@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 using UnrealBuildTool;
 
@@ -27,6 +27,9 @@ public class ModulusCore : ModuleRules
 			{
 				"Core",
 				"CoreUObject",
+				"CommonUI",
+				"UMG",
+				"EnhancedInput",
 				"Engine",
 				"NetCore",
 				"GameplayTags",
