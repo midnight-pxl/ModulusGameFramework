@@ -3,3 +3,42 @@
 
 #include "CoreUISystem/MCore_PrimaryGameLayout.h"
 
+UMCore_PrimaryGameLayout::UMCore_PrimaryGameLayout(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+UCommonActivatableWidget* UMCore_PrimaryGameLayout::PushWidgetToLayer(const FGameplayTag& LayerTag,
+	TSubclassOf<UCommonActivatableWidget> WidgetClass)
+{
+	return nullptr;
+}
+
+void UMCore_PrimaryGameLayout::PushWidgetToLayerAsync(const FGameplayTag& LayerTag,
+	TSoftClassPtr<UCommonActivatableWidget> WidgetClass)
+{
+}
+
+bool UMCore_PrimaryGameLayout::PopWidgetFromLayer(const FGameplayTag& LayerTag)
+{
+	return false;
+}
+
+UCommonActivatableWidgetStack* UMCore_PrimaryGameLayout::GetLayerStack(const FGameplayTag& LayerTag) const
+{
+	return nullptr;
+}
+
+void UMCore_PrimaryGameLayout::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+}
+
+void UMCore_PrimaryGameLayout::InitializeLayerMap()
+{
+}
+
+void UMCore_PrimaryGameLayout::HandleAsyncWidgetLoaded(const FGameplayTag& LayerTag,
+	TSoftClassPtr<UCommonActivatableWidget> WidgetClass)
+{
+}

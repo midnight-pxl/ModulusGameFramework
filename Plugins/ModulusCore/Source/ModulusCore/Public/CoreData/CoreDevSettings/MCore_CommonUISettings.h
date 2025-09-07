@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "CommonUI/Public/Input/CommonUIInputSettings.h"
 #include "Engine/DeveloperSettings.h"
 #include "MCore_CommonUISettings.generated.h"
 
@@ -15,30 +17,30 @@ class MODULUSCORE_API UMCore_CommonUISettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(config, EditAnywhere, Category = "Layer Configuration")
-	FString GameLayerTag = TEXT("UI.Layer.Game");
-    
-	UPROPERTY(config, EditAnywhere, Category = "Layer Configuration")
-	FString GameMenuLayerTag = TEXT("UI.Layer.GameMenu");
-    
-	UPROPERTY(config, EditAnywhere, Category = "Layer Configuration")
-	FString MenuLayerTag = TEXT("UI.Layer.Menu");
-    
-	UPROPERTY(config, EditAnywhere, Category = "Layer Configuration")
-	FString ModalLayerTag = TEXT("UI.Layer.Modal");
+	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
+		meta=(ExposeFunctionCategories="UI.Layer"))
+	FGameplayTag GameLayerTag;
 
-	// CommonUI auto-setup
-	UPROPERTY(config, EditAnywhere, Category = "Setup")
-	bool bAutoConfigureCommonUIOnStartup = true;
+	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
+	meta=(ExposeFunctionCategories="UI.Layer"))
+	FGameplayTag GameMenuLayerTag;
+
+	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
+	meta=(ExposeFunctionCategories="UI.Layer"))
+	FGameplayTag MenuLayerTag;
+
+	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
+	meta=(ExposeFunctionCategories="UI.Layer"))
+	FGameplayTag ModalLayerTag;
 
 	// Default assets (for the provided templates)
 	UPROPERTY(config, EditAnywhere, Category = "Default Assets")
-	TSoftObjectPtr<UCommonUIInputData> DefaultInputData;
+	TSoftObjectPtr<UCommonUIInputSettings> DefaultInputData;
 
 	// Performance settings
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
 	bool bPreloadCommonWidgets = true;
 
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
-	float AsyncLoadTimeoutSeconds = 5.0f;
+	float AsyncLoadTimeoutSeconds = 3.0f;
 };

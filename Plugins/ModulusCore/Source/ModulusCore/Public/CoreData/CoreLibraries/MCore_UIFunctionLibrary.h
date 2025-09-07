@@ -6,7 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "MCore_UIFunctionLibrary.generated.h"
 
-class FGameplayTag;
+class UMCore_CommonUISettings;
 
 /**
  * 
@@ -17,13 +17,6 @@ class MODULUSCORE_API UMCore_UIFunctionLibrary : public UBlueprintFunctionLibrar
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintPure, Category = "Modulus UI", CallInEditor = true)
+	UFUNCTION(BlueprintPure, Category = "Modulus UI", CallInEditor)
 	static const UMCore_CommonUISettings* GetCommonUISettings();
-
-	// Helper functions for tag validation
-	UFUNCTION(BlueprintPure, Category = "Modulus UI", CallInEditor = true)
-	static FGameplayTag GetValidatedGameplayTag(const FString& TagString, const FString& FallbackTag = TEXT(""));
-
-	UFUNCTION(BlueprintCallable, Category = "Modulus UI", CallInEditor = true)
-	static bool ValidateUILayerTags(TArray<FString>& OutInvalidTags);
 };
