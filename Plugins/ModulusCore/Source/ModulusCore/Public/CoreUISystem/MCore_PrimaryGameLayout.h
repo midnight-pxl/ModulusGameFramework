@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
+#include "CommonActivatableWidget.h"
 #include "GameplayTagContainer.h"
 #include "Engine/StreamableManager.h"
-#include "MCore_ActivatableWidget.h"
 #include "MCore_PrimaryGameLayout.generated.h"
 
 /**
  * 
  */
 UCLASS(BlueprintType, Blueprintable)
-class MODULUSCORE_API UMCore_PrimaryGameLayout : public UMCore_ActivatableWidget
+class MODULUSCORE_API UMCore_PrimaryGameLayout : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
@@ -24,14 +24,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Modulus UI")
     UCommonActivatableWidget* PushWidgetToLayer(FGameplayTag LayerTag, 
                                                 TSubclassOf<UCommonActivatableWidget> WidgetClass,
-                                                EMCore_UIPriority DesiredPriority = EMCore_UIPriority::Normal,
                                                 const FString& RequestingPlugin = TEXT("Unknown"));
 
     // Async loading with priority coordination
     UFUNCTION(BlueprintCallable, Category = "Modulus UI")  
     void PushWidgetToLayerAsync(FGameplayTag LayerTag,
                                TSoftClassPtr<UCommonActivatableWidget> WidgetClass,
-                               EMCore_UIPriority DesiredPriority = EMCore_UIPriority::Normal,
                                const FString& RequestingPlugin = TEXT("Unknown"),
                                bool bSuspendInputUntilComplete = true);
 
@@ -71,7 +69,6 @@ private:
     // Async loading callback
     void OnWidgetClassLoaded(TSoftClassPtr<UCommonActivatableWidget> WidgetClass, 
                             FGameplayTag LayerTag, 
-                            EMCore_UIPriority DesiredPriority,
                             FString RequestingPlugin,
                             bool bSuspendInputUntilComplete);
 };

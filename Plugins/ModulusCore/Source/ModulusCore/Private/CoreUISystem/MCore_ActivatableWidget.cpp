@@ -6,32 +6,27 @@
 UMCore_ActivatableWidget::UMCore_ActivatableWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	bIsBackHandler = true;
+	bIsModal = false;
 }
 
 TOptional<FUIInputConfig> UMCore_ActivatableWidget::GetDesiredInputConfig() const
 {
-	return Super::GetDesiredInputConfig();
-}
-
-void UMCore_ActivatableWidget::NativeOnActivated()
-{
-	Super::NativeOnActivated();
-}
-
-void UMCore_ActivatableWidget::NativeOnDeactivated()
-{
-	Super::NativeOnDeactivated();
-}
-
-void UMCore_ActivatableWidget::SetWidgetToFocus(UWidget* Widget)
-{
-}
-
-class UMCore_UICoordinator* UMCore_ActivatableWidget::GetUICoordinator() const
-{
-	return nullptr;
-}
-
-void UMCore_ActivatableWidget::HandleInitialFocus()
-{
+	switch (InputMode)
+	{
+	case EMCore_WidgetInputMode::GameAndMenu:
+		return FUIInputConfig(ECommonInputMode::All, EMouseCaptureMode::NoCapture);
+        
+	case EMCore_WidgetInputMode::Game:
+		return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently);
+        
+	case EMCore_WidgetInputMode::Menu:
+		return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
+        
+	case EMCore_WidgetInputMode::Modal:
+		return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::CaptureDuringMouseDown);
+	
+	default:
+		return Super::GetDesiredInputConfig();
+	}
 }
