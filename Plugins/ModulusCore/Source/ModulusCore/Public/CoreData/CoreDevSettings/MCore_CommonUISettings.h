@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "CommonUI/Public/Input/CommonUIInputSettings.h"
 #include "CoreUISystem/CoreGameSettings/MCore_GameSettingType.h"
 #include "Engine/DeveloperSettings.h"
 #include "MCore_CommonUISettings.generated.h"
+
+class UMCore_UIThemeDataAsset_Base;
 
 /**
  * 
@@ -38,10 +39,6 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
 	meta=(ExposeFunctionCategories="UI.Layer"))
 	FGameplayTag ModalLayerTag;
-
-	// Default assets (for the provided templates)
-	UPROPERTY(config, EditAnywhere, Category = "Default Assets")
-	TSoftObjectPtr<UCommonUIInputSettings> DefaultInputData;
 	
 	// Performance settings
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
@@ -49,10 +46,6 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
 	float AsyncLoadTimeoutSeconds{3.0f};
-
-	// Default settings menu configuration
-	UPROPERTY(config, EditAnywhere, Category = "Default Configuration")
-	FMCore_SettingsConfiguration DefaultSettingsConfiguration;
 
 	// Performance settings
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
@@ -68,11 +61,14 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = "Save System")
 	FString DefaultSaveSlotName = TEXT("GameSettings");
 
-	// NEW: Tag-based settings caching
+	// Tag-based settings caching
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
 	bool bEnableTagCaching{true};
 
-	// Helper to get widget class by setting type
-	TSoftClassPtr<UUserWidget> GetWidgetClassForType(EMCore_SettingType SettingType) const;
-	
+	UPROPERTY(Config, EditAnywhere, Category = "Configuration",
+		meta=(AllowedClasses = "MCore_UIThemeDataAsset_Base"))
+	TSoftObjectPtr<UMCore_UIThemeDataAsset_Base> CurrentThemeAsset;
+
+	UPROPERTY(Config, EditAnywhere, Category = "WidgetClasses")
+	TMap<EMCore_SettingType, TSoftClassPtr<UUserWidget>> WidgetClassOverrides;
 };

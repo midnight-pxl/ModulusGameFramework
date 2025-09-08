@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
+#include "CommonButtonBase.h"
 #include "CoreUISystem/MCore_UISettingsTags.h"
 #include "MCore_GameSettingType.generated.h"
 
@@ -41,9 +43,6 @@ struct MODULUSCORE_API FMCore_SettingDefinition
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
     FGameplayTag SaveKey; // For ModulusMemory integration
-
-    UPROPERTY()
-    FGuid InstanceID;
 
     // Type-Specific Properties (using EditCondition for clean UI)
     
@@ -97,12 +96,6 @@ struct MODULUSCORE_API FMCore_SettingDefinition
         meta = (EditCondition = "SettingType == EMCore_SettingType::Action"))
     FText ActionButtonText = FText::FromString("Execute");
 
-    // Optional custom widget override
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Advanced")
-    TSubclassOf<UUserWidget> CustomWidgetClass;
-
-    FMCore_SettingDefinition() { InstanceID = FGuid::NewGuid(); }
-
     // Helper function to validate a setting
     bool IsValid() const
     {
@@ -122,9 +115,9 @@ struct MODULUSCORE_API FMCore_SettingDefinition
         }
     }
     
-    FGameplayTag GetWidgetTypeTag() const
+    FString GetSaveKeyString() const
     {
-        return MCore_UISettingsTags::GetWidgetTypeTag(SettingType);
+        return SaveKey.IsValid() ? SaveKey.ToString() : FString();
     }
 };
 
@@ -147,10 +140,6 @@ struct MODULUSCORE_API FMCore_SettingCategory
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Category")
     TArray<FMCore_SettingDefinition> Settings;
-
-    // Optional custom tab widget
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Advanced")
-    TSubclassOf<UUserWidget> CustomTabWidgetClass;
 
     // Validation
     bool IsValid() const
@@ -180,14 +169,6 @@ struct MODULUSCORE_API FMCore_SettingCategory
             return (Setting.SaveKey == SaveKey);
         });
     }
-
-    const FMCore_SettingDefinition* FindSettingByID(const FGuid& InstanceID) const
-    {
-        return Settings.FindByPredicate([&InstanceID](const FMCore_SettingDefinition& Setting)
-        {
-            return Setting.InstanceID == InstanceID;
-        });
-    }
 };
 
 /**
@@ -203,10 +184,6 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
 
     UPROPERTY()
     FGuid ConfigurationID;
-
-    // Optional custom main menu widget
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Advanced")
-    TSubclassOf<class UCommonActivatableWidget> CustomSettingsMenuClass;
 
     FMCore_SettingsConfiguration() { ConfigurationID = FGuid::NewGuid(); }
 
