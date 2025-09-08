@@ -27,11 +27,15 @@ public class ModulusCore : ModuleRules
 			{
 				"Core",
 				"CoreUObject",
+				"InputCore",
+				"Engine",
+				"Slate",
+				"SlateCore",
+				"NetCore",
 				"CommonUI",
+				"CommonInput",
 				"UMG",
 				"EnhancedInput",
-				"Engine",
-				"NetCore",
 				"GameplayTags",
 				"DeveloperSettings"
 				// ... add other public dependencies that you statically link with here ...
@@ -41,8 +45,8 @@ public class ModulusCore : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Slate",
-				"SlateCore",
+				"ApplicationCore",
+				"PropertyPath"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
