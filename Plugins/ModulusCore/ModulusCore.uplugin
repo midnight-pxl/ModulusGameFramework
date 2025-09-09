@@ -19,16 +19,21 @@
 			"Name": "ModulusCore",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ModulusCoreEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreDefault"
 		}
 	],
-    "Plugins": [
-      {
-            "Name": "CommonUI",
-            "Enabled": true
-      },
-      {
-            "Name": "EnhancedInput",
-            "Enabled": true
-      }
-    ]
+	"Plugins": [
+		{
+			"Name": "CommonUI",
+			"Enabled": true
+		},
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		}
+	]
 }

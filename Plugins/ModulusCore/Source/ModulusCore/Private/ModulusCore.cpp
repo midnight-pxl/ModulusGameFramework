@@ -1,10 +1,13 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "ModulusCore.h"
+#include "CoreData/CoreLogging/LogModulusNetworking.h"
+#include "CoreData/CoreLogging/LogModulusUI.h"
 
 #define LOCTEXT_NAMESPACE "FModulusCoreModule"
 
 DEFINE_LOG_CATEGORY(LogModulusNetworking);
+DEFINE_LOG_CATEGORY(LogModulusUI);
 
 void FModulusCoreModule::StartupModule()
 {
