@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "GameplayTagContainer.h"
 #include "MCore_GameSettingsSubsystem.generated.h"
-
-class FGameplayTag;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGameSettingChanged, const FGameplayTag&, SaveKey, const FString&, NewSettingValue);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGameSettingApplied, const FGameplayTag&, SaveKey, const FString&, NewSettingValue);

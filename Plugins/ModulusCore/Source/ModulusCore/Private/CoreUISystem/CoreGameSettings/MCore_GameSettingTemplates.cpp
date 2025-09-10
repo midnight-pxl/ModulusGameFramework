@@ -1,6 +1,5 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreUISystem/CoreGameSettings/MCore_GameSettingTemplates.h"
 
 /** Display Settings */
@@ -236,70 +235,66 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     return Category;
 }
 
+//** Controls Settings */
+
 FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
 {
-    /** Controls Settings */
-    
-    UFUNCTION(BlueprintCallable, CallInEditor, Category = "Modulus Settings|Templates")
-    static FMCore_SettingCategory CreateControlsSettings()
-    {
-        FMCore_SettingCategory Category;
-        Category.CategoryName = FText::FromString("Controls");
-        Category.CategoryDescription = FText::FromString("Input sensitivity and key bindings");
-        Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Controls;
+    FMCore_SettingCategory Category;
+    Category.CategoryName = FText::FromString("Controls");
+    Category.CategoryDescription = FText::FromString("Input sensitivity and key bindings");
+    Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Controls;
 
-        // Mouse Sensitivity
-        FMCore_SettingDefinition MouseSensitivity;
-        MouseSensitivity.DisplayName = FText::FromString("Mouse Sensitivity");
-        MouseSensitivity.Description = FText::FromString("How fast the camera moves with mouse input");
-        MouseSensitivity.SettingType = EMCore_SettingType::Slider;
-        MouseSensitivity.SaveKey = MCore_UISettingsTags::Settings_Controls_MouseSensitivity;
-        MouseSensitivity.MinValue = 0.1f;
-        MouseSensitivity.MaxValue = 3.0f;
-        MouseSensitivity.DefaultValue = 1.0f;
-        MouseSensitivity.StepSize = 0.02f;
-        Category.Settings.Add(MouseSensitivity);
+    // Mouse Sensitivity
+    FMCore_SettingDefinition MouseSensitivity;
+    MouseSensitivity.DisplayName = FText::FromString("Mouse Sensitivity");
+    MouseSensitivity.Description = FText::FromString("How fast the camera moves with mouse input");
+    MouseSensitivity.SettingType = EMCore_SettingType::Slider;
+    MouseSensitivity.SaveKey = MCore_UISettingsTags::Settings_Controls_MouseSensitivity;
+    MouseSensitivity.MinValue = 0.1f;
+    MouseSensitivity.MaxValue = 3.0f;
+    MouseSensitivity.DefaultValue = 1.0f;
+    MouseSensitivity.StepSize = 0.02f;
+    Category.Settings.Add(MouseSensitivity);
 
-        // Invert Y Axis
-        FMCore_SettingDefinition InvertY;
-        InvertY.DisplayName = FText::FromString("Invert Y Axis");
-        InvertY.Description = FText::FromString("Invert vertical mouse movement");
-        InvertY.SettingType = EMCore_SettingType::Toggle;
-        InvertY.SaveKey = MCore_UISettingsTags::Settings_Controls_InvertY;
-        InvertY.DefaultToggleValue = false;
-        Category.Settings.Add(InvertY);
+    // Invert Y Axis
+    FMCore_SettingDefinition InvertY;
+    InvertY.DisplayName = FText::FromString("Invert Y Axis");
+    InvertY.Description = FText::FromString("Invert vertical mouse movement");
+    InvertY.SettingType = EMCore_SettingType::Toggle;
+    InvertY.SaveKey = MCore_UISettingsTags::Settings_Controls_InvertY;
+    InvertY.DefaultToggleValue = false;
+    Category.Settings.Add(InvertY);
 
-        // Gamepad Sensitivity
-        FMCore_SettingDefinition GamepadSensitivity;
-        GamepadSensitivity.DisplayName = FText::FromString("Gamepad Sensitivity");
-        GamepadSensitivity.Description = FText::FromString("Controller stick sensitivity");
-        GamepadSensitivity.SettingType = EMCore_SettingType::Slider;
-        GamepadSensitivity.SaveKey = MCore_UISettingsTags::Settings_Controls_GamepadSensitivity;
-        GamepadSensitivity.MinValue = 0.1f;
-        GamepadSensitivity.MaxValue = 3.0f;
-        GamepadSensitivity.DefaultValue = 1.0f;
-        GamepadSensitivity.StepSize = 0.02f;
-        Category.Settings.Add(GamepadSensitivity);
+    // Gamepad Sensitivity
+    FMCore_SettingDefinition GamepadSensitivity;
+    GamepadSensitivity.DisplayName = FText::FromString("Gamepad Sensitivity");
+    GamepadSensitivity.Description = FText::FromString("Controller stick sensitivity");
+    GamepadSensitivity.SettingType = EMCore_SettingType::Slider;
+    GamepadSensitivity.SaveKey = MCore_UISettingsTags::Settings_Controls_GamepadSensitivity;
+    GamepadSensitivity.MinValue = 0.1f;
+    GamepadSensitivity.MaxValue = 3.0f;
+    GamepadSensitivity.DefaultValue = 1.0f;
+    GamepadSensitivity.StepSize = 0.02f;
+    Category.Settings.Add(GamepadSensitivity);
 
-        // Key Binding Examples (commonly remapped keys)
-        FMCore_SettingDefinition MoveForward;
-        MoveForward.DisplayName = FText::FromString("Move Forward");
-        MoveForward.Description = FText::FromString("Key to move forward");
-        MoveForward.SettingType = EMCore_SettingType::KeyBinding;
-        MoveForward.SaveKey = MCore_UISettingsTags::Settings_Controls_MoveForward;
-        MoveForward.DefaultKey = EKeys::W;
-        Category.Settings.Add(MoveForward);
+    // Key Binding Examples (commonly remapped keys)
+    FMCore_SettingDefinition MoveForward;
+    MoveForward.DisplayName = FText::FromString("Move Forward");
+    MoveForward.Description = FText::FromString("Key to move forward");
+    MoveForward.SettingType = EMCore_SettingType::KeyBinding;
+    MoveForward.SaveKey = MCore_UISettingsTags::Settings_Controls_MoveForward;
+    MoveForward.DefaultKey = EKeys::W;
+    Category.Settings.Add(MoveForward);
 
-        FMCore_SettingDefinition Jump;
-        Jump.DisplayName = FText::FromString("Jump");
-        Jump.Description = FText::FromString("Key to jump");
-        Jump.SettingType = EMCore_SettingType::KeyBinding;
-        Jump.SaveKey = MCore_UISettingsTags::Settings_Controls_Jump;
-        Jump.DefaultKey = EKeys::SpaceBar;
-        Category.Settings.Add(Jump);
+    FMCore_SettingDefinition Jump;
+    Jump.DisplayName = FText::FromString("Jump");
+    Jump.Description = FText::FromString("Key to jump");
+    Jump.SettingType = EMCore_SettingType::KeyBinding;
+    Jump.SaveKey = MCore_UISettingsTags::Settings_Controls_Jump;
+    Jump.DefaultKey = EKeys::SpaceBar;
+    Category.Settings.Add(Jump);
 
-        return Category;
-    }
+    return Category;
 }
 
 /** Accessibility Settings */
@@ -373,41 +368,4 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
 
     return Category;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

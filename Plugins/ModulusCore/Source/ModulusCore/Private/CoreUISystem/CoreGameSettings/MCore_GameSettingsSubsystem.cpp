@@ -24,7 +24,10 @@ void UMCore_GameSettingsSubsystem::Deinitialize()
 
 FString UMCore_GameSettingsSubsystem::GetSettingValue(const FGameplayTag& SaveKey, const FString& SettingValue)
 {
-	if (const FString* CurrentValue = CurrentSettings.Find(SaveKey)) return CurrentValue;
+	if (const FString* CurrentValue = CurrentSettings.Find(SaveKey))
+	{
+		return SettingValue;
+	}
 
 	if (!SettingValue.IsEmpty())
 	{
@@ -51,6 +54,7 @@ void UMCore_GameSettingsSubsystem::SetSettingValue(const FGameplayTag& SaveKey, 
 
 float UMCore_GameSettingsSubsystem::GetFloatSetting(const FGameplayTag& SaveKey, float SettingValue)
 {
+	return 0;
 }
 
 void UMCore_GameSettingsSubsystem::SetFloatSetting(const FGameplayTag& SaveKey, float NewSettingValue)
@@ -59,6 +63,7 @@ void UMCore_GameSettingsSubsystem::SetFloatSetting(const FGameplayTag& SaveKey, 
 
 bool UMCore_GameSettingsSubsystem::GetBoolSetting(const FGameplayTag& SaveKey, bool SettingValue)
 {
+	return false;
 }
 
 void UMCore_GameSettingsSubsystem::SetBoolSetting(const FGameplayTag& SaveKey, bool NewSettingValue)
@@ -67,6 +72,7 @@ void UMCore_GameSettingsSubsystem::SetBoolSetting(const FGameplayTag& SaveKey, b
 
 int32 UMCore_GameSettingsSubsystem::GetIntSetting(const FGameplayTag& SaveKey, int32 DefaultValue)
 {
+	return 0;
 }
 
 void UMCore_GameSettingsSubsystem::SetIntSetting(const FGameplayTag& SaveKey, int32 NewSettingValue)
@@ -75,6 +81,7 @@ void UMCore_GameSettingsSubsystem::SetIntSetting(const FGameplayTag& SaveKey, in
 
 TMap<FGameplayTag, FString> UMCore_GameSettingsSubsystem::GetMultipleSettings(const TArray<FGameplayTag>& SaveKeys)
 {
+	return TMap<FGameplayTag, FString>();
 }
 
 void UMCore_GameSettingsSubsystem::SetMultipleSettings(const TMap<FGameplayTag, FString>& Settings,
@@ -84,6 +91,7 @@ void UMCore_GameSettingsSubsystem::SetMultipleSettings(const TMap<FGameplayTag, 
 
 bool UMCore_GameSettingsSubsystem::HasSetting(const FGameplayTag& SaveKey) const
 {
+	return false;
 }
 
 void UMCore_GameSettingsSubsystem::SaveAllSettings()

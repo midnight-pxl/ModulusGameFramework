@@ -53,6 +53,7 @@ void FModulusCoreEditorModule::UnregisterHubMenus()
 
 void FModulusCoreEditorModule::OpenModulusHub()
 {
+	/**
 	UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
 	if (EditorUtilitySubsystem)
 	{
@@ -68,6 +69,7 @@ void FModulusCoreEditorModule::OpenModulusHub()
 			UE_LOG(LogModulusEditor, Warning, TEXT("Could not find Modulus Hub widget blueprint"))
 		}
 	}
+	*/
 }
 
 #undef LOCTEXT_NAMESPACE

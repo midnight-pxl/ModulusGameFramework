@@ -59,25 +59,13 @@ protected:
      * Compliance Tab
      */
     
-    /** Test Xbox accessibility compliance */
-    UFUNCTION(BlueprintCallable, Category = "Compliance")
-    void TestXboxCompliance();
+	/** Run basic accessibility checks */
+	UFUNCTION(BlueprintCallable, Category = "Compliance")
+	void RunBasicAccessibilityCheck();
     
-    /** Test PlayStation accessibility compliance */
-    UFUNCTION(BlueprintCallable, Category = "Compliance")
-    void TestPlayStationCompliance();
-    
-    /** Test text contrast compliance */
-    UFUNCTION(BlueprintCallable, Category = "Compliance")
-    void TestTextContrast();
-    
-    /** Test colorblind accessibility */
-    UFUNCTION(BlueprintCallable, Category = "Compliance")
-    void TestColorblindAccessibility();
-    
-    /** Generate certification report */
-    UFUNCTION(BlueprintCallable, Category = "Compliance")
-    void GenerateCertificationReport();
+	/** Open console certification guidelines */
+	UFUNCTION(BlueprintCallable, Category = "Compliance")
+	void OpenCertificationGuidelines();
 
     /**
      * Modulus Ecosystem Tab
@@ -107,7 +95,21 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Documentation")
     void OpenAPIReference();
 
+protected:
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void ShowEmbeddedSettings();
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void OnSettingsWidgetCreated(class UWidget* ModulusSettingsWidget);
+
 private:
+
+	void LogAction(const FString& Action, const FString& LogResult, const FLogCategoryBase& LogCategory=LogTemp);
+	
+	/** Get installed Modulus plugins */
+	TArray<FString> GetInstalledModulusPlugins();
+	
     /** Update the interface with current plugin status */
     void UpdatePluginStatus();
     
@@ -116,4 +118,15 @@ private:
     
     /** Log action to output log */
     void LogAction(const FString& Action, const FString& LogResult);
+
+	/** Open URL in default browser */
+	void OpenURL(const FString& URL);
+
+	TSharedPtr<class IDetailsView> CreateSettingsDetailsView;
+	
+	UPROPERTY()
+	TObjectPtr<class UWidget> EmbeddedSettingsWidget;
+
+
+	
 };

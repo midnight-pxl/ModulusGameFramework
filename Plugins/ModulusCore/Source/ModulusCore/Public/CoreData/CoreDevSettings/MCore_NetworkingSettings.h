@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS(Config=ModulusGameFramework, DefaultConfig, meta=(DisplayName="Modulus Networking Settings"))
+UCLASS(Config=game, DefaultConfig, meta=(DisplayName="Modulus Networking Settings"))
 class MODULUSCORE_API UMCore_NetworkingSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

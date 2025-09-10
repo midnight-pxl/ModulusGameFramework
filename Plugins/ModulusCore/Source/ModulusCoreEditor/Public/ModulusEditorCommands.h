@@ -5,13 +5,11 @@
 #include "CoreMinimal.h"
 #include "EditorStyleSet.h"
 #include "Framework/Commands/Commands.h"
-#include "EditorStyleSet.h"
 
 class FModulusEditorCommands : public TCommands<FModulusEditorCommands>
 {
 public:
-    FModulusEditorCommands()
-        : TCommands<FModulusEditorCommands>(
+    FModulusEditorCommands() : TCommands<FModulusEditorCommands>(
             TEXT("ModulusEditor"), 
             NSLOCTEXT("Contexts", "ModulusEditor", "Modulus Editor"), 
             NAME_None, 
@@ -21,8 +19,7 @@ public:
 
     // TCommands<> interface
     virtual void RegisterCommands() override;
-
-public:
+	
     /** Open Modulus Hub command */
     TSharedPtr<FUICommandInfo> OpenModulusHub;
 };
