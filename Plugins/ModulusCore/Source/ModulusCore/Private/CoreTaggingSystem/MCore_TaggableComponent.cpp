@@ -1,8 +1,6 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreTaggingSystem/MCore_TaggableComponent.h"
-
 
 // Sets default values for this component's properties
 UMCore_TaggableComponent::UMCore_TaggableComponent()

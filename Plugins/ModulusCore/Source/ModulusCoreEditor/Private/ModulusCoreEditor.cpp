@@ -6,7 +6,6 @@
 #include "ModulusEditorCommands.h"
 
 #define LOCTEXT_NAMESPACE "FModulusCoreEditorModule"
-#define DEFINE_LOG_CATEGORY(LogModulusEditor);
 
 void FModulusCoreEditorModule::StartupModule()
 {
@@ -21,8 +20,6 @@ void FModulusCoreEditorModule::StartupModule()
 void FModulusCoreEditorModule::ShutdownModule()
 {
 	UnregisterHubMenus();
-
-	FModulusCoreEditorModule::UnregisterHubMenus();
 
 	UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditor module shutdown"));    
 }

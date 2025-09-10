@@ -1,6 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUISystem/CoreGameSettings/MCore_GameSettingTemplates.h"
+#include "CoreUISystem/CoreGameSettings/MCore_GameSettingType.h"
 
 /** Display Settings */
 
@@ -367,5 +368,65 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     Category.Settings.Add(ReduceMotion);
 
     return Category;
+}
+
+FMCore_SettingsConfiguration UMCore_GameSettingTemplates::CreateCompleteSettingsConfiguration()
+{
+    return FMCore_SettingsConfiguration{};
+}
+
+FMCore_SettingsConfiguration UMCore_GameSettingTemplates::CreateMinimalSettingsConfiguration()
+{
+    return FMCore_SettingsConfiguration{};
+}
+
+TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateSliders()
+{
+    return TArray<FMCore_SettingDefinition>();
+}
+
+TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateDropdowns()
+{
+    return TArray<FMCore_SettingDefinition>();
+}
+
+TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateToggles()
+{
+    return TArray<FMCore_SettingDefinition>();
+}
+
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateSliderSetting(const FGameplayTag& SaveKey,
+    const FText& DisplayName, const FText& Description, float MinValue, float MaxValue, float DefaultValue,
+    float StepValue)
+{
+    return FMCore_SettingDefinition();
+}
+
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateDropdownSetting(const FGameplayTag& SaveKey,
+    const FText& DisplayName, const FText& Description, const TArray<FText>& Options, int32 DefaultIndex)
+{
+    return FMCore_SettingDefinition();
+}
+
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateToggleSetting(const FGameplayTag& SaveKey,
+    const FText& DisplayName, const FText& Description, float DefaultValue)
+{
+    return FMCore_SettingDefinition();
+}
+
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateKeyBindingSetting(const UInputAction* InputAction,
+                                                                              const class UInputMappingContext* MappingContext)
+{
+    return FMCore_SettingDefinition();
+}
+
+TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControlDefinition()
+{
+    return TArray<FMCore_SettingDefinition>();
+}
+
+bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(UObject* WorldContext, TArray<FString>& ValidationErrors)
+{
+    return false;
 }
 
