@@ -19,7 +19,7 @@ class MODULUSCORE_API UMCore_EventBlueprintLibrary : public UBlueprintFunctionLi
 public:
 	// Static broadcasting
 	UFUNCTION(BlueprintCallable, Category = "Modulus Events", CallInEditor)
-	static void BroadcastEvent(UObject* WorldContext, const FMCore_EventData& Event);
+	static void BroadcastEvent(const UObject* WorldContext, const FMCore_EventData& Event);
 
 	UFUNCTION(BlueprintCallable, Category = "Modulus Events", CallInEditor)
 	static void BroadcastSimple(UObject* WorldContext, const FGameplayTag& EventTag, 
@@ -36,5 +36,5 @@ public:
 	static void BroadcastGameplayEvent(UObject* WorldContext, const FGameplayTag& EventTag, const FString& Parameter = TEXT(""));
 
 	UFUNCTION(BlueprintPure, Category = "Modulus Events")
-	static UMCore_EventSubsystem* GetEventSubsystem(UObject* WorldContext);
+	static UMCore_EventSubsystem* GetEventSubsystem(const UObject* WorldContext);
 };

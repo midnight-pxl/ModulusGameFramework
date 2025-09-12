@@ -9,7 +9,7 @@
 enum class EMCore_EventScope : uint8;
 
 USTRUCT(BlueprintType)
-struct MODULUSCORE_APIFMCore_EventData
+struct MODULUSCORE_API FMCore_EventData
 {
     GENERATED_BODY()
 
@@ -27,7 +27,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
     FString EventParameter;
 
-    // Contructors
+    // Constructors
     FMCore_EventData() = default;
     
     FMCore_EventData(const FGameplayTag& InTag, EMCore_EventScope InScope = EMCore_EventScope::Local)

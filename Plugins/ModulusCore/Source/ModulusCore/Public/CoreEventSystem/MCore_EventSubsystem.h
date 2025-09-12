@@ -9,7 +9,7 @@
 #include "MCore_EventSubsystem.generated.h"
 
 class IMCore_EventListeners;
-class FMCore_EventData;
+struct FMCore_EventData;
 
 /**
  * 
@@ -43,8 +43,8 @@ public:
 	void BroadcastGameplayEvent(const FGameplayTag& EventTag, const FString& Parameter = TEXT(""));
 
 	// Listener management
-	void RegisterListener(TScriptInterface<IMCore_EventListeners> Listener);
-	void UnregisterListener(TScriptInterface<IMCore_EventListeners> Listener);
+	void RegisterListener(const TScriptInterface<IMCore_EventListeners>& Listener);
+	void UnregisterListener(const TScriptInterface<IMCore_EventListeners>& Listener);
 
 	// Static access
 	static UMCore_EventSubsystem* Get(const UObject* WorldContext);
@@ -58,14 +58,4 @@ protected:
 
 private:
 	static TWeakObjectPtr<UMCore_EventSubsystem> CachedSubsystem;
-
-
-
-
-
-
-
-
-
-	
 };

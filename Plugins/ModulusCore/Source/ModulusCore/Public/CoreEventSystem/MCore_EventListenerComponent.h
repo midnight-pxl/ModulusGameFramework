@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "CoreEventSystem/EventSystemData/MCore_EventDetails.h"
 #include "CoreNetworkingSystem/MCore_NetworkingComponent.h"
 #include "MCore_EventListenerComponent.generated.h"
 
@@ -44,7 +45,7 @@ public:
 
 	// Whether this listener is currently active
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Listener")
-	bool bIsActive{true};
+	bool bIsListening{true};
 
 	// Blueprint event for handling events
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModulusEvent, const FMCore_EventData&, Event);
@@ -68,13 +69,13 @@ public:
 	 * Enable or disable event listening at runtime.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Modulus Events")
-	void SetActive(bool bActive);
-
+	void SetListening(bool bListening);
+	
 	/**
 	 * Check if this listener is currently active.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-	bool IsActive() const { return bIsActive && IsValid(GetOwner()); }
+	bool IsListening() const { return bIsListening && IsValid(GetOwner()); }
 
 private:
 	// Whether we're currently registered with the event subsystem

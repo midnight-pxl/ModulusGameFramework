@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "MCore_EventGameplayTags.generated.h"
 
 // Forward declaration
@@ -27,14 +28,14 @@ enum class EMCore_EventScope : uint8;
 namespace MCoreEventTags
 {
     // Common UI events (Local scope recommended)
-    MODULUSCORE_API extern const FGameplayTag UI_MenuOpened;     // MCore.Events.UI.MenuOpened
-    MODULUSCORE_API extern const FGameplayTag UI_MenuClosed;     // MCore.Events.UI.MenuClosed
-    MODULUSCORE_API extern const FGameplayTag UI_SettingsChanged; // MCore.Events.UI.SettingsChanged
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_MenuOpened);          // MCore.Events.UI.MenuOpened
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_MenuClosed);          // MCore.Events.UI.MenuClosed
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_SettingsChanged);     // MCore.Events.UI.SettingsChanged
     
     // Common Player events (Global scope recommended)
-    MODULUSCORE_API extern const FGameplayTag Player_LevelUp;    // MCore.Events.Player.LevelUp
-    MODULUSCORE_API extern const FGameplayTag Player_ItemFound;  // MCore.Events.Player.ItemFound
-    MODULUSCORE_API extern const FGameplayTag Player_QuestComplete; // MCore.Events.Player.QuestComplete
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_LevelUp);         // MCore.Events.Player.LevelUp
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_ItemFound);       // MCore.Events.Player.ItemFound
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Player_QuestComplete);   // MCore.Events.Player.QuestComplete
     
     // Common Gameplay events (Global scope recommended)
     MODULUSCORE_API extern const FGameplayTag Gameplay_EnemyKilled; // MCore.Events.Gameplay.EnemyKilled
