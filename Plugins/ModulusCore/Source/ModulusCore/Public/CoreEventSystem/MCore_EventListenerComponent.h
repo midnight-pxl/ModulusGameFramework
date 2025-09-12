@@ -7,9 +7,7 @@
 #include "CoreNetworkingSystem/MCore_NetworkingComponent.h"
 #include "MCore_EventListenerComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMCore_SimpleEventDelegate, const FMCore_SimpleEvent&, Event);
-
-struct FMCore_SimpleEvent;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModulusEvent, const FMCore_EventData&, Event);
 
 /**
  * Simple event listener interface
@@ -28,7 +26,7 @@ class IMCore_EventListeners
 public:
 	// Handle received events. Implement this function to respond
 	UFUNCTION(BlueprintImplementableEvent, Category="ModulusEvents")
-	void HandleEvent(const FMCore_SimpleEvent& Event);
+	void HandleEvent(const FMCore_EventData& Event);
 };
 
 /**
@@ -49,7 +47,7 @@ public:
 	bool bIsActive{true};
 
 	// Blueprint event for handling events
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModulusEvent, const FMCore_SimpleEvent&, Event);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnModulusEvent, const FMCore_EventData&, Event);
 	UPROPERTY(BlueprintAssignable, Category = "Modulus Events")
 	FOnModulusEvent OnModulusEvent;
 
@@ -62,7 +60,7 @@ public:
 
 	// Blueprint implementation - forwards to delegate
 	UFUNCTION(BlueprintImplementableEvent, Category = "Modulus Events")
-	void HandleEvent(const FMCore_SimpleEvent& Event);
+	void HandleEvent(const FMCore_EventData& Event);
 
 	//~ Start of Blueprint Interface
 
@@ -77,10 +75,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
 	bool IsActive() const { return bIsActive && IsValid(GetOwner()); }
-
-protected:
-	// Internal event handler that forwards to Blueprint
-	void InternalHandleEvent(const FMCore_SimpleEvent& Event);
 
 private:
 	// Whether we're currently registered with the event subsystem
