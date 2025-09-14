@@ -1,0 +1,107 @@
+﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "MCore_EventData.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "MCore_EventFunctionLibrary.generated.h"
+
+struct FGameplayTag;
+struct FMCore_EventData;
+enum class EMCore_EventScope : uint8;
+
+/**
+ * For event broadcasting and parameter helpers
+ * No components needed - stateless broadcasting functions
+ * Routes to appropriate subsystem based on event scope
+ */
+UCLASS()
+class MODULUSCORE_API UMCore_EventFunctionLibrary : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
+
+public:
+    /**
+     * Generic event broadcasting with full control
+	 * PERFORMANCE: Optimized for smaller parameter counts
+	 * DESIGN PRINCIPLE: IF you need >10 parameters, use multiple events
+	 */
+    UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
+              meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastEvent(const UObject* WorldContext,
+		FGameplayTag EventTag,
+		EMCore_EventScope EventScope,
+		const TMap<FString, FString>& EventParams);
+
+	/**
+	 * Broadcast event without parameters (most common case)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
+			  meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastSimpleEvent(const UObject* WorldContext,
+									FGameplayTag EventTag,
+									EMCore_EventScope EventScope);
+	
+	/**
+	 * Simple event broadcasting with local scope (most common case)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
+			  meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastLocalEvent(const UObject* WorldContext,
+								   FGameplayTag EventTag,
+								   const TMap<FString, FString>& Parameters);
+
+	/**
+	 * Simple event broadcasting with global scope
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
+			  meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastGlobalEvent(const UObject* WorldContext,
+									FGameplayTag EventTag,
+									const TMap<FString, FString>& Parameters);
+
+    /**
+     * Helper to create complete event data
+     */
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static FMCore_EventData MakeEventData(FGameplayTag EventTag,
+    	const TMap<FString, FString>& Parameters);
+
+	/**
+	 * Helper to create empty parameter map (for events with no parameters)
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static TMap<FString, FString> MakeEmptyParamMap();
+
+    /**
+     * Parameter helpers
+     */
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static bool GetBoolParameter(const FMCore_EventData& EventData, const FString& Key,
+    	bool DefaultValue = false);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static int32 GetIntParameter(const FMCore_EventData& EventData, const FString& Key,
+    	int32 DefaultValue = 0);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static float GetFloatParameter(const FMCore_EventData& EventData, const FString& Key,
+    	float DefaultValue = 0.0f);
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static FString GetStringParameter(const FMCore_EventData& EventData, const FString& Key,
+    	const FString& DefaultValue = TEXT(""));
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static FVector GetVectorParameter(const FMCore_EventData& EventData, const FString& Key,
+    	const FVector& DefaultValue = FVector::ZeroVector);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static FGameplayTag GetGameplayTagParameter(const FMCore_EventData& EventData,
+		const FString& Key, const FGameplayTag& DefaultValue = FGameplayTag());
+	
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+    static TMap<FString, FString> MakeEventParameters(const TArray<FString>& Keys,
+    	const TArray<FString>& Values);
+};
