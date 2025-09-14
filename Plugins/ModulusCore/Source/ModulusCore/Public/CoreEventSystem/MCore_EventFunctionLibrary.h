@@ -22,26 +22,37 @@ class MODULUSCORE_API UMCore_EventFunctionLibrary : public UBlueprintFunctionLib
 	GENERATED_BODY()
 
 public:
-    /**
-     * Generic event broadcasting with full control
-	 * PERFORMANCE: Optimized for smaller parameter counts
-	 * DESIGN PRINCIPLE: IF you need >10 parameters, use multiple events
-	 */
-    UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
-              meta = (DefaultToSelf = "WorldContext"))
-	static void BroadcastEvent(const UObject* WorldContext,
-		FGameplayTag EventTag,
-		EMCore_EventScope EventScope,
-		const TMap<FString, FString>& EventParams);
-
 	/**
-	 * Broadcast event without parameters (most common case)
+	 * Main Function: Broadcast signal-only event (90% of use cases)
+	 * No parameters - listeners query relevant subsystems for current state
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
 			  meta = (DefaultToSelf = "WorldContext"))
 	static void BroadcastSimpleEvent(const UObject* WorldContext,
 									FGameplayTag EventTag,
-									EMCore_EventScope EventScope);
+									EMCore_EventScope EventScope = EMCore_EventScope::Local);
+
+	/**
+	 * Common Function: Event with single context ID (~9% of use cases)
+	 * For events that need minimal context like quest ID, player name, etc.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
+			  meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastEventWithContext(const UObject* WorldContext,
+										 FGameplayTag EventTag,
+										 const FString& ContextID,
+										 EMCore_EventScope EventScope = EMCore_EventScope::Local);
+	
+    /**
+	 * Rare Function: Event with full parameters (~1% of use cases)
+	 * Only for complex edge cases requiring multiple parameters
+	 */
+    UFUNCTION(BlueprintCallable, Category = "Modulus Events", 
+              meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastEvent(const UObject* WorldContext,
+		FGameplayTag EventTag,
+		EMCore_EventScope EventScope = EMCore_EventScope::Local,
+		const TMap<FString, FString>& EventParams);
 	
 	/**
 	 * Simple event broadcasting with local scope (most common case)
@@ -69,10 +80,17 @@ public:
     	const TMap<FString, FString>& Parameters);
 
 	/**
-	 * Helper to create empty parameter map (for events with no parameters)
+	 * Parameter helpers for the rare complex events
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-	static TMap<FString, FString> MakeEmptyParamMap();
+	static FString GetEventContextID(const FMCore_EventData& EventData);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static FString GetEventParameter(const FMCore_EventData& EventData, const FString& Key, const FString& DefaultValue = TEXT(""));
+
+private:
+	// Internal routing function
+	static void RouteEventToSubsystem(const UObject* WorldContext, const FMCore_EventData& EventData, EMCore_EventScope EventScope);
 
     /**
      * Parameter helpers

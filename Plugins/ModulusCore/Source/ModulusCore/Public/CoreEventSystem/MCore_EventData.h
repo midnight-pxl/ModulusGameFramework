@@ -44,13 +44,11 @@ struct MODULUSCORE_API FMCore_EventParameter
 
 	FMCore_EventParameter(const FString& InKey, const FString& InValue)
 		: Key(InKey), Value(InValue){}
-
-	bool IsValid() const { return !Key.IsEmpty(); }
 };
 
 /**
  * Event data structure - RPC-compatible with fast lookup helpers
- * Optimized for 1-8 parameters (95% of use cases)
+ * Optimized for <10 parameters (95% of use cases)
  */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_EventData
@@ -61,10 +59,16 @@ struct MODULUSCORE_API FMCore_EventData
 	FGameplayTag EventTag;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "EventData")
+	FString ContextID;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "EventData")
 	TArray<FMCore_EventParameter> EventParams;
 
 	FMCore_EventData() = default;
 
+	FMCore_EventData(const FGameplayTag& InEventTag, const FString& InContextID)
+		: EventTag(InEventTag), ContextID(InContextID) {}
+	
 	FMCore_EventData(const FGameplayTag& InEventTag, const TMap<FString, FString>& InEventParams = {})
 		: EventTag(InEventTag)
 	{
@@ -78,15 +82,9 @@ struct MODULUSCORE_API FMCore_EventData
 		}
 	}
 
-	// Quick single-parameter constructor
-	FMCore_EventData(const FGameplayTag& InEventTag, const FString& Key, const FString& Value)
-		: EventTag(InEventTag)
-	{
-		EventParams.Emplace(Key, Value);
-	}
-
 	bool IsValid() const { return EventTag.IsValid(); }
 
+	// Simple parameter lookup for rare complex events
 	FString GetParameter(const FString& Key, const FString& DefaultValue = TEXT("")) const
 	{
 		// Linear search is optimal for typical 1-8 parameters
@@ -98,35 +96,5 @@ struct MODULUSCORE_API FMCore_EventData
 			}
 		}
 		return DefaultValue;
-	}
-
-	void AddParameter(const FString& Key, const FString& Value)
-	{
-		if (!Key.IsEmpty())
-		{
-			for (FMCore_EventParameter& Param : EventParams)
-			{
-				if (Param.Key == Key)
-				{
-					Param.Value = Value;
-					return;
-				}
-			}
-			EventParams.Emplace(Key, Value);
-		}
-	}
-
-	TMap<FString, FString> GetParametersAsMap() const
-	{
-		TMap<FString, FString> Result;
-		Result.Reserve(EventParams.Num());
-		for (const FMCore_EventParameter& Param : EventParams)
-		{
-			if (!Param.Key.IsEmpty())
-			{
-				Result.Add(Param.Key, Param.Value);
-			}
-		}
-		return Result;
 	}
 };

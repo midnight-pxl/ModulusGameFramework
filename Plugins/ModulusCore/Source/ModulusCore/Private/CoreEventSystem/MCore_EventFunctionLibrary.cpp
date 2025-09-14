@@ -103,9 +103,20 @@ FMCore_EventData UMCore_EventFunctionLibrary::MakeEventData(FGameplayTag EventTa
 	return FMCore_EventData(EventTag, Parameters);
 }
 
-TMap<FString, FString> UMCore_EventFunctionLibrary::MakeEmptyParamMap()
+FString UMCore_EventFunctionLibrary::GetEventContextID(const FMCore_EventData& EventData)
 {
-	return TMap<FString, FString>();
+	return FString(TEXT(""));
+}
+
+FString UMCore_EventFunctionLibrary::GetEventParameter(const FMCore_EventData& EventData, const FString& Key,
+	const FString& DefaultValue)
+{
+	return FString(TEXT(""));
+}
+
+void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldContext, const FMCore_EventData& EventData,
+	EMCore_EventScope EventScope)
+{
 }
 
 /**

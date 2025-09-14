@@ -6,6 +6,11 @@
 #include "CoreEventSystem/MCore_EventData.h"
 #include "CoreEventSystem/MCore_EventListenerComp.h"
 
+void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+}
+
 void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& EventData)
 {
 	if (!EventData.IsValid())
@@ -195,19 +200,21 @@ void UMCore_GlobalEventSubsystem::CleanupStaleGlobalListeners()
 bool UMCore_GlobalEventSubsystem::HasGlobalEventAuthority() const
 {
 	const UWorld* World = GetWorld();
-	if (!World) { return false; }
+	if (!World) {
+		return false;
+	}
 
 	const ENetMode NetMode = World->GetNetMode();
-    
-	// Single player always has authority
-	if (NetMode == NM_Standalone) { return true; }
-    
-	// For networked games, only server has global event authority
-	if (NetMode == NM_DedicatedServer) { return true; }
-    
-	// Listen server: Must have valid game mode
-	if (NetMode == NM_ListenServer) { return World->GetAuthGameMode() != nullptr; }
-    
-	// Clients never have global authority
-	return false;
+	
+	switch (NetMode) {
+	case NM_Standalone:
+	case NM_DedicatedServer:
+		return true;
+        
+	case NM_ListenServer:
+		return World->GetAuthGameMode() != nullptr;
+        
+	default:
+		return false;
+	}
 }

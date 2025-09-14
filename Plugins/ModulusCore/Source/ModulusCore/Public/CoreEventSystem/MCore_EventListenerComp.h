@@ -13,7 +13,8 @@ class UMCore_GlobalEventSubsystem;
 struct FMCore_EventData;
 
 /**
- * 
+ * Drop-in component for actors that need to receive events
+ * Handles automatic registration/cleanup and tag-based filtering
  */
 UCLASS(ClassGroup=(ModulusGameFramework), BlueprintType, meta=(BlueprintSpawnableComponent))
 class MODULUSCORE_API UMCore_EventListenerComp : public UMCore_NetworkingComponent
@@ -72,4 +73,6 @@ private:
     
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_GlobalEventSubsystem> CachedGlobalSubsystem;
+
+	bool bRegisteredWithSubsystem{false};
 };
