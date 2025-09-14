@@ -1,7 +1,6 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreEventSystem/MCore_GlobalEventSubsystem.h"
-
 #include "CoreData/CoreLogging/LogModulusEvent.h"
 #include "CoreEventSystem/MCore_EventData.h"
 #include "CoreEventSystem/MCore_EventListenerComp.h"
@@ -9,46 +8,31 @@
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
+	if (MaxEventHistorySize > 0)
+	{
+		EventHistory.Reserve(MaxEventHistorySize);
+	}
 }
 
 void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& EventData)
 {
-	if (!EventData.IsValid())
-	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("Attempted to broadcast invalid global event"));
+	if (!HasGlobalEventAuthority()) {
+		UE_LOG(LogModulusEvent, Warning, TEXT("Attempted to broadcast global event without server authority"));
 		return;
 	}
 
-	if (HasGlobalEventAuthority())
-	{
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Broadcasting global event (Server): %s"), 
-			  *EventData.EventTag.ToString());
-
-		// Add to history if true
-		if (bSendEventHistoryToLateJoiners)
-		{
-			EventHistory.Add(EventData);
-
-			if (EventHistory.Num() > MaxEventHistorySize)
-			{
-				int32 RemoveCount = EventHistory.Num() - MaxEventHistorySize;
-				EventHistory.RemoveAt(0, RemoveCount);
-				UE_LOG(LogModulusEvent, Verbose, TEXT("Trimmed event history, removed %d old events"),
-					RemoveCount);
-			}
-		}
-
-		// Broadcast to all clients
-		MulticastGlobalEvent(EventData);
+	// Add to event history - circular buffer handles size management automatically
+	if (bSendEventHistoryToLateJoiners && MaxEventHistorySize > 0) {
+		EventHistory[EventHistoryIdx] = EventData;
+		EventHistoryIdx = (EventHistoryIdx + 1) % MaxEventHistorySize;
 	}
-	else
-	{
-		// Client receiving multicast - deliver locally
-		UE_LOG(LogModulusEvent, VeryVerbose, TEXT("Receiving global event (Client): %s"), 
-			   *EventData.EventTag.ToString());
-		
-		DeliverGlobalEventToLocalListeners(EventData);
-	}
+
+	// Deliver to current listeners
+	DeliverGlobalEventToLocalListeners(EventData);
+
+	// Send to all clients
+	MulticastGlobalEvent(EventData);
 }
 
 void UMCore_GlobalEventSubsystem::RegisterGlobalListener(UMCore_EventListenerComp* ListenerComponent)
@@ -77,15 +61,30 @@ void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerC
 
 void UMCore_GlobalEventSubsystem::OnClientConnected(APlayerController* NewPlayer)
 {
-	if (!IsValid(NewPlayer) || !bSendEventHistoryToLateJoiners || EventHistory.Num() == 0) { return; }
+	if (!HasGlobalEventAuthority() || !bSendEventHistoryToLateJoiners) { return; }
+
+	if (!IsValid(NewPlayer) || MaxEventHistorySize < 0) { return; }
 
 	UE_LOG(LogModulusEvent, Log, TEXT("Sending %d historical events to late-joining player: %s"), 
 		   EventHistory.Num(), *NewPlayer->GetName());
 
-	// Send historical events to the new client
-	for (const FMCore_EventData& HistoricalEvent : EventHistory)
-	{
-		ClientReceiveEventHistory(HistoricalEvent);
+	// Collect valid events from circular array in chronological order
+	TArray<FMCore_EventData> HistoryArray;
+	HistoryArray.Reserve(MaxEventHistorySize); // Pre-allocate for performance
+    
+	// Start from the oldest event (current write position) and wrap around
+	for (int32 i = 0; i < MaxEventHistorySize; ++i) {
+		int32 ReadIndex = (EventHistoryIdx + i) % MaxEventHistorySize;
+		const FMCore_EventData& Event = EventHistory[ReadIndex];
+        
+		if (Event.IsValid()) {
+			HistoryArray.Add(Event);
+		}
+	}
+
+	// Send history to new client if we have any valid events
+	if (HistoryArray.Num() > 0) {
+		ClientReceiveEventHistory(HistoryArray);
 	}
 }
 
@@ -151,13 +150,17 @@ void UMCore_GlobalEventSubsystem::MulticastGlobalEvent_Implementation(const FMCo
 	BroadcastGlobalEvent(EventData);
 }
 
-void UMCore_GlobalEventSubsystem::ClientReceiveEventHistory_Implementation(const FMCore_EventData& HistoricalEvent)
+void UMCore_GlobalEventSubsystem::ClientReceiveEventHistory_Implementation(const TArray<FMCore_EventData>& HistoricalEvents)
 {
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Received historical event: %s"), 
-	   *HistoricalEvent.EventTag.ToString());
+	UE_LOG(LogModulusEvent, Verbose, TEXT("Receiving %d historical events"), 
+	   HistoricalEvents.Num());
     
-	// Deliver historic event to local listeners
-	DeliverGlobalEventToLocalListeners(HistoricalEvent);
+	// Late-joining client receives event history
+	for (const FMCore_EventData& HistoryEvent : HistoricalEvents) {
+		if (HistoryEvent.IsValid()) {
+			DeliverGlobalEventToLocalListeners(HistoryEvent);
+		}
+	}
 }
 
 void UMCore_GlobalEventSubsystem::DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData)

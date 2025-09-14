@@ -75,20 +75,22 @@ private:
 	 * Client RPC - send event history to late-joining client
 	 */
 	UFUNCTION(Client, Reliable)
-	void ClientReceiveEventHistory(const FMCore_EventData& HistoricalEvent);
+	void ClientReceiveEventHistory(const TArray<FMCore_EventData>& HistoricalEvents);
 
 	// Server authority validation
 	bool ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData);
 	void ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData);
 	void MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData);
-	void ClientReceiveEventHistory_Implementation(const FMCore_EventData& HistoricalEvent);
+	void ClientReceiveEventHistory_Implementation(const TArray<FMCore_EventData>& HistoricalEvents);
 
 	// Global listener components (server manages, clients mirror)
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> GlobalListeners;
 
 	// Event history for late-joining clients (server only)
-	TCircularBuffer<FMCore_EventData> EventHistory;
+	UPROPERTY()
+	TArray<FMCore_EventData> EventHistory;
+	int32 EventHistoryIdx{0};
 
 	// Internal delivery to local listeners
 	void DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData);
