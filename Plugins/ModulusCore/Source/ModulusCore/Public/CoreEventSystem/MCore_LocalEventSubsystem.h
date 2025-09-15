@@ -32,12 +32,13 @@ public:
 	 * Broadcast local event to registered listeners on this client only
 	 */
 	void BroadcastLocalEvent(const FMCore_EventData& EventData);
-
+	
+protected:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	
 private:
 	// Local listener components on this client
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> LocalListeners;
-
-	// Periodic cleanup of stale listener references
-	void CleanupStaleLocalListeners();
 };

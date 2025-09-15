@@ -1,13 +1,21 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreEventSystem/MCore_LocalEventSubsystem.h"
-
 #include "CoreData/CoreLogging/LogModulusEvent.h"
 #include "CoreEventSystem/MCore_EventListenerComp.h"
 #include "CoreEventSystem/MCore_EventData.h"
-#include "DSP/BufferDiagnostics.h"
 
+void UMCore_LocalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+}
+
+void UMCore_LocalEventSubsystem::Deinitialize()
+{
+	LocalListeners.Empty();
+	
+	Super::Deinitialize();
+}
 
 void UMCore_LocalEventSubsystem::RegisterLocalListener(UMCore_EventListenerComp* ListenerComponent)
 {
@@ -41,34 +49,24 @@ void UMCore_LocalEventSubsystem::BroadcastLocalEvent(const FMCore_EventData& Eve
 
 	UE_LOG(LogModulusEvent, Verbose, TEXT("Broadcasting local event: %s"),
 		*EventData.EventTag.ToString());
-
-	static int32 CleanupCounter = 0;
-	if (++CleanupCounter % 100 == 0) { CleanupStaleLocalListeners(); }
 	
-	for (const TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener : LocalListeners)
+	for (int32 i = LocalListeners.Num() - 1; i >= 0; --i)
 	{
-		if (UMCore_EventListenerComp* CurrentListener = WeakListener.Get())
+		TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener = LocalListeners[i];
+
+		
+		if (WeakListener.IsValid())
 		{
+			UMCore_EventListenerComp* CurrentListener = WeakListener.Get();
+		
 			if (CurrentListener->ShouldReceiveEvent(EventData, false)) // false == not global event
 			{
 				CurrentListener->DeliverEvent(EventData, false);
 			}
 		}
-	}
-}
-
-void UMCore_LocalEventSubsystem::CleanupStaleLocalListeners()
-{
-	int32 InitialCount = LocalListeners.Num();
-	LocalListeners.RemoveAll([](const TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener)
-	{
-		return !WeakListener.IsValid();
-	});
-
-	int32 RemovedCount = InitialCount - LocalListeners.Num();
-	if (RemovedCount > 0)
-	{
-		UE_LOG(LogModulusEvent, Log, TEXT("Cleaned up %d stale local listeners"),
-			RemovedCount);
+		else
+		{
+			LocalListeners.RemoveAtSwap(i);
+		}
 	}
 }

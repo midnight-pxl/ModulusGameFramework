@@ -21,18 +21,6 @@ class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsyste
 	GENERATED_BODY()
 
 public:
-	/**
-	 * Configuration: Should late-joining clients receive event history?
-	 * RPGs/persistent worlds: true, FPS/match-based: false
-	 */
-	UPROPERTY(EditAnywhere, Config, Category = "Event System Configuration")
-	bool bSendEventHistoryToLateJoiners{false};
-
-	/**
-	 * Configuration: How many historical events to maintain (if history enabled)
-	 */
-	UPROPERTY(EditAnywhere, Config, Category = "Event System Configuration", meta = (ClampMin = "10", ClampMax = "500"))
-	int32 MaxEventHistorySize{50};
 
 	/**
 	 * Configuration: Authority validation strictness
@@ -65,9 +53,6 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerBroadcastGlobalEvent(const FMCore_EventData& EventData);
 
-	UFUNCTION(BlueprintCallable, Category = "Event System", BlueprintAuthorityOnly)
-	void SendEventHistoryToPlayer(APlayerController* TargetPlayer);
-
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -80,28 +65,14 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastGlobalEvent(const FMCore_EventData& EventData);
 
-	/**
-	 * Client RPC - send event history to specific player
-	 */
-	UFUNCTION(Client, Reliable)
-	void ClientReceiveEventHistory(const TArray<FMCore_EventData>& HistoricalEvents);
-
 	// Server authority validation
 	bool ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData);
 	void ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData);
 	void MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData);
-	void ClientReceiveEventHistory_Implementation(const TArray<FMCore_EventData>& HistoricalEvents);
 
 	// Global listener components (server manages, clients mirror)
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> GlobalListeners;
-
-	// Event history for late-joining clients (server only)
-	UPROPERTY()
-	TArray<FMCore_EventData> EventHistory;
-
-	// Current write position in EventHistory buffer
-	int32 EventHistoryIndex{0};
 
 	// Internal delivery to local listeners
 	void DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData);
