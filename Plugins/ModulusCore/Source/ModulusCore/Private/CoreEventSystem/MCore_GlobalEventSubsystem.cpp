@@ -4,29 +4,49 @@
 #include "CoreData/CoreLogging/LogModulusEvent.h"
 #include "CoreEventSystem/MCore_EventData.h"
 #include "CoreEventSystem/MCore_EventListenerComp.h"
+#include "GameFramework/GameModeBase.h"
 
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	if (MaxEventHistorySize > 0)
+	if (bSendEventHistoryToLateJoiners && MaxEventHistorySize > 0)
 	{
-		EventHistory.Reserve(MaxEventHistorySize);
+		EventHistory.SetNum(MaxEventHistorySize);
+		UE_LOG(LogModulusEvent, Log, TEXT("Event history initialized with size of %d"), MaxEventHistorySize);
 	}
+}
+
+void UMCore_GlobalEventSubsystem::Deinitialize()
+{
+	GlobalListeners.Empty();
+	EventHistory.Empty();
+	EventHistoryIndex = 0;
+	
+	Super::Deinitialize();
 }
 
 void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& EventData)
 {
+	if (!EventData.IsValid())
+	{
+		UE_LOG(LogModulusEvent, Warning, TEXT("Attempted to broadcast invalid global event"));
+		return;
+	}
+	
 	if (!HasGlobalEventAuthority()) {
-		UE_LOG(LogModulusEvent, Warning, TEXT("Attempted to broadcast global event without server authority"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("Attempted to broadcast global event %s without server authority"),
+			*EventData.EventTag.ToString());
 		return;
 	}
 
-	// Add to event history - circular buffer handles size management automatically
+	// Add to event history - circular buffer
 	if (bSendEventHistoryToLateJoiners && MaxEventHistorySize > 0) {
-		EventHistory[EventHistoryIdx] = EventData;
-		EventHistoryIdx = (EventHistoryIdx + 1) % MaxEventHistorySize;
+		EventHistory[EventHistoryIndex] = EventData;
+		EventHistoryIndex = (EventHistoryIndex + 1) % MaxEventHistorySize;
 	}
+
+	UE_LOG(LogModulusEvent, Verbose, TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
 
 	// Deliver to current listeners
 	DeliverGlobalEventToLocalListeners(EventData);
@@ -54,78 +74,98 @@ void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerC
 
 	if (RemoveCount > 0)
 	{
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Unregistered global event listener: %s"), 
-	   ListenerComponent ? *ListenerComponent->GetName() : TEXT("Unknown"));
+		UE_LOG(LogModulusEvent, Verbose, TEXT("Unregistered global event listener: %s"),
+			ListenerComponent ? *ListenerComponent->GetName() : TEXT("Unknown"));
 	}
 }
 
-void UMCore_GlobalEventSubsystem::OnClientConnected(APlayerController* NewPlayer)
+bool UMCore_GlobalEventSubsystem::HasGlobalEventAuthority() const
 {
-	if (!HasGlobalEventAuthority() || !bSendEventHistoryToLateJoiners) { return; }
+	const UWorld* World = GetWorld();
+	if (!World) { return false; }
 
-	if (!IsValid(NewPlayer) || MaxEventHistorySize < 0) { return; }
-
-	UE_LOG(LogModulusEvent, Log, TEXT("Sending %d historical events to late-joining player: %s"), 
-		   EventHistory.Num(), *NewPlayer->GetName());
-
-	// Collect valid events from circular array in chronological order
-	TArray<FMCore_EventData> HistoryArray;
-	HistoryArray.Reserve(MaxEventHistorySize); // Pre-allocate for performance
-    
-	// Start from the oldest event (current write position) and wrap around
-	for (int32 i = 0; i < MaxEventHistorySize; ++i) {
-		int32 ReadIndex = (EventHistoryIdx + i) % MaxEventHistorySize;
-		const FMCore_EventData& Event = EventHistory[ReadIndex];
+	const ENetMode NetMode = World->GetNetMode();
+	
+	switch (NetMode) {
+	case NM_Standalone:
+	case NM_DedicatedServer:
+		return true;
         
-		if (Event.IsValid()) {
-			HistoryArray.Add(Event);
+	case NM_ListenServer:
+		return World->GetAuthGameMode() != nullptr;
+
+	case NM_Client:
+		return false;
+        
+	default:
+		return false;
+	}
+}
+
+void UMCore_GlobalEventSubsystem::SendEventHistoryToPlayer(APlayerController* TargetPlayer)
+{
+	if (!TargetPlayer)
+	{
+		UE_LOG(LogModulusEvent, Warning, TEXT("SendEventHistoryToPlayer: Invalid TargetPlayer"));
+		return;
+	}
+
+	if (!HasGlobalEventAuthority())
+	{
+		UE_LOG(LogModulusEvent, Warning, TEXT("SendEventHistoryToPlayer: No server authority"));
+		return;
+	}
+
+	if (!bSendEventHistoryToLateJoiners)
+	{
+		UE_LOG(LogModulusEvent, Log, TEXT("SendEventHistoryToPlayer: Event history disabled in configuration"));
+		return;
+	}
+
+	// Build active history array from circular buffer
+	TArray<FMCore_EventData> ActiveHistory;
+	ActiveHistory.Reserve(MaxEventHistorySize);
+
+	for (int32 i = 0; i < MaxEventHistorySize; ++i)
+	{
+		int32 Index = (EventHistoryIndex + i) % MaxEventHistorySize;
+		if (EventHistory.IsValidIndex(Index) && EventHistory[Index].IsValid())
+		{
+			ActiveHistory.Add(EventHistory[Index]);
 		}
 	}
 
-	// Send history to new client if we have any valid events
-	if (HistoryArray.Num() > 0) {
-		ClientReceiveEventHistory(HistoryArray);
+	if (ActiveHistory.Num() > 0)
+	{
+		// Send to specific client via RPC
+		ClientReceiveEventHistory(ActiveHistory);
+		UE_LOG(LogModulusEvent, Log, TEXT("Sent %d historical events to player %s"), 
+			   ActiveHistory.Num(), *TargetPlayer->GetName());
+	}
+	else
+	{
+		UE_LOG(LogModulusEvent, Log, TEXT("No event history to send to player %s"), 
+			   *TargetPlayer->GetName());
 	}
 }
 
 bool UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData)
 {
-	if (!EventData.IsValid())
-	{
-		switch (ValidationStrictness)
-		{
-		case EMCore_ValidationStrictness::Permissive:
-			UE_LOG(LogModulusEvent, Warning, TEXT("Invalid event data received, ignoring"));
-			return false;
-		case EMCore_ValidationStrictness::Balanced:
-			UE_LOG(LogModulusEvent, Error, TEXT("Invalid event data: %s"), *EventData.EventTag.ToString());
-			return false;
-		case EMCore_ValidationStrictness::Strict:
-			UE_LOG(LogModulusEvent, Fatal, TEXT("Critical validation failure: Invalid event data"));
-			return false;
-		}
-	}
-    
-	// Additional validation based on strictness
-	if (ValidationStrictness == EMCore_ValidationStrictness::Strict)
-	{
-		// Strict mode: Validate parameter count, tag hierarchy, etc.
-		if (EventData.EventParams.Num() > 50) // Prevent parameter spam
-		{
-			UE_LOG(LogModulusEvent, Error, TEXT("Event rejected: Too many parameters (%d > 50)"),
-				EventData.EventParams.Num());
-			return false;
-		}
+	if (!EventData.IsValid()) { return false; }
+	
+	switch (ValidationStrictness) {
+	case EMCore_ValidationStrictness::Permissive:
+		return true;
+		
+	case EMCore_ValidationStrictness::Balanced:
+		return EventData.EventParams.Num() < 10 && EventData.ContextID.Len() < 100;
+		
+	case EMCore_ValidationStrictness::Strict:
+		return EventData.EventParams.Num() < 6 && EventData.ContextID.Len() < 60;
 
-		if (!EventData.EventTag.ToString().StartsWith(TEXT("MCore.Events.")))
-		{
-			UE_LOG(LogModulusEvent, Error, TEXT("Event rejected: Invalid tag format in strict mode: %s"), 
-				   *EventData.EventTag.ToString());
-			return false;
-		}
+	default:
+		return false;
 	}
-    
-	return true;
 }
 
 void UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData)
@@ -147,17 +187,19 @@ void UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Implementation(cons
 void UMCore_GlobalEventSubsystem::MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData)
 {
 	// All clients (including server) receive this and deliver locally
-	BroadcastGlobalEvent(EventData);
+	DeliverGlobalEventToLocalListeners(EventData);
 }
 
 void UMCore_GlobalEventSubsystem::ClientReceiveEventHistory_Implementation(const TArray<FMCore_EventData>& HistoricalEvents)
 {
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Receiving %d historical events"), 
+	UE_LOG(LogModulusEvent, Log, TEXT("Receiving %d historical events"), 
 	   HistoricalEvents.Num());
     
 	// Late-joining client receives event history
-	for (const FMCore_EventData& HistoryEvent : HistoricalEvents) {
-		if (HistoryEvent.IsValid()) {
+	for (const FMCore_EventData& HistoryEvent : HistoricalEvents)
+	{
+		if (HistoryEvent.IsValid())
+		{
 			DeliverGlobalEventToLocalListeners(HistoryEvent);
 		}
 	}
@@ -165,59 +207,26 @@ void UMCore_GlobalEventSubsystem::ClientReceiveEventHistory_Implementation(const
 
 void UMCore_GlobalEventSubsystem::DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData)
 {
-	// Performance: Clean up stale references periodically
-	static int32 CleanupCounter = 0;
-	if (++CleanupCounter % 100 == 0)
-	{
-		CleanupStaleGlobalListeners();
-	}
+	// Early exit if no listeners
+	if (GlobalListeners.Num() == 0) { return; }
 
-	// Deliver to global listeners on this client
-	for (const TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener : GlobalListeners)
+	// Deliver event to all registered local listeners
+	for (int32 i = GlobalListeners.Num() - 1; i >= 0; --i)
 	{
-		if (UMCore_EventListenerComp* Listener = WeakListener.Get())
+		TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener = GlobalListeners[i];
+        
+		if (WeakListener.IsValid())
 		{
-			if (Listener->ShouldReceiveEvent(EventData, true)) // true = global event
+			UMCore_EventListenerComp* Listener = WeakListener.Get();
+			if (Listener && Listener->ShouldReceiveEvent(EventData, true))
 			{
 				Listener->DeliverEvent(EventData, true);
 			}
 		}
-	}
-}
-
-void UMCore_GlobalEventSubsystem::CleanupStaleGlobalListeners()
-{
-	int32 InitialCount = GlobalListeners.Num();
-	GlobalListeners.RemoveAll([](const TWeakObjectPtr<UMCore_EventListenerComp>& WeakPtr)
-	{
-		return !WeakPtr.IsValid();
-	});
-    
-	int32 RemovedCount = InitialCount - GlobalListeners.Num();
-	if (RemovedCount > 0)
-	{
-		UE_LOG(LogModulusEvent, Log, TEXT("Cleaned up %d stale global listeners"), RemovedCount);
-	}
-}
-
-bool UMCore_GlobalEventSubsystem::HasGlobalEventAuthority() const
-{
-	const UWorld* World = GetWorld();
-	if (!World) {
-		return false;
-	}
-
-	const ENetMode NetMode = World->GetNetMode();
-	
-	switch (NetMode) {
-	case NM_Standalone:
-	case NM_DedicatedServer:
-		return true;
-        
-	case NM_ListenServer:
-		return World->GetAuthGameMode() != nullptr;
-        
-	default:
-		return false;
+		else
+		{
+			// Remove stale reference during iteration
+			GlobalListeners.RemoveAtSwap(i);
+		}
 	}
 }

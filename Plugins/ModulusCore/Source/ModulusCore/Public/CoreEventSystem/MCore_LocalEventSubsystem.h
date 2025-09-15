@@ -38,6 +38,6 @@ private:
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> LocalListeners;
 
-	// Clean up stale local listener references
+	// Periodic cleanup of stale listener references
 	void CleanupStaleLocalListeners();
 };

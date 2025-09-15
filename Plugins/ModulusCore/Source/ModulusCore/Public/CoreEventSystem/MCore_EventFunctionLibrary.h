@@ -51,8 +51,8 @@ public:
               meta = (DefaultToSelf = "WorldContext"))
 	static void BroadcastEvent(const UObject* WorldContext,
 		FGameplayTag EventTag,
-		EMCore_EventScope EventScope = EMCore_EventScope::Local,
-		const TMap<FString, FString>& EventParams);
+		const TMap<FString, FString>& EventParams,
+		EMCore_EventScope EventScope = EMCore_EventScope::Local);
 	
 	/**
 	 * Simple event broadcasting with local scope (most common case)
@@ -80,46 +80,46 @@ public:
     	const TMap<FString, FString>& Parameters);
 
 	/**
+	 * Helper to create event parameters map
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static TMap<FString, FString> MakeEventParameters(const TArray<FString>& Keys,
+		const TArray<FString>& Values);
+	
+	/**
 	 * Parameter helpers for the rare complex events
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
 	static FString GetEventContextID(const FMCore_EventData& EventData);
-
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
 	static FString GetEventParameter(const FMCore_EventData& EventData, const FString& Key, const FString& DefaultValue = TEXT(""));
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static bool GetBoolParameter(const FMCore_EventData& EventData, const FString& Key,
+		bool DefaultValue = false);
 
-private:
-	// Internal routing function
-	static void RouteEventToSubsystem(const UObject* WorldContext, const FMCore_EventData& EventData, EMCore_EventScope EventScope);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static int32 GetIntParameter(const FMCore_EventData& EventData, const FString& Key,
+		int32 DefaultValue = 0);
 
-    /**
-     * Parameter helpers
-     */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-    static bool GetBoolParameter(const FMCore_EventData& EventData, const FString& Key,
-    	bool DefaultValue = false);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static float GetFloatParameter(const FMCore_EventData& EventData, const FString& Key,
+		float DefaultValue = 0.0f);
 
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-    static int32 GetIntParameter(const FMCore_EventData& EventData, const FString& Key,
-    	int32 DefaultValue = 0);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static FString GetStringParameter(const FMCore_EventData& EventData, const FString& Key,
+		const FString& DefaultValue = TEXT(""));
 
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-    static float GetFloatParameter(const FMCore_EventData& EventData, const FString& Key,
-    	float DefaultValue = 0.0f);
-
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-    static FString GetStringParameter(const FMCore_EventData& EventData, const FString& Key,
-    	const FString& DefaultValue = TEXT(""));
-
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-    static FVector GetVectorParameter(const FMCore_EventData& EventData, const FString& Key,
-    	const FVector& DefaultValue = FVector::ZeroVector);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
+	static FVector GetVectorParameter(const FMCore_EventData& EventData, const FString& Key,
+		const FVector& DefaultValue = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
 	static FGameplayTag GetGameplayTagParameter(const FMCore_EventData& EventData,
 		const FString& Key, const FGameplayTag& DefaultValue = FGameplayTag());
-	
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus Events")
-    static TMap<FString, FString> MakeEventParameters(const TArray<FString>& Keys,
-    	const TArray<FString>& Values);
+
+private:
+	// Internal routing function
+	static void RouteEventToSubsystem(const UObject* WorldContext, const FMCore_EventData& EventData, EMCore_EventScope EventScope);
 };

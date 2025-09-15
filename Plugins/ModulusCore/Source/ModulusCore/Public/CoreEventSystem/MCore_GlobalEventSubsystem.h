@@ -8,6 +8,8 @@
 #include "MCore_GlobalEventSubsystem.generated.h"
 
 class UMCore_EventListenerComp;
+class AGameModeBase;
+class APlayerController;
 
 /**
  * Server-authoritative global event system
@@ -56,14 +58,21 @@ public:
 	// Server authority checking
 	UFUNCTION(BlueprintCallable, Category = "Event System")
 	bool HasGlobalEventAuthority() const;
-	
-private:
 
 	/**
 	 * Server RPC - validate and broadcast global event
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerBroadcastGlobalEvent(const FMCore_EventData& EventData);
+
+	UFUNCTION(BlueprintCallable, Category = "Event System", BlueprintAuthorityOnly)
+	void SendEventHistoryToPlayer(APlayerController* TargetPlayer);
+
+protected:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+
+private:
 
 	/**
 	 * Multicast RPC - deliver global event to all clients
@@ -72,7 +81,7 @@ private:
 	void MulticastGlobalEvent(const FMCore_EventData& EventData);
 
 	/**
-	 * Client RPC - send event history to late-joining client
+	 * Client RPC - send event history to specific player
 	 */
 	UFUNCTION(Client, Reliable)
 	void ClientReceiveEventHistory(const TArray<FMCore_EventData>& HistoricalEvents);
@@ -90,18 +99,10 @@ private:
 	// Event history for late-joining clients (server only)
 	UPROPERTY()
 	TArray<FMCore_EventData> EventHistory;
-	int32 EventHistoryIdx{0};
+
+	// Current write position in EventHistory buffer
+	int32 EventHistoryIndex{0};
 
 	// Internal delivery to local listeners
 	void DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData);
-
-	// Clean up stale global listener references
-	void CleanupStaleGlobalListeners();
-	
-	/**
-	 * Handle new client connections for event history
-	 */
-	void OnClientConnected(class APlayerController* NewPlayer);
-
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 };

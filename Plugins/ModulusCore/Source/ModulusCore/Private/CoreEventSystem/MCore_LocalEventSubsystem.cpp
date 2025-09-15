@@ -21,7 +21,8 @@ void UMCore_LocalEventSubsystem::RegisterLocalListener(UMCore_EventListenerComp*
 
 void UMCore_LocalEventSubsystem::UnregisterLocalListener(UMCore_EventListenerComp* ListenerComponent)
 {
-	int32 RemovedCount = LocalListeners.RemoveAll([ListenerComponent](const TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener)
+	int32 RemovedCount = LocalListeners.RemoveAll([ListenerComponent](
+		const TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener)
 	{
 		return !WeakListener.IsValid() || WeakListener.Get() == ListenerComponent;
 	});
@@ -38,7 +39,7 @@ void UMCore_LocalEventSubsystem::BroadcastLocalEvent(const FMCore_EventData& Eve
 	// Early exit if no listeners or event invalid
 	if (LocalListeners.Num() == 0 || !EventData.IsValid()) { return; }
 
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Broadcasted local event: %s"),
+	UE_LOG(LogModulusEvent, Verbose, TEXT("Broadcasting local event: %s"),
 		*EventData.EventTag.ToString());
 
 	static int32 CleanupCounter = 0;
