@@ -27,6 +27,9 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FMCore_ControlsSettingsData ControlsSettings;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Accessibility")
+    FMCore_AccessibilitySettings AccessibilitySettings;
     
     // Platform-specific validation data
     UPROPERTY(EditAnywhere, BlueprintReadOnly)

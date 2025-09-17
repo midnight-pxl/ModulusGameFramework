@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "MCore_ReferenceUtils.generated.h"
+#include "MCore_GraphicsLibrary.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MODULUSCORE_API UMCore_ReferenceUtils : public UBlueprintFunctionLibrary
+class MODULUSCORE_API UMCore_GraphicsLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 };
