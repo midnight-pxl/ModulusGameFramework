@@ -16,6 +16,21 @@ enum class EMCore_GraphicsPreset
 	Custom      UMETA(DisplayName = "Custom")
 };
 
+// Frame rate limit
+UENUM(BlueprintType)
+enum class EMCore_FrameRate
+{
+    FPS_30            UMETA(DisplayName = "30 Frames per second"),
+    FPS_60            UMETA(DisplayName = "60 Frames per second"),
+    FPS_75            UMETA(DisplayName = "75 Frames per second"),
+    FPS_120           UMETA(DisplayName = "120 Frames per second"),
+    FPS_144           UMETA(DisplayName = "144 Frames per second"),
+    FPS_165           UMETA(DisplayName = "165 Frames per second"),
+    FPS_240           UMETA(DisplayName = "240 Frames per second"),
+    FPS_360           UMETA(DisplayName = "360 Frames per second"),
+    Unlimited     UMETA(DisplayName = "Uncapped Frame Rate"),
+};
+
 // Audio quality levels
 UENUM(BlueprintType)
 enum class EMCore_AudioQuality : uint8

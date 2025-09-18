@@ -35,10 +35,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TMap<FString, FMCore_PlatformCapabilities> PlatformCapabilities;
 
-    // Platform defaults - simple data only
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform Support")
-    TArray<FIntPoint> SupportedResolutions;
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform Support")
     TArray<FText> GraphicsPresets;
 

@@ -35,6 +35,9 @@ public:
 	// Default Presets - Simple configuration only
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
 	EMCore_GraphicsPreset DefaultGraphicsPreset = EMCore_GraphicsPreset::Medium;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
+	EMCore_FrameRate DefaultFrameRate = EMCore_FrameRate::FPS_60;
     
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
 	EMCore_AudioQuality DefaultAudioQuality = EMCore_AudioQuality::Medium_44kHz;
