@@ -51,8 +51,4 @@ public:
 	// Platform-specific recommendations (simple mapping)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform Defaults")
 	TMap<EMCore_PlatformType, EMCore_GraphicsPreset> PlatformGraphicsDefaults;
-    
-	// Settings categories that should be available per platform
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Platform Availability")
-	TMap<EMCore_PlatformType, TArray<FString>> PlatformAvailableSettings;
 };

@@ -4,7 +4,7 @@
 
 #include "MCore_GraphicsSettingsData.generated.h"
 
-struct FMCore_GraphicsPreset;
+enum class EMCore_GraphicsPreset : uint8;
 
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_GraphicsSettingsData
@@ -26,7 +26,7 @@ public:
 	TArray<int32> FrameRateLimits; // 30, 60, 120, 144, Unlimited
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quality")
-	TArray<FMCore_GraphicsPreset> QualityPresets;
+	TArray<EMCore_GraphicsPreset> QualityPresets;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quality")
 	TArray<FText> AntiAliasingOptions; // Off, FXAA, TAA, MSAA 2x/4x/8x

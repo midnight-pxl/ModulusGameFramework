@@ -7,7 +7,7 @@
 
 // Graphics preset options
 UENUM(BlueprintType)
-enum class EMCore_GraphicsPreset
+enum class EMCore_GraphicsPreset : uint8
 {
 	Low         UMETA(DisplayName = "Low"),
 	Medium      UMETA(DisplayName = "Medium"), 
@@ -18,7 +18,7 @@ enum class EMCore_GraphicsPreset
 
 // Frame rate limit
 UENUM(BlueprintType)
-enum class EMCore_FrameRate
+enum class EMCore_FrameRate : uint8
 {
     FPS_30            UMETA(DisplayName = "30 Frames per second"),
     FPS_60            UMETA(DisplayName = "60 Frames per second"),

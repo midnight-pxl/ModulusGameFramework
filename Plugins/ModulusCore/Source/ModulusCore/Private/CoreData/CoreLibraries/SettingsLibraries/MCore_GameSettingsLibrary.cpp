@@ -10,6 +10,7 @@
 #include "PlayerMappableInputConfig.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Engine/LocalPlayer.h"
+#include "Kismet/KismetRenderingLibrary.h"
 
 static float StoredMasterVolume{1.0f};
 static float StoredMouseSensitivityX{1.0f};
@@ -386,72 +387,6 @@ EMCore_InputDeviceType UMCore_GameSettingsLibrary::GetCurrentInputDevice()
 	return EMCore_InputDeviceType::KeyboardMouse;
 }
 
-bool UMCore_GameSettingsLibrary::RemapInputAction(const FString& ActionName, FKey NewKey)
-{
-	if (const UWorld* World = GEngine->GetCurrentPlayWorld())
-	{
-		if (const APlayerController* PC = World->GetFirstPlayerController())
-		{
-			if (const ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
-			{
-				if (UEnhancedInputLocalPlayerSubsystem* EISubsystem = 
-					LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-				{
-					// Try to add the player mapped key
-					const FName ActionFName(*ActionName);
-                    
-					try 
-					{
-						// This is the correct UE 5.6 API for player key mapping
-						EISubsystem->AddPlayerMappedKeyInSlot(ActionFName, NewKey);
-						UE_LOG(LogModulusSettings, Log, TEXT("Successfully remapped %s to %s"), *ActionName, *NewKey.ToString());
-						return true;
-					}
-					catch (...)
-					{
-						UE_LOG(LogModulusSettings, Warning, TEXT("Failed to remap %s - Enhanced Input setup may be incomplete"), *ActionName);
-						return false;
-					}
-				}
-			}
-		}
-	}
-    
-	UE_LOG(LogModulusSettings, Warning, TEXT("Enhanced Input subsystem not available for key remapping"));
-	return false;
-}
-
-void UMCore_GameSettingsLibrary::ResetInputMappingsToDefault()
-{
-	if (const UWorld* World = GEngine->GetCurrentPlayWorld())
-	{
-		if (const APlayerController* PC = World->GetFirstPlayerController())
-		{
-			if (const ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
-			{
-				if (UEnhancedInputLocalPlayerSubsystem* EISubsystem = 
-					LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-				{
-					// Reset all player mappings to default
-					EISubsystem->ResetAllPlayerKeysInSlot();
-					UE_LOG(LogModulusSettings, Log, TEXT("Reset all input mappings to defaults"));
-					return;
-				}
-			}
-		}
-	}
-    
-	UE_LOG(LogModulusSettings, Warning, TEXT("Enhanced Input subsystem not available for resetting mappings"));
-}
-
-TArray<FString> UMCore_GameSettingsLibrary::GetRemappableActionNames()
-{
-}
-
-FKey UMCore_GameSettingsLibrary::GetCurrentKeyForAction(const FString& ActionName)
-{
-}
-
 void UMCore_GameSettingsLibrary::SetColorBlindMode(EMCore_ColorBlindType ColorBlindType)
 {
 	// Implementation would apply colorblind-friendly color schemes
@@ -488,7 +423,7 @@ TArray<FIntPoint> UMCore_GameSettingsLibrary::GetSupportedResolutions()
 bool UMCore_GameSettingsLibrary::SupportsRayTracing()
 {
 	// Query UE's RHI system directly
-	return IsRayTracingEnabled();
+	return false;
 }
 
 bool UMCore_GameSettingsLibrary::SupportsHDR()
@@ -518,7 +453,7 @@ TArray<FString> UMCore_GameSettingsLibrary::GetAvailableAudioDevices()
 	TArray<FString> DeviceNames;
     
 	// Use UE 5.6 Audio Engine Subsystem
-	if (GEngine->GetEngineSubsystem<UAudioEngineSubsystem>())
+	if (GEngine && GEngine->GetMainAudioDevice())
 	{
 		// Get audio device info - this is the correct UE 5.6 approach
 		DeviceNames.Add(TEXT("Default Audio Device"));

@@ -7,6 +7,7 @@
 #include "CoreData/CoreStructEnums/SettingsStructsEnums/MCore_SettingsPresets.h"
 #include "MCore_GameSettingsLibrary.generated.h"
 
+class UInputAction;
 /**
  * 
  */
@@ -133,21 +134,6 @@ public:
     
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Controls")
 	static EMCore_InputDeviceType GetCurrentInputDevice();
-
-	/**
-	 * Enhanced Input Key Remappings
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Controls", meta = (ToolTip = "Requires Enhanced Input setup with Player Mappable Input Config"))
-	static bool RemapInputAction(const FString& ActionName, FKey NewKey);
-    
-	UFUNCTION(BlueprintCallable, Category = "Controls", meta = (ToolTip = "Requires Enhanced Input setup with Player Mappable Input Config"))
-	static void ResetInputMappingsToDefault();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Controls")
-	static TArray<FString> GetRemappableActionNames();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Controls") 
-	static FKey GetCurrentKeyForAction(const FString& ActionName);
 	
     /**
      * Accessibility Settings

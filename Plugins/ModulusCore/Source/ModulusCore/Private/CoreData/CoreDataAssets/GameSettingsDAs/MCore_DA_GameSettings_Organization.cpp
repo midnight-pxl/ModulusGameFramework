@@ -41,12 +41,4 @@ UMCore_DA_GameSettings_Organization::UMCore_DA_GameSettings_Organization()
         {EMCore_PlatformType::Mobile, EMCore_GraphicsPreset::Low},
         {EMCore_PlatformType::SteamDeck, EMCore_GraphicsPreset::Medium}
     };
-    
-    // Platform-specific available settings
-    PlatformAvailableSettings = {
-        {EMCore_PlatformType::PC, {"Resolution", "WindowMode", "DLSS", "RayTracing", "HDR"}},
-        {EMCore_PlatformType::Console, {"HDR", "RayTracing", "PerformanceMode"}},
-        {EMCore_PlatformType::Mobile, {"BatteryOptimization", "TouchControls"}},
-        {EMCore_PlatformType::SteamDeck, {"FSR", "BatteryOptimization", "PortableMode"}}
-    };
 }
