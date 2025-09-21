@@ -20,7 +20,6 @@ enum class EMCore_GraphicsPreset : uint8
 UENUM(BlueprintType)
 enum class EMCore_FrameRate : uint8
 {
-    FPS_30            UMETA(DisplayName = "30 Frames per second"),
     FPS_60            UMETA(DisplayName = "60 Frames per second"),
     FPS_75            UMETA(DisplayName = "75 Frames per second"),
     FPS_120           UMETA(DisplayName = "120 Frames per second"),

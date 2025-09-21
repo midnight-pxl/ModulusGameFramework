@@ -493,7 +493,7 @@ bool UMCore_GameSettingsLibrary::IsMobile()
 
 bool UMCore_GameSettingsLibrary::IsSteamDeck()
 {
-	// Steam Deck detection would need specific checks
+	// Steam Deck detection will need specific checks
 	// For now, return false
 	return false;
 }
@@ -556,7 +556,6 @@ float UMCore_GameSettingsLibrary::ConvertFrameRateEnumToFloat(EMCore_FrameRate F
 {
 	switch(FrameRate)
 	{
-	case EMCore_FrameRate::FPS_30:      return 30.0f;
 	case EMCore_FrameRate::FPS_60:      return 60.0f;
 	case EMCore_FrameRate::FPS_75:      return 75.0f;
 	case EMCore_FrameRate::FPS_120:     return 120.0f;
@@ -575,8 +574,7 @@ EMCore_FrameRate UMCore_GameSettingsLibrary::ConvertFloatToFrameRateEnum(float F
 	{
 		return EMCore_FrameRate::Unlimited;
 	}
-    
-	if (FrameRateFloat <= 45.0f)  return EMCore_FrameRate::FPS_30;
+	
 	if (FrameRateFloat <= 70.0f)  return EMCore_FrameRate::FPS_60;
 	if (FrameRateFloat <= 110.0f) return EMCore_FrameRate::FPS_75;
 	if (FrameRateFloat <= 136.0f) return EMCore_FrameRate::FPS_120;
