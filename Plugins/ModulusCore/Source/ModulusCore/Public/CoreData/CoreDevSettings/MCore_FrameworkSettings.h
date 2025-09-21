@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DeveloperSettings.h"
-#include "ModulusFrameworkSettings.generated.h"
+#include "MCore_FrameworkSettings.generated.h"
 
 /**
  * 
  */
 UCLASS(config=Game, DefaultConfig, meta=(DisplayName = "Modulus Game Framework"))
-class MODULUSCORE_API UModulusFrameworkSettings : public UDeveloperSettings
+class MODULUSCORE_API UMCore_FrameworkSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-	UModulusFrameworkSettings();
+	UMCore_FrameworkSettings();
 
 
 	/**
