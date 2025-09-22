@@ -3,7 +3,7 @@
 #include "CoreEventSystem/MCore_LocalEventSubsystem.h"
 #include "CoreData/CoreLogging/LogModulusEvent.h"
 #include "CoreEventSystem/MCore_EventListenerComp.h"
-#include "CoreEventSystem/MCore_EventData.h"
+#include "CoreData/CoreStructEnums/EventStructsEnums/MCore_EventData.h"
 
 void UMCore_LocalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

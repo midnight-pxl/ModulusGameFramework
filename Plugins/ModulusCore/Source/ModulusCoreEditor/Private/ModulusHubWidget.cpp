@@ -4,7 +4,6 @@
 
 #include "AssetViewUtils.h"
 #include "CoreEditorLogging/LogModulusEditor.h"
-#include "CoreUISystem/CoreGameSettings/MCore_GameSettingsSubsystem.h"
 
 void UModulusHubWidget::LogAction(const FString& Action, const FString& LogResult, const FLogCategoryBase& LogCategory)
 {
@@ -33,17 +32,6 @@ void UModulusHubWidget::NativeConstruct()
 
 void UModulusHubWidget::ResetAllSettings()
 {
-	LogAction("Reset Settings", "Starting reset of all game settings...", LogModulusEditor);
-
-	UMCore_GameSettingsSubsystem* SettingsSubsystem = GetGameInstance()->GetSubsystem<UMCore_GameSettingsSubsystem>();
-	if (!SettingsSubsystem)
-	{
-		LogAction("Reset Settings", "Failed to find settings subsystem", LogModulusEditor);
-		return;
-	}
-
-	SettingsSubsystem->ResetAllSettings();
-	LogAction("Reset Settings", "All game settings reset to defaults", LogModulusEditor);
 }
 
 void UModulusHubWidget::ExportSettings()

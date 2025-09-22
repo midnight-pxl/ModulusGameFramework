@@ -1,7 +1,9 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUISystem/CoreGameSettings/MCore_GameSettingTemplates.h"
-#include "CoreUISystem/CoreGameSettings/MCore_GameSettingType.h"
+#include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingTemplates.h"
+
+#include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
+#include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingType.h"
 
 /** Display Settings */
 
@@ -10,7 +12,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Display");
     Category.CategoryDescription = FText::FromString("Screen Resolution, Window Mode, and Display Options");
-    Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Display;
+    Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Display;
 
     // Screen Resolution
     FMCore_SettingDefinition Resolution;
@@ -63,14 +65,13 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     FrameRate.SaveKey = MCore_UISettingsTags::Settings_Display_FrameRateLimit;
     FrameRate.DropdownOptions = {
         FText::FromString("Unlimited"),
-        FText::FromString("30 FPS"),
         FText::FromString("60 FPS"),
         FText::FromString("120 FPS"),
         FText::FromString("144 FPS"),
         FText::FromString("165 FPS"),
         FText::FromString("220 FPS")
     };
-    FrameRate.DefaultDropdownIndex = 2; // 60 FPS
+    FrameRate.DefaultDropdownIndex = 1; // 60 FPS
     Category.Settings.Add(FrameRate);
 
     return Category;
@@ -83,7 +84,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Graphics");
     Category.CategoryDescription = FText::FromString("Visual quality and rendering options");
-    Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Graphics;
+    Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Graphics;
 
     // Overall Quality Preset
     FMCore_SettingDefinition QualityPreset;
@@ -169,7 +170,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Audio");
     Category.CategoryDescription = FText::FromString("Volume levels and audio options");
-    Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Audio;
+    Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Audio;
 
     // Master Volume
     FMCore_SettingDefinition MasterVolume;
@@ -243,7 +244,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Controls");
     Category.CategoryDescription = FText::FromString("Input sensitivity and key bindings");
-    Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Controls;
+    Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Controls;
 
     // Mouse Sensitivity
     FMCore_SettingDefinition MouseSensitivity;
@@ -305,7 +306,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Accessibility");
     Category.CategoryDescription = FText::FromString("Options to improve game accessibility");
-    Category.CategoryTag = MCore_UISettingsTags::Settings_Category_Accessibility;
+    Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Accessibility;
 
     // Subtitles
     FMCore_SettingDefinition Subtitles;

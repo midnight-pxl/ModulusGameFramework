@@ -4,7 +4,7 @@
 #include "CoreEventSystem/MCore_EventListenerComp.h"
 
 #include "CoreData/CoreLogging/LogModulusEvent.h"
-#include "CoreEventSystem/MCore_EventData.h"
+#include "CoreData/CoreStructEnums/EventStructsEnums/MCore_EventData.h"
 #include "CoreEventSystem/MCore_GlobalEventSubsystem.h"
 #include "CoreEventSystem/MCore_LocalEventSubsystem.h"
 

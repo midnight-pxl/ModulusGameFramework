@@ -1,16 +1,16 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUISystem/MCore_UISettingsTags.h"
-#include "CoreUISystem/CoreGameSettings/MCore_GameSettingType.h" // For EMCore_SettingType
+#include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
+#include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingType.h" // For EMCore_SettingType
 
 namespace MCore_UISettingsTags
 {
     // Setting Categories
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Category_Display, "Settings.Category.Display");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Category_Graphics, "Settings.Category.Graphics");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Category_Audio, "Settings.Category.Audio");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Category_Controls, "Settings.Category.Controls");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Category_Accessibility, "Settings.Category.Accessibility");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Display, "UI.Categories.Display");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Graphics, "UI.Categories.Graphics");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Audio, "UI.Categories.Audio");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Controls, "UI.Categories.Controls");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Accessibility, "UI.Categories.Accessibility");
 
     // Display Settings
     UE_DEFINE_GAMEPLAY_TAG(Settings_Display_Resolution, "Settings.Display.Resolution");
@@ -79,15 +79,15 @@ namespace MCore_UISettingsTags
     FGameplayTag GetCategoryTag(const FString& CategoryName)
     {
         if (CategoryName.Equals(TEXT("Display"), ESearchCase::IgnoreCase))
-            return Settings_Category_Display;
+            return UI_Categories_Display;
         if (CategoryName.Equals(TEXT("Graphics"), ESearchCase::IgnoreCase))
-            return Settings_Category_Graphics;
+            return UI_Categories_Graphics;
         if (CategoryName.Equals(TEXT("Audio"), ESearchCase::IgnoreCase))
-            return Settings_Category_Audio;
+            return UI_Categories_Audio;
         if (CategoryName.Equals(TEXT("Controls"), ESearchCase::IgnoreCase))
-            return Settings_Category_Controls;
+            return UI_Categories_Controls;
         if (CategoryName.Equals(TEXT("Accessibility"), ESearchCase::IgnoreCase))
-            return Settings_Category_Accessibility;
+            return UI_Categories_Accessibility;
         
         return FGameplayTag::EmptyTag;
     }

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MCore_EventData.h"
+#include "CoreData/CoreStructEnums/EventStructsEnums/MCore_EventData.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "MCore_GlobalEventSubsystem.generated.h"
 

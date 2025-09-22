@@ -6,8 +6,6 @@
 #include "Engine/DeveloperSettings.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
-#include "CommonButtonBase.h"
-#include "CoreUISystem/MCore_UISettingsTags.h"
 #include "MCore_GameSettingType.generated.h"
 
 class UCommonActivatableWidget;

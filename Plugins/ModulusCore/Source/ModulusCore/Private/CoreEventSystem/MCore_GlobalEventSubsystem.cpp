@@ -2,7 +2,7 @@
 
 #include "CoreEventSystem/MCore_GlobalEventSubsystem.h"
 #include "CoreData/CoreLogging/LogModulusEvent.h"
-#include "CoreEventSystem/MCore_EventData.h"
+#include "CoreData/CoreStructEnums/EventStructsEnums/MCore_EventData.h"
 #include "CoreEventSystem/MCore_EventListenerComp.h"
 
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)

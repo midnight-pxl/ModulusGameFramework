@@ -9,11 +9,11 @@ enum class EMCore_SettingType : uint8;
 namespace MCore_UISettingsTags
 {
     // Setting Categories
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Category_Display);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Category_Graphics);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Category_Audio);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Category_Controls);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Category_Accessibility);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Display);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Graphics);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Audio);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Controls);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Accessibility);
 
     // Display Settings
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Display_Resolution);

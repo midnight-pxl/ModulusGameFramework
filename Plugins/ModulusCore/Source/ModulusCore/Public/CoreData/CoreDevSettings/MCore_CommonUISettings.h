@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "CoreUISystem/CoreGameSettings/MCore_GameSettingType.h"
+#include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingType.h"
 #include "Engine/DeveloperSettings.h"
 #include "MCore_CommonUISettings.generated.h"
 

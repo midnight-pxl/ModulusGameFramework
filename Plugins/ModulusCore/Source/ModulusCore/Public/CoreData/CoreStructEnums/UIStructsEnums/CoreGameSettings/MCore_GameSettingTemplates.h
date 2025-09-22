@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "MCore_GameSettingType.h"
-#include "CoreUISystem/MCore_UISettingsTags.h"
+#include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
 #include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "MCore_GameSettingTemplates.generated.h"
 
+class UInputAction;
 /**
  * 
  */
@@ -16,7 +17,7 @@ class MODULUSCORE_API UMCore_GameSettingTemplates : public UObject
 {
 	GENERATED_BODY()
 
-	public:
+public:
 
     UFUNCTION(BlueprintCallable, CallInEditor, Category="Settings|Templates")
     static FMCore_SettingCategory CreateDisplaySettings();

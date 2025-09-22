@@ -1,11 +1,11 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreEventSystem/MCore_EventFunctionLibrary.h"
+#include "CoreData/CoreLibraries/EventsLibraries/MCore_EventFunctionLibrary.h"
 #include "Engine/World.h"
 #include "Engine/World.h"
 #include "Engine/LocalPlayer.h"
 #include "CoreData/CoreLogging/LogModulusEvent.h"
-#include "CoreEventSystem/MCore_EventData.h"
+#include "CoreData/CoreStructEnums/EventStructsEnums/MCore_EventData.h"
 #include "CoreEventSystem/MCore_GlobalEventSubsystem.h"
 #include "CoreEventSystem/MCore_LocalEventSubsystem.h"
 
