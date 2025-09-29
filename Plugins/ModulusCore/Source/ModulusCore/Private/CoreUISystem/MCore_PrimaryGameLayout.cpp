@@ -3,6 +3,8 @@
 
 #include "CoreUISystem/MCore_PrimaryGameLayout.h"
 
+#include "CoreData/CoreLogging/LogModulusUI.h"
+
 UMCore_PrimaryGameLayout::UMCore_PrimaryGameLayout(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -32,6 +34,11 @@ UCommonActivatableWidgetStack* UMCore_PrimaryGameLayout::GetLayerStack(const FGa
 void UMCore_PrimaryGameLayout::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+
+	InitializeLayerMap();
+
+	UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout initialized with %d layers"),
+		LayerMap.Num());
 }
 
 void UMCore_PrimaryGameLayout::InitializeLayerMap()
