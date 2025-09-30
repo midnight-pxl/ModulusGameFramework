@@ -25,6 +25,6 @@ public:
 	void RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
 
 private:
-	UPROPERTY()
+	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_PrimaryGameLayout> CachedPrimaryGameLayout;
 };
