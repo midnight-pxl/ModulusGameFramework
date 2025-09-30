@@ -97,7 +97,7 @@ struct MODULUSCORE_API FMCore_SettingDefinition
     // Helper function to validate a setting
     bool IsValid() const
     {
-        if (DisplayName.IsEmpty() || SaveKey.IsValid())
+        if (DisplayName.IsEmpty() || !SaveKey.IsValid())
         {
             return false;
         }
