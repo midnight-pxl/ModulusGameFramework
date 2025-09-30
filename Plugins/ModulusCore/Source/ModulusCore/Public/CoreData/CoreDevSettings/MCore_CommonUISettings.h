@@ -19,26 +19,7 @@ class MODULUSCORE_API UMCore_CommonUISettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	UMCore_CommonUISettings();
-
-	/**
-	 * CommonUI Widget Stack Layer Tags
-	 */
-	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
-		meta=(ExposeFunctionCategories="UI.Layer"))
-	FGameplayTag GameLayerTag;
-
-	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
-	meta=(ExposeFunctionCategories="UI.Layer"))
-	FGameplayTag GameMenuLayerTag;
-
-	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
-	meta=(ExposeFunctionCategories="UI.Layer"))
-	FGameplayTag MenuLayerTag;
-
-	UPROPERTY(config, EditAnywhere, Category = "Layer Tags",
-	meta=(ExposeFunctionCategories="UI.Layer"))
-	FGameplayTag ModalLayerTag;
+	UMCore_CommonUISettings() = default;
 	
 	// Performance settings
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
@@ -46,12 +27,6 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
 	float AsyncLoadTimeoutSeconds{3.0f};
-	
-	UPROPERTY(config, EditAnywhere, Category = "Performance")
-	bool bEnableWidgetPooling{true};
-
-	UPROPERTY(config, EditAnywhere, Category = "Performance", meta = (ClampMin = "1"))
-	int32 MaxPooledWidgetsPerType{12};
 
 	// Auto-save settings
 	UPROPERTY(config, EditAnywhere, Category = "Save System")
@@ -74,5 +49,5 @@ public:
 	// Current DataAsset for Default Settings values
 	UPROPERTY(Config, EditAnywhere, Category = "Configuration",
 		meta=(DisplayName = "Default Settings Config"))
-	TSoftObjectPtr<class UMCore_DA_GameSettings_Base> CurrentDefaultSettings;
+	TSoftObjectPtr<class UMCore_DA_GameSettings_Organization> CurrentDefaultSettings;
 };

@@ -1,7 +1,6 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
-#include "CoreUISystem/MCore_ActivatableWidget.h"
+#include "CoreUISystem/CoreWidgets/MCore_ActivatableWidget.h"
 
 UMCore_ActivatableWidget::UMCore_ActivatableWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
