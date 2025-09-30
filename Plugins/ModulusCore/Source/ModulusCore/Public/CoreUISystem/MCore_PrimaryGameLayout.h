@@ -40,5 +40,7 @@ public:
 
     UPROPERTY(BlueprintReadOnly, meta=(BindWidget), Category = "UI|Layers")
     TObjectPtr<UCommonActivatableWidgetStack> MCore_ModalLayer;
-	
+
+private:
+	void NativeOnInitialized() override;
 };
