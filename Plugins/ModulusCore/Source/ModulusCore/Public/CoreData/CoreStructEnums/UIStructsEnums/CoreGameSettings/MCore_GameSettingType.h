@@ -8,6 +8,8 @@
 #include "GameplayTagContainer.h"
 #include "MCore_GameSettingType.generated.h"
 
+class UInputMappingContext;
+class UInputAction;
 class UCommonActivatableWidget;
 
 UENUM(BlueprintType)
@@ -39,8 +41,17 @@ struct MODULUSCORE_API FMCore_SettingDefinition
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
     EMCore_SettingType SettingType = EMCore_SettingType::Toggle;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
-    FGameplayTag SaveKey; // For ModulusMemory integration
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic", 
+    meta = (Categories = "Settings"))  // Filters to Settings.* tags only
+    FGameplayTag SettingTag;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeyBinding",
+    meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding", EditConditionHides))
+    TObjectPtr<const UInputAction> InputAction;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeyBinding",
+        meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding", EditConditionHides))
+    TObjectPtr<const UInputMappingContext> InputMappingContext;
 
     // Type-Specific Properties (using EditCondition for clean UI)
     
@@ -97,10 +108,7 @@ struct MODULUSCORE_API FMCore_SettingDefinition
     // Helper function to validate a setting
     bool IsValid() const
     {
-        if (DisplayName.IsEmpty() || !SaveKey.IsValid())
-        {
-            return false;
-        }
+        if (DisplayName.IsEmpty() || !SettingTag.IsValid()) { return false; }
 
         switch (SettingType)
         {
@@ -112,10 +120,10 @@ struct MODULUSCORE_API FMCore_SettingDefinition
             return true;
         }
     }
-    
-    FString GetSaveKeyString() const
+
+    FString GetSettingKeyString() const
     {
-        return SaveKey.IsValid() ? SaveKey.ToString() : FString();
+        return SettingTag.IsValid() ? SettingTag.ToString() : FString();
     }
 };
 
@@ -160,11 +168,11 @@ struct MODULUSCORE_API FMCore_SettingCategory
     }
 
     // Helper to find setting by save key
-    const FMCore_SettingDefinition* FindSetting(const FGameplayTag& SaveKey) const
+    const FMCore_SettingDefinition* FindSetting(const FGameplayTag& SettingTag) const
     {
-        return Settings.FindByPredicate([&SaveKey](const FMCore_SettingDefinition& Setting)
+        return Settings.FindByPredicate([&SettingTag](const FMCore_SettingDefinition& Setting)
         {
-            return (Setting.SaveKey == SaveKey);
+            return (Setting.SettingTag == SettingTag);
         });
     }
 };
@@ -214,11 +222,11 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
     }
 
     // Helper to find setting across all categories
-    const FMCore_SettingDefinition* FindSetting(const FGameplayTag& SaveKey) const
+    const FMCore_SettingDefinition* FindSetting(const FGameplayTag& SettingTag) const
     {
         for (const FMCore_SettingCategory& Category : Categories)
         {
-            if (const FMCore_SettingDefinition* Found = Category.FindSetting(SaveKey))
+            if (const FMCore_SettingDefinition* Found = Category.FindSetting(SettingTag))
             {
                 return Found;
             }
@@ -234,9 +242,9 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
         {
             for (const FMCore_SettingDefinition& Setting : Category.Settings)
             {
-                if (Setting.SaveKey.IsValid())
+                if (Setting.SettingTag.IsValid())
                 {
-                    AllSettings.Add(Setting.SaveKey, Setting);
+                    AllSettings.Add(Setting.SettingTag, Setting);
                 }
             }
         }

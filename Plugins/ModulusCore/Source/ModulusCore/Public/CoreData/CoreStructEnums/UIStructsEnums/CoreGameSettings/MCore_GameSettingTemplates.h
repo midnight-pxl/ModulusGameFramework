@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CommonInputBaseTypes.h"
 #include "MCore_GameSettingType.h"
 #include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
 #include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "MCore_GameSettingTemplates.generated.h"
 
+enum class EPlayerMappableKeySlot : uint8;
+class UInputMappingContext;
 class UInputAction;
 /**
  * 
@@ -34,19 +37,24 @@ public:
     UFUNCTION(BlueprintCallable, CallInEditor, Category="Settings|Templates")
     static FMCore_SettingCategory CreateAccessibilitySettings();
 	
-    /** Config Helpers
-	 * Creates complete settings configuration with all 5 universal categories.
-	 * This is the main function for "15-minute setup"
-	 */
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Modulus Settings|Templates")
-	static FMCore_SettingsConfiguration CreateCompleteSettingsConfiguration();
+	UFUNCTION(BlueprintCallable, Category = "Settings|Enhanced Input")
+	static void GetMappableActionsFromContext(
+		const UInputMappingContext* Context,
+		ECommonInputType InputType,
+		TArray<UInputAction*>& OutActions);
 
-	/**
-	 * Creates minimal settings configuration (Display + Audio only) for simple games.
-	 */
-	UFUNCTION(BlueprintCallable, CallInEditor, Category = "Modulus Settings|Templates")
-	static FMCore_SettingsConfiguration CreateMinimalSettingsConfiguration();
+	UFUNCTION(BlueprintPure, Category = "Settings|Enhanced Input")
+	static FName GetActionDisplayCategory(const UInputAction* Action);
 
+	UFUNCTION(BlueprintCallable, Category = "Settings|Enhanced Input")
+	static TArray<FName> GetActionsUsingKey(
+		FKey Key,
+		FName ExcludeAction = NAME_None);
+
+	UFUNCTION(BlueprintPure, Category = "Settings|Enhanced Input")
+	static FKey GetCurrentKeyForAction(
+		const UInputAction* Action,
+		EPlayerMappableKeySlot Slot);
 	
     UFUNCTION(BlueprintCallable, CallInEditor, Category = "Modulus Settings|Templates")
     static FMCore_SettingCategory CreateEmptyCategory(const FString& CategoryName, const FString& Description = "")
@@ -64,7 +72,7 @@ private:
 	static TArray<FMCore_SettingDefinition> CreateToggles();
 
 	static FMCore_SettingDefinition CreateSliderSetting(
-		const FGameplayTag& SaveKey,
+		const FGameplayTag& SettingTag,
 		const FText& DisplayName,
 		const FText& Description,
 		float MinValue, float MaxValue,
@@ -72,14 +80,14 @@ private:
 		float StepValue);
 
 	static FMCore_SettingDefinition CreateDropdownSetting(
-	const FGameplayTag& SaveKey,
+	const FGameplayTag& SettingTag,
 	const FText& DisplayName,
 	const FText& Description,
 	const TArray<FText>& Options,
 	int32 DefaultIndex);
 	
 	static FMCore_SettingDefinition CreateToggleSetting(
-	const FGameplayTag& SaveKey,
+	const FGameplayTag& SettingTag,
 	const FText& DisplayName,
 	const FText& Description,
 	float DefaultValue);
