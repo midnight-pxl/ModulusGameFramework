@@ -251,3 +251,25 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
         return AllSettings;
     }
 };
+
+/**
+ * Represents a category of key bindings grouped by display category.
+ * Required for Blueprint compatibility (TMap<FName, TArray<...>> not supported in Blueprint).
+ */
+USTRUCT(BlueprintType)
+struct MODULUSCORE_API FMCore_KeyBindingCategory
+{
+    GENERATED_BODY()
+    
+    /** Display name for this category (e.g., "Movement", "Combat", "Inventory") */
+    UPROPERTY(BlueprintReadWrite, Category = "Key Bindings")
+    FText CategoryName;
+    
+    /** All key binding settings in this category */
+    UPROPERTY(BlueprintReadWrite, Category = "Key Bindings")
+    TArray<FMCore_SettingDefinition> KeyBindings;
+    
+    FMCore_KeyBindingCategory()
+        : CategoryName(FText::GetEmpty())
+    {}
+};

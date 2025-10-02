@@ -12,6 +12,7 @@
 enum class EPlayerMappableKeySlot : uint8;
 class UInputMappingContext;
 class UInputAction;
+
 /**
  * 
  */
@@ -43,6 +44,11 @@ public:
 		ECommonInputType InputType,
 		TArray<UInputAction*>& OutActions);
 
+	UFUNCTION(BlueprintCallable, Category = "Settings|Enhanced Input")
+	static TArray<FMCore_KeyBindingCategory> GetAllKeyBindingCategories(
+		UObject* WorldContext, 
+		ECommonInputType InputType = ECommonInputType::MouseAndKeyboard);
+
 	UFUNCTION(BlueprintPure, Category = "Settings|Enhanced Input")
 	static FName GetActionDisplayCategory(const UInputAction* Action);
 
@@ -67,9 +73,6 @@ public:
     }
 
 private:
-	static TArray<FMCore_SettingDefinition> CreateSliders();
-	static TArray<FMCore_SettingDefinition> CreateDropdowns();
-	static TArray<FMCore_SettingDefinition> CreateToggles();
 
 	static FMCore_SettingDefinition CreateSliderSetting(
 		const FGameplayTag& SettingTag,
@@ -80,17 +83,17 @@ private:
 		float StepValue);
 
 	static FMCore_SettingDefinition CreateDropdownSetting(
-	const FGameplayTag& SettingTag,
-	const FText& DisplayName,
-	const FText& Description,
-	const TArray<FText>& Options,
-	int32 DefaultIndex);
+		const FGameplayTag& SettingTag,
+		const FText& DisplayName,
+		const FText& Description,
+		const TArray<FText>& Options,
+		int32 DefaultIndex);
 	
 	static FMCore_SettingDefinition CreateToggleSetting(
-	const FGameplayTag& SettingTag,
-	const FText& DisplayName,
-	const FText& Description,
-	float DefaultValue);
+		const FGameplayTag& SettingTag,
+		const FText& DisplayName,
+		const FText& Description,
+		bool DefaultValue);
 
 	/**
 	 * Helper to create a key binding setting from Enhanced Input Action metadata.

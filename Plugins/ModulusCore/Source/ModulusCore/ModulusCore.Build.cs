@@ -46,7 +46,8 @@ public class ModulusCore : ModuleRules
 			new string[]
 			{
 				"ApplicationCore",
-				"PropertyPath"
+				"PropertyPath",
+				"GameplayDebugger"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

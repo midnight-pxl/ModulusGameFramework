@@ -3,12 +3,14 @@
 #include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingTemplates.h"
 
 #include "UserSettings/EnhancedInputUserSettings.h"
+#include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystemInterface.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedActionKeyMapping.h"
 #include "PlayerMappableKeySettings.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "CoreData/CoreLogging/LogModulusUI.h"
 
 /** Display Settings */
 
@@ -401,6 +403,147 @@ void UMCore_GameSettingTemplates::GetMappableActionsFromContext(const UInputMapp
     }
 }
 
+TArray<FMCore_KeyBindingCategory> UMCore_GameSettingTemplates::GetAllKeyBindingCategories(UObject* WorldContext,
+    ECommonInputType InputType)
+{
+    TArray<FMCore_KeyBindingCategory> Categories;
+    
+    if (!WorldContext)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetAllKeyBindingCategories: Invalid WorldContext"));
+        return Categories;
+    }
+    
+    // Get Enhanced Input subsystem
+    const UWorld* World = WorldContext->GetWorld();
+    if (!World)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetAllKeyBindingCategories: Invalid World"));
+        return Categories;
+    }
+    
+    const UGameInstance* GameInstance = World->GetGameInstance();
+    if (!GameInstance)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetAllKeyBindingCategories: No GameInstance"));
+        return Categories;
+    }
+    
+    const ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer();
+    if (!LocalPlayer)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GetAllKeyBindingCategories: No LocalPlayer"));
+        return Categories;
+    }
+    
+    const UEnhancedInputLocalPlayerSubsystem* Subsystem = 
+        LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+    if (!Subsystem)
+    {
+        UE_LOG(LogTemp, Error, 
+            TEXT("GetAllKeyBindingCategories: EnhancedInputLocalPlayerSubsystem not found. "
+                 "Is the Enhanced Input plugin enabled?"));
+        return Categories;
+    }
+    
+    const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+    if (!UserSettings)
+    {
+        UE_LOG(LogTemp, Error, 
+            TEXT("GetAllKeyBindingCategories: EnhancedInputUserSettings not initialized. "
+                 "Enable User Settings in Project Settings > Enhanced Input."));
+        return Categories;
+    }
+    
+    const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
+    if (!Profile)
+    {
+        UE_LOG(LogTemp, Error, 
+            TEXT("GetAllKeyBindingCategories: No active key profile found."));
+        return Categories;
+    }
+    
+    // Get all player mapping rows from the key profile
+    const TMap<FName, FKeyMappingRow>& MappingRows = Profile->GetPlayerMappingRows();
+    
+    if (MappingRows.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, 
+            TEXT("GetAllKeyBindingCategories: No mappings found in key profile. "
+                 "Are Input Mapping Contexts registered and do they have player-mappable actions?"));
+        return Categories;
+    }
+    
+    TMap<FName, TArray<FMCore_SettingDefinition>> CategoryMap;
+    
+    for (const auto& [ActionName, MappingRow] : MappingRows)
+    {
+        // Each row contains potentially multiple key mappings for the same action
+        for (const FPlayerKeyMapping& Mapping : MappingRow.Mappings)
+        {
+            const bool bIsGamepadKey = Mapping.GetCurrentKey().IsGamepadKey();
+            const bool bWantGamepad = (InputType == ECommonInputType::Gamepad);
+            if (bIsGamepadKey != bWantGamepad) { continue; }
+            
+            const UInputAction* Action = Mapping.GetAssociatedInputAction();
+            if (!Action) { continue; }
+
+            const UPlayerMappableKeySettings* MappableSettings = Action->GetPlayerMappableKeySettings();
+            if (!MappableSettings)
+            {
+                // Action isn't marked as player mappable - skip it
+                continue;
+            }
+            
+            // Get category from action metadata
+            FName CategoryName = GetActionDisplayCategory(Action);
+            
+            // Create setting definition from mapping
+            FMCore_SettingDefinition KeyBinding;
+            KeyBinding.SettingType = EMCore_SettingType::KeyBinding;
+            KeyBinding.DisplayName = MappableSettings->DisplayName;
+            KeyBinding.Description = FText::FromString(MappableSettings->DisplayCategory.ToString()); // Category as description
+            
+            // Create tag from action name
+            const FString TagString = FString::Printf(TEXT("MCore.Settings.Controls.%s"), 
+                *ActionName.ToString());
+            KeyBinding.SettingTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
+            
+            // Store current key
+            KeyBinding.DefaultKey = Mapping.GetCurrentKey();
+            
+            // Add to category map
+            if (KeyBinding.SettingTag.IsValid())
+            {
+                CategoryMap.FindOrAdd(CategoryName).Add(KeyBinding);
+            }
+        }
+    }
+    
+    // Convert map to array of structs for Blueprint compatibility
+    for (const auto& [CategoryName, KeyBindings] : CategoryMap)
+    {
+        FMCore_KeyBindingCategory Category;
+        Category.CategoryName = FText::FromName(CategoryName);
+        Category.KeyBindings = KeyBindings;
+        Categories.Add(Category);
+    }
+    
+    // Sort categories alphabetically for consistent UI
+    Categories.Sort([](const FMCore_KeyBindingCategory& A, const FMCore_KeyBindingCategory& B)
+    {
+        return A.CategoryName.CompareTo(B.CategoryName) < 0;
+    });
+    
+    UE_LOG(LogTemp, Log, 
+        TEXT("GetAllKeyBindingCategories: Discovered %d categories with total %d actions for %s"), 
+        Categories.Num(),
+        MappingRows.Num(),
+        InputType == ECommonInputType::Gamepad ? TEXT("Gamepad") : TEXT("Keyboard/Mouse"));
+    
+    return Categories;
+}
+
 FName UMCore_GameSettingTemplates::GetActionDisplayCategory(const UInputAction* Action)
 {
     if (!Action) return NAME_None;
@@ -487,53 +630,251 @@ FKey UMCore_GameSettingTemplates::GetCurrentKeyForAction(const UInputAction* Act
     return EKeys::Invalid;
 }
 
-TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateSliders()
-{
-    return TArray<FMCore_SettingDefinition>();
-}
-
-TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateDropdowns()
-{
-    return TArray<FMCore_SettingDefinition>();
-}
-
-TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateToggles()
-{
-    return TArray<FMCore_SettingDefinition>();
-}
-
-FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateSliderSetting(const FGameplayTag& SettingTag,
-    const FText& DisplayName, const FText& Description, float MinValue, float MaxValue, float DefaultValue,
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateSliderSetting(
+    const FGameplayTag& SettingTag,
+    const FText& DisplayName,
+    const FText& Description,
+    float MinValue,
+    float MaxValue,
+    float DefaultValue,
     float StepValue)
 {
-    return FMCore_SettingDefinition();
+    FMCore_SettingDefinition Setting;
+    Setting.SettingType = EMCore_SettingType::Slider;
+    Setting.SettingTag = SettingTag;
+    Setting.DisplayName = DisplayName;
+    Setting.Description = Description;
+    
+    // Ensure valid range
+    Setting.MinValue = FMath::Min(MinValue, MaxValue);
+    Setting.MaxValue = FMath::Max(MinValue, MaxValue);
+    
+    // Clamp default to valid range
+    Setting.DefaultValue = FMath::Clamp(DefaultValue, Setting.MinValue, Setting.MaxValue);
+    
+    // Ensure positive step size
+    Setting.StepSize = FMath::Max(0.001f, StepValue);
+    
+    return Setting;
 }
 
-FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateDropdownSetting(const FGameplayTag& SettingTag,
-    const FText& DisplayName, const FText& Description, const TArray<FText>& Options, int32 DefaultIndex)
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateDropdownSetting(
+    const FGameplayTag& SettingTag,
+    const FText& DisplayName,
+    const FText& Description,
+    const TArray<FText>& Options,
+    int32 DefaultIndex)
 {
-    return FMCore_SettingDefinition();
+    FMCore_SettingDefinition Setting;
+    Setting.SettingType = EMCore_SettingType::Dropdown;
+    Setting.SettingTag = SettingTag;
+    Setting.DisplayName = DisplayName;
+    Setting.Description = Description;
+    Setting.DropdownOptions = Options;
+    
+    // Ensure valid default index
+    if (Options.Num() > 0)
+    {
+        Setting.DefaultDropdownIndex = FMath::Clamp(DefaultIndex, 0, Options.Num() - 1);
+    }
+    else
+    {
+        Setting.DefaultDropdownIndex = 0;
+        UE_LOG(LogModulusUI, Warning, TEXT("CreateDropdownSetting: '%s' has no options"), 
+            *DisplayName.ToString());
+    }
+    
+    return Setting;
 }
 
-FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateToggleSetting(const FGameplayTag& SettingTag,
-    const FText& DisplayName, const FText& Description, float DefaultValue)
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateToggleSetting(
+    const FGameplayTag& SettingTag,
+    const FText& DisplayName,
+    const FText& Description,
+    bool DefaultValue)
 {
-    return FMCore_SettingDefinition();
+    FMCore_SettingDefinition Setting;
+    Setting.SettingType = EMCore_SettingType::Toggle;
+    Setting.SettingTag = SettingTag;
+    Setting.DisplayName = DisplayName;
+    Setting.Description = Description;
+    Setting.DefaultToggleValue = DefaultValue;
+    
+    return Setting;
 }
 
-FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateKeyBindingSetting(const UInputAction* InputAction,
-                                                                              const class UInputMappingContext* MappingContext)
+FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateKeyBindingSetting(
+    const UInputAction* InputAction,
+    const UInputMappingContext* MappingContext)
 {
-    return FMCore_SettingDefinition();
+    FMCore_SettingDefinition KeyBinding;
+    
+    if (!InputAction)
+    {
+        UE_LOG(LogModulusUI, Error, TEXT("CreateKeyBindingSetting: InputAction is null"));
+        return KeyBinding;
+    }
+    
+    // Check if action is player-mappable
+    const UPlayerMappableKeySettings* MappableSettings = InputAction->GetPlayerMappableKeySettings();
+    if (!MappableSettings)
+    {
+        UE_LOG(LogModulusUI, Warning, 
+            TEXT("CreateKeyBindingSetting: InputAction '%s' is not marked as Player Mappable. "
+                 "Enable 'Player Mappable Key Settings' in the Input Action asset."), 
+            *InputAction->GetName());
+        return KeyBinding;
+    }
+    
+    // Configure setting definition from player mappable settings
+    KeyBinding.SettingType = EMCore_SettingType::KeyBinding;
+    KeyBinding.DisplayName = MappableSettings->DisplayName;
+    KeyBinding.Description = MappableSettings->DisplayCategory;
+    
+    // Create tag from action name for identification
+    const FString TagString = FString::Printf(TEXT("MCore.Settings.Controls.%s"), 
+        *InputAction->GetFName().ToString());
+    KeyBinding.SettingTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
+    
+    // Get current key mapping (defaults to first slot)
+    KeyBinding.DefaultKey = GetCurrentKeyForAction(InputAction, EPlayerMappableKeySlot::First);
+    
+    return KeyBinding;
 }
+
+/**
+ * Template Functions
+ */
 
 TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControlDefinition()
 {
-    return TArray<FMCore_SettingDefinition>();
+    TArray<FMCore_SettingDefinition> BasicControls;
+    
+    // Mouse Sensitivity
+    BasicControls.Add(CreateSliderSetting(
+        MCore_UISettingsTags::Settings_Controls_MouseSensitivity,
+        FText::FromString("Mouse Sensitivity"),
+        FText::FromString("How fast the camera moves with mouse input"),
+        0.1f,  // Min
+        3.0f,  // Max
+        1.0f,  // Default
+        0.05f  // Step
+    ));
+    
+    // Invert Y Axis
+    BasicControls.Add(CreateToggleSetting(
+        MCore_UISettingsTags::Settings_Controls_InvertY,
+        FText::FromString("Invert Y Axis"),
+        FText::FromString("Invert vertical mouse movement"),
+        false // Default off
+    ));
+    
+    // Gamepad Sensitivity
+    BasicControls.Add(CreateSliderSetting(
+        MCore_UISettingsTags::Settings_Controls_GamepadSensitivity,
+        FText::FromString("Gamepad Sensitivity"),
+        FText::FromString("Controller stick sensitivity"),
+        0.1f,  // Min
+        3.0f,  // Max
+        1.0f,  // Default
+        0.05f  // Step
+    ));
+    
+    return BasicControls;
 }
 
-bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(UObject* WorldContext, TArray<FString>& ValidationErrors)
+// ============================================================================
+// VALIDATION UTILITIES
+// ============================================================================
+
+bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
+    UObject* WorldContext, 
+    TArray<FString>& ValidationErrors)
 {
-    return false;
+    ValidationErrors.Empty();
+    
+    if (!WorldContext)
+    {
+        ValidationErrors.Add("Invalid WorldContext");
+        return false;
+    }
+    
+    const UWorld* World = WorldContext->GetWorld();
+    if (!World)
+    {
+        ValidationErrors.Add("No valid World found");
+        return false;
+    }
+    
+    const UGameInstance* GameInstance = World->GetGameInstance();
+    if (!GameInstance)
+    {
+        ValidationErrors.Add("No GameInstance found");
+        return false;
+    }
+    
+    const ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer();
+    if (!LocalPlayer)
+    {
+        ValidationErrors.Add("No LocalPlayer found - is this being called before player initialization?");
+        return false;
+    }
+    
+    // Validate Enhanced Input subsystem exists
+    const UEnhancedInputLocalPlayerSubsystem* Subsystem = 
+        LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+    if (!Subsystem)
+    {
+        ValidationErrors.Add("EnhancedInputLocalPlayerSubsystem not found");
+        ValidationErrors.Add("Solution: Enable the Enhanced Input plugin in Project Settings");
+        return false;
+    }
+    
+    // Validate user settings initialized
+    const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+    if (!UserSettings)
+    {
+        ValidationErrors.Add("EnhancedInputUserSettings not initialized");
+        ValidationErrors.Add("Solution: Enable 'User Settings' in Project Settings > Enhanced Input");
+        return false;
+    }
+    
+    // Validate active key profile exists
+    const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
+    if (!Profile)
+    {
+        ValidationErrors.Add("No active key profile found");
+        ValidationErrors.Add("Solution: Ensure at least one key profile is created in User Settings");
+        return false;
+    }
+    
+    // Validate mappings exist in profile
+    const TMap<FName, FKeyMappingRow>& MappingRows = Profile->GetPlayerMappingRows();
+    if (MappingRows.Num() == 0)
+    {
+        ValidationErrors.Add("No input mappings found in key profile");
+        ValidationErrors.Add("Solution: Register Input Mapping Contexts with UserSettings->RegisterInputMappingContext()");
+        return false;
+    }
+    
+    // Check if contexts have player-mappable actions
+    int32 TotalMappableActions = 0;
+    for (const auto& [ActionName, MappingRow] : MappingRows)
+    {
+        TotalMappableActions += MappingRow.Mappings.Num();
+    }
+    
+    if (TotalMappableActions == 0)
+    {
+        ValidationErrors.Add("No player-mappable actions found in registered contexts");
+        ValidationErrors.Add("Solution: Mark Input Actions as 'Player Mappable' in their asset settings");
+        return false;
+    }
+    
+    // Validation passed
+    UE_LOG(LogTemp, Log, 
+        TEXT("Enhanced Input validation passed: %d mapping rows, %d mappable actions"), 
+        MappingRows.Num(), TotalMappableActions);
+    
+    return true;
 }
-
