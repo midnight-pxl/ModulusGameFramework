@@ -16,14 +16,15 @@ UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
 	return nullptr;
 }
 
-void UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout)
+bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout)
 {
 	if (!InLayout)
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Attempted to register null PrimaryGameLayout"));
-		return;
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Attempted to register null PrimaryGameLayout"));
+		return false;
 	}
 
 	CachedPrimaryGameLayout = InLayout;
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Registered PrimaryGameLayout"));
+	return true;
 }

@@ -22,7 +22,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI Layout")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
-	void RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
+	UFUNCTION(BlueprintCallable, Category = "UI Layout")
+	bool RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
 
 private:
 	UPROPERTY(Transient)
