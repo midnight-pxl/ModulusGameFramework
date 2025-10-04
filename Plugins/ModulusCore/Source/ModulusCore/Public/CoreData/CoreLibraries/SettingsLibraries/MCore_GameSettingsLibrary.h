@@ -9,7 +9,17 @@
 
 class UInputAction;
 /**
- * 
+ * Game settings library
+ *
+ * Convenience wrappers around UGameUserSettings for common settings operations.
+ * Integrates with Unreal Engine's built-in graphics/audio/input systems.
+ *
+ * Blueprint Usage:
+ * - Call Set* functions from settings menus
+ * - Call ApplyAndSaveAllSettings() when user clicks "Apply" button
+ * - Quality values: 0 = Low, 1 = Medium, 2 = High, 3 = Ultra
+ *
+ * Note: Most settings require ApplyAndSaveAllSettings() to take effect.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_GameSettingsLibrary : public UBlueprintFunctionLibrary
@@ -17,45 +27,56 @@ class MODULUSCORE_API UMCore_GameSettingsLibrary : public UBlueprintFunctionLibr
 	GENERATED_BODY()
 
 public:
-	
-    // UE GameUserSettings Accessor
+
+    /** Get Unreal's built-in game user settings object */
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings Access")
     static UGameUserSettings* GetGameUserSettings();
 
-    // Graphics Settings
+	// Graphics Settings
+
+    /** Apply graphics quality preset (affects all scalability settings) */
     UFUNCTION(BlueprintCallable, Category = "Graphics")
     static void ApplyGraphicsPreset(EMCore_GraphicsPreset Preset);
 
+	/** Get current graphics preset based on scalability levels */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Graphics")
 	static EMCore_GraphicsPreset GetCurrentGraphicsPreset();
-    
+
+	/** Set screen resolution and window mode (Fullscreen, Windowed, Borderless) */
     UFUNCTION(BlueprintCallable, Category = "Graphics")
     static void SetResolution(FIntPoint Resolution, EWindowMode::Type WindowMode = EWindowMode::Fullscreen);
-    
-    UFUNCTION(BlueprintCallable, Category = "Graphics")
-    static void SetVSyncEnabled(bool bIsEnabled);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Graphics")
+	static void SetVSyncEnabled(bool bIsEnabled);
+
 	UFUNCTION(BlueprintCallable, Category = "Graphics")
 	static EMCore_FrameRate GetFrameRateLimit();
 
+	/** Set frame rate limit (0 = unlimited) */
 	UFUNCTION(BlueprintCallable, Category = "Graphics")
 	static void SetFrameRateLimit(EMCore_FrameRate FrameRate);
-    
+
+	/** Set texture quality (0-3: Low to Ultra) */
     UFUNCTION(BlueprintCallable, Category = "Graphics")
     static void SetTextureQuality(int32 Quality);
-    
+
+	/** Set shadow quality (0-3: Low to Ultra) */
     UFUNCTION(BlueprintCallable, Category = "Graphics")
     static void SetShadowQuality(int32 Quality);
 
+	/** Set anti-aliasing quality (0-3: Low to Ultra) */
 	UFUNCTION(BlueprintCallable, Category = "Graphics")
 	static void SetAntiAliasingQuality(int32 Quality);
-    
+
+	/** Set view distance quality (0-3: Low to Ultra) */
 	UFUNCTION(BlueprintCallable, Category = "Graphics")
 	static void SetViewDistanceQuality(int32 Quality);
-    
+
+	/** Set foliage quality (0-3: Low to Ultra) */
 	UFUNCTION(BlueprintCallable, Category = "Graphics")
 	static void SetFoliageQuality(int32 Quality);
-    
+
+	/** Set shading quality (0-3: Low to Ultra) */
 	UFUNCTION(BlueprintCallable, Category = "Graphics")
 	static void SetShadingQuality(int32 Quality);
 
@@ -180,12 +201,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Platform Detection")
 	static bool IsSteamDeck();
 
-	/**
-	 * Settings Management - Simple UE system integration
-	 */
+	// Settings Management
+
+	/** Apply all pending settings changes and save to disk. Call this when user clicks "Apply" button */
 	UFUNCTION(BlueprintCallable, Category = "Settings Management")
 	static void ApplyAndSaveAllSettings();
-    
+
+	/** Reset all settings to engine defaults. Usually requires confirmation prompt */
 	UFUNCTION(BlueprintCallable, Category = "Settings Management")
 	static void ResetAllSettingsToDefaults();
 

@@ -17,7 +17,19 @@ enum class EMCore_WidgetInputMode : uint8
 };
 
 /**
- * 
+ * Base class for activatable UI widgets in ModulusCore
+ *
+ * Extends CommonUI's UCommonActivatableWidget with simplified input mode configuration.
+ * Use this as the base class for all menus, HUD elements, and interactive UI.
+ *
+ * Derived Classes:
+ * - Settings menus
+ * - Pause menus
+ * - HUD widgets
+ * - Modal dialogs
+ *
+ * Blueprint Usage:
+ * Set InputMode to control how the widget handles input focus (Game, Menu, GameAndMenu, Modal)
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API UMCore_ActivatableWidget : public UCommonActivatableWidget
@@ -28,7 +40,8 @@ public:
 	UMCore_ActivatableWidget(const FObjectInitializer& ObjectInitializer);
 
 protected:
-	
+
+	/** Input mode for this widget (Default, Game, Menu, GameAndMenu, Modal) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Input")
 	EMCore_WidgetInputMode InputMode = EMCore_WidgetInputMode::Default;
 

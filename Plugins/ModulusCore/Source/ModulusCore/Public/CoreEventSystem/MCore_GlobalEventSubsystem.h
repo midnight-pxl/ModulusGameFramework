@@ -12,8 +12,23 @@ class AGameModeBase;
 class APlayerController;
 
 /**
- * Server-authoritative global event system
- * Handles events that need to be synchronized across all players
+ * Global event subsystem for networked events
+ *
+ * Server-authoritative event broadcasting across all clients.
+ * One instance per GameInstance (shared by all players).
+ *
+ * Common Uses:
+ * - Game state changes (match started, round ended)
+ * - World events (boss spawned, treasure chest opened)
+ * - Cross-player notifications (player joined, achievement unlocked)
+ *
+ * Network: Server-authoritative
+ * - Server: Broadcasts to all clients via multicast RPC
+ * - Clients: Can request server to broadcast (subject to validation)
+ * - Late-joiners: Do not receive events broadcast before they joined
+ *
+ * Blueprint Usage:
+ * Use UMCore_EventFunctionLibrary::BroadcastGlobalEvent() instead of accessing this subsystem directly.
  */
 UCLASS(Config=ModulusGameFramework)
 class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsystem
@@ -22,33 +37,35 @@ class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsyste
 
 public:
 
-	/**
-	 * Configuration: Authority validation strictness
-	 */
+	/** Validation strictness for global events (Permissive, Balanced, Strict) */
 	UPROPERTY(EditAnywhere, Config, Category = "Event System Configuration")
 	EMCore_ValidationStrictness ValidationStrictness = EMCore_ValidationStrictness::Balanced;
-	
+
 	/**
-	 * Server-side: Broadcast global event to all clients
+	 * Broadcast global event to all clients
+	 *
+	 * Server: Directly multicasts to all clients
+	 * Client: Sends server RPC (subject to validation based on ValidationStrictness)
+	 *
+	 * Use UMCore_EventFunctionLibrary::BroadcastGlobalEvent() instead of calling this directly.
 	 */
 	void BroadcastGlobalEvent(const FMCore_EventData& EventData);
 
-	/**
-	 * Register a listener component for global events (server manages this)
-	 */
+	/** Register listener for global events. Called automatically by UMCore_EventListenerComp::BeginPlay() */
 	void RegisterGlobalListener(UMCore_EventListenerComp* ListenerComponent);
 
-	/**
-	 * Unregister a listener component from global events
-	 */
+	/** Unregister listener from global events. Called automatically by UMCore_EventListenerComp::EndPlay() */
 	void UnregisterGlobalListener(UMCore_EventListenerComp* ListenerComponent);
 
-	// Server authority checking
+	/** Check if this instance has authority to broadcast global events (server-only) */
 	UFUNCTION(BlueprintCallable, Category = "Event System")
 	bool HasGlobalEventAuthority() const;
 
 	/**
-	 * Server RPC - validate and broadcast global event
+	 * Server RPC - Client requests server to broadcast global event
+	 *
+	 * Server validates request based on ValidationStrictness before broadcasting.
+	 * Do not call directly - use BroadcastGlobalEvent() instead.
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerBroadcastGlobalEvent(const FMCore_EventData& EventData);
@@ -59,21 +76,19 @@ protected:
 
 private:
 
-	/**
-	 * Multicast RPC - deliver global event to all clients
-	 */
+	/** Multicast RPC - Server delivers global event to all clients */
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastGlobalEvent(const FMCore_EventData& EventData);
 
-	// Server authority validation
+	// RPC implementations
 	bool ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData);
 	void ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData);
 	void MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData);
 
-	// Global listener components (server manages, clients mirror)
+	// Registered listener components
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> GlobalListeners;
 
-	// Internal delivery to local listeners
+	// Deliver event to listeners on this client
 	void DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData);
 };

@@ -12,6 +12,7 @@ class UInputMappingContext;
 class UInputAction;
 class UCommonActivatableWidget;
 
+/** Setting widget types for game settings menus */
 UENUM(BlueprintType)
 enum class EMCore_SettingType : uint8
 {
@@ -24,7 +25,16 @@ enum class EMCore_SettingType : uint8
 };
 
 /**
+ * Setting definition struct
  *
+ * Describes a single game setting (display name, type, value range, defaults).
+ * Used by UMCore_GameSettingTemplates to create setting categories.
+ *
+ * Usage:
+ * - Create manually in Blueprint/C++, or
+ * - Use UMCore_GameSettingTemplates factory functions
+ *
+ * Properties are type-conditional (e.g., MinValue only visible for Sliders).
  */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_SettingDefinition
@@ -128,7 +138,14 @@ struct MODULUSCORE_API FMCore_SettingDefinition
 };
 
 /**
- * Settings category - simple grouping of settings
+ * Settings category struct
+ *
+ * Groups related settings together (e.g., Graphics, Audio, Controls).
+ * Contains array of FMCore_SettingDefinition with shared category metadata.
+ *
+ * Example:
+ * - CategoryName: "Graphics"
+ * - Settings: [Quality Preset, Texture Quality, Shadow Quality, Anti-Aliasing]
  */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_SettingCategory
@@ -178,7 +195,15 @@ struct MODULUSCORE_API FMCore_SettingCategory
 };
 
 /**
- * Complete settings configuration - ready to generate UI
+ * Complete settings configuration
+ *
+ * Top-level container for all setting categories.
+ * Pass this to your settings menu to generate the entire UI.
+ *
+ * Usage:
+ * 1. Create via UMCore_GameSettingTemplates factory functions
+ * 2. Add/remove categories as needed
+ * 3. Pass to settings menu widget
  */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_SettingsConfiguration

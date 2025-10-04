@@ -7,10 +7,28 @@
 #include "GameFramework/SaveGame.h"
 #include "MCore_PlayerSettingsSave.generated.h"
 
+/** Delegate called when player settings finish loading asynchronously */
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnPlayerSettingsLoaded, UMCore_PlayerSettingsSave*, PlayerSettings);
 
 /**
- * 
+ * Player settings save game
+ *
+ * Stores UI preferences and menu state (not gameplay settings - use UGameUserSettings for those).
+ * Automatically saved when modified.
+ *
+ * Saved Data:
+ * - UI Scale
+ * - Tooltip delay
+ * - Last selected settings tab
+ * - Collapsed category states
+ * - First-time experience flags
+ *
+ * Blueprint Usage:
+ * - LoadPlayerSettings() to get saved instance
+ * - Modify properties
+ * - SaveSettings() to persist changes
+ *
+ * Note: Implementations are currently stubs - awaiting completion.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
@@ -20,31 +38,47 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	public:
     UMCore_PlayerSettingsSave();
 
-    // Core UI Preferences (high value to remember)
+    /** UI scale multiplier (0.5 to 2.0) */
     UPROPERTY(SaveGame)
     float UIScale{1.0f};
-    
+
+    /** Tooltip hover delay in milliseconds */
     UPROPERTY(SaveGame)
     int32 TooltipDelayMs{500};
 
-    // Menu State (improves UX by remembering user choices)
+    /** Last settings tab the player had open (restored on re-open) */
     UPROPERTY(SaveGame)
     EMCore_SettingsTab LastSelectedTab = EMCore_SettingsTab::Graphics;
-    
+
+    /** Which setting categories were collapsed (per tab) */
     UPROPERTY(SaveGame)
     TMap<EMCore_SettingsTab, bool> CollapsedCategories;
-    
-    // First-time experience
+
+    /** Has player seen the welcome screen? (prevents showing twice) */
     UPROPERTY(SaveGame)
     bool bHasSeenWelcomeScreen = false;
 
-    // Save/Load Interface
+    /** Save current settings to disk. Call after modifying properties */
     UFUNCTION(BlueprintCallable, Category="Player Settings")
     void SaveSettings();
-    
+
+    /**
+     * Load player settings from disk (synchronous)
+     *
+     * Returns existing save if found, or creates new instance with defaults.
+     *
+     * @return Player settings instance
+     */
     UFUNCTION(BlueprintCallable, Category="Player Settings")
     static UMCore_PlayerSettingsSave* LoadPlayerSettings();
-    
+
+    /**
+     * Load player settings from disk (asynchronous)
+     *
+     * Useful for loading screens. OnLoaded callback receives settings instance.
+     *
+     * @param OnLoaded - Delegate called when loading completes
+     */
     UFUNCTION(BlueprintCallable, Category="Player Settings")
     static void LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded OnLoaded);
 

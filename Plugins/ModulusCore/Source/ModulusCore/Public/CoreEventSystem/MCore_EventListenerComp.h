@@ -14,7 +14,19 @@ struct FMCore_EventData;
 
 /**
  * Drop-in component for actors that need to receive events
- * Handles automatic registration/cleanup and tag-based filtering
+ *
+ * Handles automatic registration with Local and Global event subsystems.
+ * Filters events by GameplayTag subscriptions. Add to any actor to receive event notifications.
+ *
+ * Common Uses:
+ * - UI widgets listening for game state changes (quest updates, player stats)
+ * - Gameplay actors responding to world events (time of day, weather changes)
+ * - Cross-plugin communication without direct dependencies
+ *
+ * Blueprint Usage:
+ * 1. Add component to actor/widget
+ * 2. Set SubscribedEvents tags (or leave empty to receive all events)
+ * 3. Implement OnEventReceived Blueprint event
  */
 UCLASS(ClassGroup=(ModulusGameFramework), BlueprintType, meta=(BlueprintSpawnableComponent))
 class MODULUSCORE_API UMCore_EventListenerComp : public UMCore_NetworkingComponent
@@ -25,28 +37,26 @@ public:
 	// Sets default values for this component's properties
 	UMCore_EventListenerComp();
 
-	/**
-	 * Events to listen for (using Gameplay Tags)
-	 * Leave empty to receive all events
-	 */
+	/** Tags to filter events (e.g., MCore.Events.Player.*, MCore.Events.Quest.Completed). Leave empty to receive all events */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Listening", meta = (Categories = "MCore.Events"))
 	FGameplayTagContainer SubscribedEvents;
 
-	/**
-	 * Whether to receive local events (this client only)
-	 */
+	/** Receive events broadcast locally (this client only) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Listening")
 	bool bReceiveLocalEvents{true};
 
-	/**
-	 * Whether to receive global events (from all players)
-	 */
+	/** Receive events broadcast globally (networked from server) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event Listening")
 	bool bReceiveGlobalEvents{true};
-	
+
 	/**
 	 * Called when a subscribed event is received
-	 * Implement this in Blueprint to handle events
+	 *
+	 * Implement in Blueprint to handle event notifications.
+	 * Use EventData.EventTag to determine event type, then query EventData.Parameters or subsystems for details.
+	 *
+	 * @param EventData - Event information (tag, parameters, timestamp)
+	 * @param bWasGlobalEvent - True if event came from Global subsystem (networked), false if Local
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Event Handling")
 	void OnEventReceived(const FMCore_EventData& EventData, bool bWasGlobalEvent);
@@ -56,14 +66,10 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	/**
-	 * Internal - called by subsystems to deliver events
-	 */
+	/** Internal - called by subsystems to deliver events. Do not call directly */
 	void DeliverEvent(const FMCore_EventData& EventData, bool bWasGlobalEvent);
 
-	/**
-	 * Check if this component should receive a specific event
-	 */
+	/** Internal - check if this component should receive a specific event based on filters */
 	bool ShouldReceiveEvent(const FMCore_EventData& EventData, bool bIsGlobalEvent) const;
 
 private:

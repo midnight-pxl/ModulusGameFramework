@@ -6,6 +6,22 @@
 #include "MCore_NetworkingInterface.h"
 #include "MCore_NetworkingComponent.generated.h"
 
+/**
+ * Base networking component for ModulusCore
+ *
+ * Provides authority validation, replication helpers, and Iris detection.
+ * Derive from this for components that need network-aware functionality.
+ *
+ * Common Uses:
+ * - Event listener components (UMCore_EventListenerComp)
+ * - Replicated gameplay components
+ * - Components that need server/client authority checks
+ *
+ * Blueprint Usage:
+ * - CanExecuteServerOperation() to check if component can run server logic
+ * - CanExecuteClientOperation() to check if component can run client logic
+ * - ForceNetUpdate() to prioritize this component's replication
+ */
 UCLASS(Abstract, BlueprintType, ClassGroup=(ModulusCore))
 class MODULUSCORE_API UMCore_NetworkingComponent : public UActorComponent, public IMCore_NetworkingInterface
 {
@@ -14,25 +30,28 @@ class MODULUSCORE_API UMCore_NetworkingComponent : public UActorComponent, publi
 public:
 	UMCore_NetworkingComponent();
 
-	// Authority Validations	
+	/** Check if this component has network authority (server in client-server, or standalone) */
 	virtual bool HasNetworkAuthority() const override
 	{
 		return GetOwner() ? GetOwner()->HasAuthority() : false;
 	};
 
+	/** Check if this component can execute server-authoritative operations */
 	UFUNCTION(BlueprintPure, Category="Networking|Authority")
 	bool CanExecuteServerOperation() const { return HasNetworkAuthority(); }
 
+	/** Check if this component can execute client-side operations (false on dedicated server) */
 	UFUNCTION(BlueprintPure, Category="Networking|Authority")
 	bool CanExecuteClientOperation() const
 	{
 		return GetOwner() ? (GetOwner()->GetNetMode() != NM_DedicatedServer) : false;
 	}
 
+	/** Check if using Unreal Engine 5's Iris replication system (vs legacy replication) */
 	UFUNCTION(BlueprintPure, Category="Networking|Replication")
 	bool IsUsingIrisReplication() const;
-	
-	// Performance Utility
+
+	/** Force immediate network update for this component (use sparingly - performance cost) */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Replication")
 	void ForceNetUpdate();
 
