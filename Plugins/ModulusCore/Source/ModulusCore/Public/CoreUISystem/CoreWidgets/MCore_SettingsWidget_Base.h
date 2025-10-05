@@ -3,9 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CommonActivatableWidget.h"
 #include "GameplayTagContainer.h"
-#include "MCore_ActivatableWidget.h"
 #include "MCore_SettingsWidget_Base.generated.h"
+
+class UMCore_UISubsystem;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
+	FGameplayTag, SettingTag,
+	FString, NewValue);
 
 /**
  * Base class for all setting widgets
@@ -20,7 +26,7 @@
  * - UMCore_SettingWidget_KeyBinding (input remapping)
  */
 UCLASS(Abstract, Blueprintable)
-class MODULUSCORE_API UMCore_SettingsWidget_Base : public UMCore_ActivatableWidget
+class MODULUSCORE_API UMCore_SettingsWidget_Base : public UCommonUserWidget
 {
 	GENERATED_BODY()
 
@@ -47,20 +53,43 @@ public:
 	/** Explanation shown when setting is disabled (e.g., "Requires HDR-capable display") */
 	UPROPERTY(BlueprintReadOnly, Category = "Setting State")
 	FText DisabledReason;
+
+	/** Should value changes broadcast to Modulus global event system? */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Configuration")
+	bool bBroadcastToEventSystem = false;
+
+	/**
+	 * Delegates
+	 */
+
+	/** 
+	 * Fires when setting value changes.
+	 * Provides generic string-based notification for any setting type.
+	 * 
+	 * Use this when you:
+	 * - Need "something changed" notification (enable Apply button)
+	 * - Don't care about the actual value
+	 * - Want to handle multiple setting types with one handler
+	 * 
+	 * For type-safe value access, bind to derived class delegates instead:
+	 * - OnToggleChanged, OnSliderChanged, etc.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Setting Events")
+	FOnSettingValueChanged OnValueChanged;
 	
 	/**
 	 * Reset this setting to its default value
 	 * Derived classes should restore default, update UI, and broadcast change
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Setting Widget")
-	virtual void ResetToDefault() PURE_VIRTUAL(UMCore_SettingWidget_Base::ResetToDefault, );
+	virtual void ResetToDefault();
 	
 	/**
 	 * Check if current value differs from default
 	 * Used for "unsaved changes" indicators
 	 */
 	UFUNCTION(BlueprintPure, Category = "Setting Widget")
-	virtual bool IsModifiedFromDefault() const PURE_VIRTUAL(UMCore_SettingWidget_Base::IsModifiedFromDefault, return false;);
+	virtual bool IsModifiedFromDefault();
 	
 	/**
 	 * Enable or disable this setting widget
@@ -69,6 +98,14 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Setting Widget")
 	void SetEnabled(bool bInEnable, FText Reason = FText::GetEmpty());
+
+	/** Load value from game settings (via subsystem) */
+	UFUNCTION(BlueprintCallable, Category = "Setting")
+	virtual void LoadValue();
+    
+	/** Save value to game settings (via subsystem) */
+	UFUNCTION(BlueprintCallable, Category = "Setting")
+	virtual void SaveValue();
 	
 	/**
 	 * Initialize widget with setting info
@@ -80,13 +117,53 @@ public:
 	                     FText InDescription = FText::GetEmpty());
 	
 protected:
-	/**
-	 * Update widget's visual appearance
-	 * Derived classes override to update UI elements (slider position, checkbox state, etc.)
+
+	virtual void NativeConstruct() override;
+	
+	/** 
+	 * Update visual state based on current value and enabled state.
+	 * 
+	 * Override this to update your widget's visual appearance when:
+	 * - Value changes
+	 * - Enabled state changes
+	 * - Theme is applied
+	 * 
+	 * Example: Update toggle knob position, slider thumb location, dropdown selection.
+	 * 
+	 * NOTE: This is NOT called automatically when value changes.
+	 * Derived classes must call this explicitly when appropriate.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Setting Widget")
 	void UpdateVisualState();
 	virtual void UpdateVisualState_Implementation();
 	
-	virtual void NativeConstruct() override;
+    /** 
+     * Called when value changes.
+     * Fires OnValueChanged delegate with string-based value.
+     * 
+     * Derived classes should call this after changing their value:
+     * - SetValue(bool) → OnValueChangedInternal("true")
+     * - SetValue(float) → OnValueChangedInternal(LexToString(Value))
+     * 
+     * This method ONLY fires the delegate. It does NOT:
+     * - Call UpdateVisualState() (derived class controls timing)
+     * - Broadcast to event system (settings screen handles if needed)
+     * - Save value (derived class or settings screen handles)
+     * 
+     * @param NewValue - New value as string (for generic delegate)
+     */
+    virtual void OnValueChangedInternal(const FString& NewValue);
+	
+    /** 
+     * Get settings subsystem (cached for performance).
+     * Use this to load/save values in derived classes.
+     * 
+     * @return Settings subsystem, or nullptr if not available
+     */
+    UFUNCTION(BlueprintPure, Category = "Setting Helpers")
+    UMCore_UISubsystem* GetMCoreUISubsystem() const;
+    
+private:
+    /** Cached settings subsystem reference (performance optimization) */
+    mutable TWeakObjectPtr<UMCore_UISubsystem> CachedUISubsystem;
 };
