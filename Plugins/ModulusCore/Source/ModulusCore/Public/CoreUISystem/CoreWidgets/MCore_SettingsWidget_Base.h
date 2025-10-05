@@ -42,7 +42,7 @@ public:
 	
 	/** Is this setting currently enabled? Disabled settings are grayed out and non-interactive */
 	UPROPERTY(BlueprintReadOnly, Category = "Setting State")
-	bool bIsEnabled = true;
+	bool bEnabled = true;
 
 	/** Explanation shown when setting is disabled (e.g., "Requires HDR-capable display") */
 	UPROPERTY(BlueprintReadOnly, Category = "Setting State")
@@ -64,11 +64,11 @@ public:
 	
 	/**
 	 * Enable or disable this setting widget
-	 * @param bEnabled - True to enable, false to disable
+	 * @param bInEnable - True to enable, false to disable
 	 * @param Reason - Optional reason shown in tooltip when disabled
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Setting Widget")
-	void SetEnabled(bool bEnabled, FText Reason = FText::GetEmpty());
+	void SetEnabled(bool bInEnable, FText Reason = FText::GetEmpty());
 	
 	/**
 	 * Initialize widget with setting info
