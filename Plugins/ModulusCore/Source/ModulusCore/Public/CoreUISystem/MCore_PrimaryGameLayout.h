@@ -42,5 +42,5 @@ public:
     TObjectPtr<UCommonActivatableWidgetStack> MCore_ModalLayer;
 
 private:
-	void NativeOnInitialized() override;
+	virtual void NativeOnInitialized() override;
 };
