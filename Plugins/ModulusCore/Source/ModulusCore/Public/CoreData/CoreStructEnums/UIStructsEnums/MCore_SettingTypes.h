@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MCore_UITypes.generated.h"
+#include "MCore_SettingTypes.generated.h"
 
 /**
  * Core settings tabs - type-safe alternative to FString
