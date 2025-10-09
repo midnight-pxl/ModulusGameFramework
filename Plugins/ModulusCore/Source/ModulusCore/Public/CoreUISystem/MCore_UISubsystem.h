@@ -121,6 +121,9 @@ public:
     int32 GetRegisteredScreenCount() const { return RegisteredMenuScreens.Num(); }
 
 private:
+	UPROPERTY()
+	TSubclassOf<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_PrimaryGameLayout> CachedPrimaryGameLayout;
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
 #include "MCore_PlayerController.generated.h"
 
@@ -26,6 +27,20 @@ class MODULUSCORE_API AMCore_PlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	AMCore_PlayerController();
+	
 protected:
+	//~ Begin AActor Interface
+	virtual void BeginPlay() override;
+	//~ End AActor Interface
+
+	//~ Begin APlayerController Interface
+	virtual void SetupInputComponent() override;
+	//~ End APlayerController Interface
+	
 	virtual void OnPossess(APawn* aPawn) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Modulus|Input")
+	TArray<TObjectPtr<UInputMappingContext>> DefaultInputContexts;
 };
