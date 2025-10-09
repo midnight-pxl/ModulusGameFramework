@@ -28,72 +28,50 @@ bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InL
 	return true;
 }
 
-FGuid UMCore_UISubsystem::RegisterMenuTab(const FMCore_MenuTab& Tab)
+void UMCore_UISubsystem::RegisterMenuScreen(TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass, const FText& TabName,
+	int32 Priority, UTexture2D* TabIcon)
 {
-	if (!Tab.PageWidget)
+	if (!ScreenWidgetClass)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Cannot register menu tab '%s' - PageWidget is null"),
-			*Tab.TabLabel.ToString());
-		return FGuid();
+		UE_LOG(LogModulusUI, Warning, TEXT("RegisterMenuScreen: ScreenWidgetClass is null"));
+		return;
 	}
 
-	// Check for duplicate registration by PageWidget class
-	for (const FMCore_MenuTab& ExistingTab : RegisteredMenuTabs)
+	if (TabName.IsEmpty())
 	{
-		if (ExistingTab.PageWidget == Tab.PageWidget)
-		{
-			UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Menu tab already registered for widget class '%s'"),
-				*Tab.PageWidget->GetName());
-			return ExistingTab.TabID;
-		}
+		UE_LOG(LogModulusUI, Warning, TEXT("RegisterMenuScreen: TabName is empty for %s"),
+			*ScreenWidgetClass->GetName());
+		return;
 	}
 
-	// Create registered copy with guaranteed unique ID
-	FMCore_MenuTab RegisteredTab = Tab;
-	if (!RegisteredTab.TabID.IsValid())
+	if (IsScreenRegistered(ScreenWidgetClass))
 	{
-		RegisteredTab.TabID = FGuid::NewGuid();
+		UE_LOG(LogModulusUI, Log, TEXT("Screen %s already registered in menu hub"),
+			*ScreenWidgetClass->GetName());
+		return;
 	}
 
-	// Add and sort by priority
-	RegisteredMenuTabs.Add(RegisteredTab);
-	RegisteredMenuTabs.Sort();
+	// Create new tab info
+	FMCore_MenuTab NewTab;
+	NewTab.TabName = TabName;
+	NewTab.TabIcon = TabIcon;
+	NewTab.ScreenWidgetClass = ScreenWidgetClass;  // ← Consistent naming
+	NewTab.Priority = Priority;
 
-	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Registered menu tab '%s' (Priority: %d, ID: %s)"),
-		*RegisteredTab.TabLabel.ToString(),
-		RegisteredTab.Priority,
-		*RegisteredTab.TabID.ToString());
+	// Add and sort
+	RegisteredMenuScreens.Add(NewTab);
+	RegisteredMenuScreens.Sort();
 
-	return RegisteredTab.TabID;
+	UE_LOG(LogModulusUI, Verbose, TEXT("Registered menu screen '%s' (Priority: %d, TabID: %s)"),
+	*TabName.ToString(), Priority, *NewTab.TabID.ToString());
 }
 
-bool UMCore_UISubsystem::UnregisterMenuTab(TSubclassOf<UCommonActivatableWidget> PageWidget)
+bool UMCore_UISubsystem::IsScreenRegistered(TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass) const
 {
-	if (!PageWidget)
-	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Cannot unregister menu tab - PageWidget is null"));
-		return false;
-	}
+	if (!ScreenWidgetClass) { return false; }
 
-	const int32 RemovedCount = RegisteredMenuTabs.RemoveAll([PageWidget](const FMCore_MenuTab& Tab)
+	return RegisteredMenuScreens.ContainsByPredicate([ScreenWidgetClass](const FMCore_MenuTab& InMenuTab)
 	{
-		return Tab.PageWidget == PageWidget;
+		return InMenuTab.ScreenWidgetClass == ScreenWidgetClass;
 	});
-
-	if (RemovedCount > 0)
-	{
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Unregistered %d menu tab(s) for widget class '%s'"),
-			RemovedCount, *PageWidget->GetName());
-		return true;
-	}
-
-	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: No menu tab found for widget class '%s'"),
-		*PageWidget->GetName());
-	
-	return false;
-}
-
-TArray<FMCore_MenuTab> UMCore_UISubsystem::GetRegisteredMenuTabs() const
-{
-	return RegisteredMenuTabs;
 }

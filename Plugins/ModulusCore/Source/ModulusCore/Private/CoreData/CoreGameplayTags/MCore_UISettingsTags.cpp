@@ -1,7 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
-#include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingType.h" // For EMCore_SettingType
+#include "CoreData/CoreStructEnums/SettingsStructsEnums/CoreGameSettings/MCore_GameSettingType.h" // For EMCore_SettingType
 
 namespace MCore_UISettingsTags
 {

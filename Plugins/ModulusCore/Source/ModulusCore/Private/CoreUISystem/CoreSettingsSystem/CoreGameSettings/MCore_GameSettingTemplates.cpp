@@ -1,7 +1,6 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreData/CoreStructEnums/UIStructsEnums/CoreGameSettings/MCore_GameSettingTemplates.h"
-
+#include "CoreData/CoreStructEnums/SettingsStructsEnums/CoreGameSettings/MCore_GameSettingTemplates.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputSubsystemInterface.h"
@@ -783,9 +782,7 @@ TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControl
     return BasicControls;
 }
 
-// ============================================================================
-// VALIDATION UTILITIES
-// ============================================================================
+/** Validation utilities */
 
 bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
     UObject* WorldContext, 

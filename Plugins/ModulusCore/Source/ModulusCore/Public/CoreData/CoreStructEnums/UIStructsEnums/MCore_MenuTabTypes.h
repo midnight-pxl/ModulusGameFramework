@@ -6,10 +6,22 @@
 #include "MCore_MenuTabTypes.generated.h"
 
 class UCommonActivatableWidget;
+
 /**
-   * Menu tab registration data for in-game menu hub
-   */
-  USTRUCT(BlueprintType)
+ * Menu tab registration data for in-game menu hub
+ *
+ * Lightweight struct storing tab information for plugin screen registration.
+ * Each tab displays a button in the menu hub that activates its screen widget.
+ *
+ * Common Priorities:
+ * - 100 = Character/Inventory
+ * - 200 = Abilities/Skills
+ * - 300 = Quests/Journal  
+ * - 400 = Map/World
+ * - 500 = Social/Guild
+ * - 600 = System/Settings
+ */
+USTRUCT(BlueprintType)
 struct FMCore_MenuTab
 {
   	GENERATED_BODY()
@@ -22,7 +34,7 @@ public:
   	
 	/** Display name shown on tab button */
   	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")
-  	FText TabLabel = FText::GetEmpty();
+  	FText TabName = FText::GetEmpty();
 
   	/** Icon displayed on tab button (optional) */
   	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")
@@ -30,7 +42,7 @@ public:
 
   	/** Widget class to display when tab is active */
   	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")
-  	TSubclassOf<UCommonActivatableWidget> PageWidget;
+  	TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass;
 
   	/** Sort order (lower = left, higher = right) */
   	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")

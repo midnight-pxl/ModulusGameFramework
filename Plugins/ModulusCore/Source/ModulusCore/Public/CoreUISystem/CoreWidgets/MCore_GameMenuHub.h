@@ -49,8 +49,6 @@ struct FMCore_MenuTab;
       UFUNCTION(BlueprintCallable, Category = "Menu Hub")
       void SwitchToTab(int32 TabIndex);
 
-      // === BLUEPRINT BINDINGS ===
-
       /** Widget stack for displaying active tab's page */
       UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
       TObjectPtr<UCommonActivatableWidgetStack> PageStack;
@@ -64,11 +62,16 @@ struct FMCore_MenuTab;
       TSubclassOf<UMCore_ButtonBase> TabButtonClass;
 
   private:
-      /** Cached registered tabs (refreshed on activation) */
-      UPROPERTY(Transient)
-      TArray<FMCore_MenuTab> CachedTabs;
 
       /** Currently active tab index */
       int32 ActiveTabIndex{-1};
+
+      /** Created tab buttons (for cleanup/updates) */
+      UPROPERTY(Transient)
+      TArray<TObjectPtr<UMCore_ButtonBase>> CachedTabs;
+
+      /** Created screen widgets (cached for reuse) */
+      UPROPERTY(Transient)
+      TArray<TObjectPtr<UCommonActivatableWidget>> ScreenWidgets;
   };
 
