@@ -28,7 +28,7 @@ class MODULUSCORE_API AMCore_PlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	AMCore_PlayerController();
+	AMCore_PlayerController() {}
 	
 protected:
 	//~ Begin AActor Interface
@@ -41,6 +41,11 @@ protected:
 	
 	virtual void OnPossess(APawn* aPawn) override;
 
+	void OnInGameMenuToggle();
+
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|Input")
-	TArray<TObjectPtr<UInputMappingContext>> DefaultInputContexts;
+	TObjectPtr<UInputMappingContext> DefaultModulusContext;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Modulus|Input")
+	TArray<TObjectPtr<UInputMappingContext>> InputContexts;
 };

@@ -3,18 +3,40 @@
 
 #include "CorePlayer/CoreControllers/MCore_PlayerController.h"
 
+#include "EnhancedInputSubsystems.h"
 #include "Camera/CameraActor.h"
+#include "CoreData/CoreLogging/LogModulusSettings.h"
+#include "CoreUISystem/MCore_PrimaryGameLayout.h"
+#include "CoreUISystem/MCore_UISubsystem.h"
 #include "Kismet/GameplayStatics.h"
 
-void AMCore_PlayerController::OnPossess(APawn* aPawn)
+void AMCore_PlayerController::BeginPlay()
 {
-	Super::OnPossess(aPawn);
+	Super::BeginPlay();
+}
 
-	TArray<AActor*> FoundCameras;
-	UGameplayStatics::GetAllActorsOfClassWithTag(this, ACameraActor::StaticClass(), FName("MCore.MainMenu.Default"),FoundCameras);
+void AMCore_PlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
 
-	if (!FoundCameras.IsEmpty())
+	if (!IsLocalController()) return;
+
+	
+}
+
+void AMCore_PlayerController::OnInGameMenuToggle()
+{
+	if (UMCore_UISubsystem* UISubsystem = GetLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
 	{
-		SetViewTargetWithBlend(FoundCameras[0]);
+		if (UMCore_PrimaryGameLayout* GameLayout = UISubsystem->GetPrimaryGameLayout())
+		{
+			UCommonActivatableWidgetStack* LayerStack = GameLayout->MCore_GameMenuLayer;
+
+			if (LayerStack->GetActiveWidget()) { LayerStack->PopWidget(); }
+			else
+			{
+				LayerStack->PushWidget(MenuHu)
+			}
+		}
 	}
 }
