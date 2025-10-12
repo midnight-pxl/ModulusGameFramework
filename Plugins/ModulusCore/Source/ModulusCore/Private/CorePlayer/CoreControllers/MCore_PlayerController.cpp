@@ -20,23 +20,14 @@ void AMCore_PlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	if (!IsLocalController()) return;
-
 	
 }
 
-void AMCore_PlayerController::OnInGameMenuToggle()
+void AMCore_PlayerController::OnPossess(APawn* aPawn)
 {
-	if (UMCore_UISubsystem* UISubsystem = GetLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
-	{
-		if (UMCore_PrimaryGameLayout* GameLayout = UISubsystem->GetPrimaryGameLayout())
-		{
-			UCommonActivatableWidgetStack* LayerStack = GameLayout->MCore_GameMenuLayer;
+	Super::OnPossess(aPawn);
+}
 
-			if (LayerStack->GetActiveWidget()) { LayerStack->PopWidget(); }
-			else
-			{
-				LayerStack->PushWidget(MenuHu)
-			}
-		}
-	}
+void AMCore_PlayerController::ToggleInGameMenu()
+{
 }

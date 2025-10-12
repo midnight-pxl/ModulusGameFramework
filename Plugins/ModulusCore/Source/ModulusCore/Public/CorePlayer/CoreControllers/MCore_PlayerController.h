@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
 #include "MCore_PlayerController.generated.h"
+
+class UInputAction;
+class UInputMappingContext;
 
 /**
  * Base player controller for ModulusCore
@@ -41,7 +43,7 @@ protected:
 	
 	virtual void OnPossess(APawn* aPawn) override;
 
-	void OnInGameMenuToggle();
+	void ToggleInGameMenu();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|Input")
 	TObjectPtr<UInputMappingContext> DefaultModulusContext;

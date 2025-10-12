@@ -7,10 +7,12 @@
 #include "CoreData/CoreStructEnums/UIStructsEnums/MCore_MenuTabTypes.h"
 #include "MCore_UISubsystem.generated.h"
 
+class UTexture2D;
 class UCommonTabListWidgetBase;
+class UMCore_GameMenuHub;
 class UMCore_PrimaryGameLayout;
 class UCommonActivatableWidget;
-struct FMCore_MenuTab;
+struct FGameplayTag;
 
 /**
  * For accessing the primary game layout (CommonUI Widget Stacks)
@@ -40,6 +42,10 @@ class MODULUSCORE_API UMCore_UISubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 
 public:
+	//~USubsystem Interface
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+	//~End USubsystem Interface
 
 	/** Get the primary game layout widget for this local player */
 	UFUNCTION(BlueprintPure, Category = "ModulusUI|Layout")
@@ -55,83 +61,75 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ModulusUI|Layout")
 	bool RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
 
-	/**
-     * Register a menu screen from a plugin
-     *
-     * Plugins call this during component BeginPlay to add their screens
-     * to the in-game menu hub. Screens appear as tabs, sorted by priority.
-     *
-     * Example Usage (ModulusVault):
-     *   UISubsystem->RegisterMenuScreen(
-     *       InventoryScreenClass,
-     *       LOCTEXT("Inventory", "Inventory"),
-     *       100  // Priority: lower numbers appear first
-     *   );
-     *
-     * Common Priorities:
-     * - 100 = Character/Inventory
-     * - 200 = Quests/Journal
-     * - 300 = Map/World
-     * - 400 = Social/Guild
-     * - 500 = System/Settings
-     *
-     * @param ScreenWidgetClass - Widget class for the menu screen
-     * @param TabName - Display name for the tab
-     * @param Priority - Lower numbers appear first (default 100)
-     * @param TabIcon - Optional Icon for the tab
-     */
-    UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
-    void RegisterMenuScreen(
-        TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass,
-        const FText& TabName,
-        int32 Priority = 100,
-        UTexture2D* TabIcon = nullptr
-    );
-
-    /**
-     * Check if a screen is already registered
-     *
-     * Prevents duplicate registration when components re-initialize.
-     *
-     * @param ScreenWidgetClass - Widget class to check
-     * @return True if already registered
-     */
-    UFUNCTION(BlueprintPure, Category = "ModulusUI|MenuHub")
-    bool IsScreenRegistered(TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass) const;
-
-	/**
-	 * Get all registered menu tabs (sorted by priority)
-	 *
-	 * Menu hub widget calls this during NativeOnInitialized to build tabs.
-	 * Returns tabs in priority order (lower priority values first).
-	 *
-	 * @return Array of registered menu tabs
+	/** 
+	 * Get or create the menu hub widget
+	 * Caller is responsible for pushing to appropriate stack
+	 * 
+	 * @return MenuHub widget (created on first call, cached for reuse)
 	 */
+	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
+	UMCore_GameMenuHub* GetOrCreateMenuHub();
+
+	/** Menu screen registration */
+	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
+	void RegisterMenuScreen(
+		FGameplayTag TabID,
+		TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass,
+		int32 Priority = 100,
+		UTexture2D* TabIcon = nullptr);
+
 	UFUNCTION(BlueprintPure, Category = "ModulusUI|MenuHub")
-	const TArray<FMCore_MenuTab>& GetRegisteredMenuScreens() const { return RegisteredMenuScreens; }
+	const TArray<FMCore_MenuTab>& GetRegisteredMenuScreens() const
+	{
+		return RegisteredMenuScreens;
+	}
 
-    /**
-     * Get count of registered menu screens
-     *
-     * Useful for debugging or conditional UI layout.
-     *
-     * @return Number of registered screens
-     */
-    UFUNCTION(BlueprintPure, Category = "ModulusUI|MenuHub")
-    int32 GetRegisteredScreenCount() const { return RegisteredMenuScreens.Num(); }
+	void RebuildTabBar();
 
-private:
+protected:
+
 	UPROPERTY()
 	TSubclassOf<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
+	
+	UPROPERTY()
+	TSubclassOf<UMCore_GameMenuHub> MenuHubClass;
+
+private:
 	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_PrimaryGameLayout> CachedPrimaryGameLayout;
 
+	/** Cached reference to menu hub tab list (if created) */
+	UPROPERTY(Transient)
+	TWeakObjectPtr<UMCore_GameMenuHub> CachedMenuHub;
+	
 	/** Registered menu screens for this local player */
 	UPROPERTY(Transient)
 	TArray<FMCore_MenuTab> RegisteredMenuScreens;
 
-	/** Cached reference to menu hub tab list (if created) */
-	UPROPERTY(Transient)
-	TWeakObjectPtr<UCommonTabListWidgetBase> CachedMenuHub;
+	/**
+	 * Load widget classes from configuration
+	 * 
+	 * Current: Hard-coded asset paths (temporary)
+	 * Future: Load from UMCore_UISettings (project settings)
+	 * 
+	 * Called during Initialize() before CreatePrimaryGameLayout()
+	 */
+	void LoadWidgetClasses();
+	
+	/**
+	 * Create and cache PrimaryGameLayout widget
+	 * 
+	 * - Creates widget instance
+	 * - Adds to viewport at Z-Order 0
+	 * - Validates widget stack bindings
+	 * - Caches for future access
+	 * 
+	 * Called during Initialize() after LoadWidgetClasses()
+	 */
+	void CreatePrimaryGameLayout();
+	
+	void RebuildMenuHub();
+
+	bool RetryLayoutCreation(float DeltaTime);
 };
