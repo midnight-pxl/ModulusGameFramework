@@ -4,11 +4,11 @@
 
 #include "GameplayTagContainer.h"
 #include "CommonTabListWidgetBase.h"
+#include "CommonAnimatedSwitcher.h"
 #include "CoreUISystem/MCore_UISubsystem.h"
 #include "CoreData/CoreLogging/LogModulusUI.h"
 #include "CoreData/CoreStructEnums/UIStructsEnums/MCore_MenuTabTypes.h"
 #include "CoreUISystem/CoreWidgets/WidgetPrimitives/MCore_ButtonBase.h"
-#include "Widgets/CommonActivatableWidgetContainer.h"
 
 UMCore_GameMenuHub::UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializer)
   : Super(ObjectInitializer)
@@ -18,10 +18,10 @@ UMCore_GameMenuHub::UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializ
 void UMCore_GameMenuHub::RebuildTabBar()
 {
     // Validate BindWidget components
-    if (!TabList || !PageStack)
+    if (!TabList || !PageSwitcher)
     {
         UE_LOG(LogModulusUI, Error,
-            TEXT("GameMenuHub: TabList or PageStack not bound - verify BindWidget in Blueprint"));
+            TEXT("GameMenuHub: TabList or PageSwitcher not bound - verify BindWidget in Blueprint"));
         return;
     }
 
@@ -46,10 +46,20 @@ void UMCore_GameMenuHub::RebuildTabBar()
     // Empty state: No screens registered
     if (RegisteredScreens.IsEmpty())
     {
+        PageSwitcher->ClearChildren();
+        ScreenWidgets.Empty();
+        
         if (EmptyStateWidgetClass)
         {
-            PageStack->AddWidget(EmptyStateWidgetClass);
-            UE_LOG(LogModulusUI, Log, TEXT("GameMenuHub: Showing empty state (no screens registered)"));
+            UCommonActivatableWidget* EmptyWidget = CreateWidget<UCommonActivatableWidget>(
+                GetOwningPlayer(), EmptyStateWidgetClass);
+
+            if (EmptyWidget)
+            {
+                PageSwitcher->AddChild(EmptyWidget);
+                PageSwitcher->SetActiveWidget(EmptyWidget);
+                UE_LOG(LogModulusUI, Log, TEXT("GameMenuHub: Showing empty state (no screens registered)"));
+            }                
         }
         else
         {
@@ -60,6 +70,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
 
     // Clear existing tabs
     TabList->RemoveAllTabs();
+    PageSwitcher->ClearChildren();
     ScreenWidgets.Empty();
     
     // Validate button class with framework default fallback
@@ -102,7 +113,8 @@ void UMCore_GameMenuHub::RebuildTabBar()
             continue;
         }
 
-        // Register with TabList - explicit index for priority order
+        PageSwitcher->AddChild(ScreenWidget);
+        
         // RegisteredScreens already sorted by priority in UISubsystem
         TabList->RegisterTab(TabNameID, ButtonClass, ScreenWidget, Index);
         
@@ -110,7 +122,6 @@ void UMCore_GameMenuHub::RebuildTabBar()
         ScreenWidgets.Add(TabNameID, ScreenWidget);
         
         // Configure tab button (text + optional icon)
-        // GetTabButtonBaseByID returns UCommonButtonBase*, must cast to access MCore APIs
         if (UCommonButtonBase* ButtonBase = TabList->GetTabButtonBaseByID(TabNameID))
         {
             // Cast to MCore_ButtonBase - guaranteed to succeed due to type enforcement
@@ -142,21 +153,52 @@ void UMCore_GameMenuHub::RebuildTabBar()
     
     // Bind tab selection delegate
     TabList->OnTabSelected.Clear();
-    TabList->OnTabSelected.AddUniqueDynamic(this, &UMCore_GameMenuHub::HandleTabSelected);
+    TabList->OnTabSelected.AddUniqueDynamic(this, &ThisClass::HandleTabSelected);
     
     // Select first tab to show initial content
     if (!RegisteredScreens.IsEmpty())
     {
         FName FirstTabID = FName(*RegisteredScreens[0].TabID.ToString());
         TabList->SelectTabByID(FirstTabID);
+        
+        UE_LOG(LogModulusUI, Log, 
+            TEXT("GameMenuHub: Rebuilt tab bar with %d tabs, %d widgets in PageSwitcher"),
+            RegisteredScreens.Num(),
+            PageSwitcher->GetChildrenCount());
     }
-    
-    UE_LOG(LogModulusUI, Log, 
-        TEXT("GameMenuHub: Rebuilt tab bar with %d tabs using %s"),
-        RegisteredScreens.Num(),
-        *ButtonClass->GetName());
 }
 
 void UMCore_GameMenuHub::HandleTabSelected(FName TabNameID)
 {
+    if (!PageSwitcher)
+    {
+        UE_LOG(LogModulusUI, Error,
+       TEXT("HandleTabSelected: Stack is null. Cannot display page content."));
+        return;
+    }
+    
+    TObjectPtr<UCommonActivatableWidget>* NamedWidget = ScreenWidgets.Find(TabNameID);
+    if (!NamedWidget || !*NamedWidget)
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("HandleTabSelected: Tab '%s' not found. Screen may not be registered."),
+            *TabNameID.ToString());
+        return;
+    }
+
+    if (!PageSwitcher->HasChild(*NamedWidget))
+    {
+        UE_LOG(LogModulusUI, Error,
+            TEXT("HandleTabSelected: Widget for tab '%s' is not child of PageSwitcher, rebuilding tab bar"),
+            *TabNameID.ToString());
+
+        // Try to recover by rebuilding
+        RebuildTabBar();
+        return;
+    }
+
+    // Deactivate current widgets in target stack
+    PageSwitcher->SetActiveWidget(*NamedWidget);
+
+    UE_LOG(LogModulusUI, Log, TEXT("HandleTabSelected: Successfully switched to tab '%s'"), 
+       *TabNameID.ToString());
 }

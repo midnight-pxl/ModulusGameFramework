@@ -7,8 +7,8 @@
 #include "MCore_GameMenuHub.generated.h"
 
 class UMCore_ButtonBase;
+class UCommonAnimatedSwitcher;
 class UCommonTabListWidgetBase;
-class UCommonActivatableWidgetStack;
 
 /**
  * In-Game Menu Hub - Tabbed interface for plugin menu pages
@@ -50,9 +50,9 @@ protected:
     UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
     TObjectPtr<UCommonTabListWidgetBase> TabList;
 
-    /** Widget stack for displaying active tab's page */
+    /** Widget switcher for displaying active tab's page */
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-    TObjectPtr<UCommonActivatableWidgetStack> PageStack;
+    TObjectPtr<UCommonAnimatedSwitcher> PageSwitcher;
 
     /** Tab button class UMCore_ButtonBase for text and icon integration */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu Hub")
@@ -64,7 +64,7 @@ protected:
 private:
     /** 
      * CommonUI delegate - called when user selects tab
-     * Loads corresponding screen widget into PageStack
+     * Loads corresponding screen widget into PageSwitcher
      */
     UFUNCTION()
     void HandleTabSelected(FName TabNameID);
