@@ -7,6 +7,7 @@
 #include "CoreData/CoreStructEnums/UIStructsEnums/MCore_MenuTabTypes.h"
 #include "MCore_UISubsystem.generated.h"
 
+class UMCore_DA_UITheme_Base;
 class UTexture2D;
 class UCommonTabListWidgetBase;
 class UMCore_GameMenuHub;
@@ -85,6 +86,12 @@ public:
 	}
 
 	void RebuildTabBar();
+	
+	/**
+	 * Get active UI theme from Dev Settings
+	 */
+	 UFUNCTION(BlueprintCallable, Category = "ModulusUI|Theme")
+	virtual UMCore_DA_UITheme_Base* GetActiveTheme() const;
 
 protected:
 

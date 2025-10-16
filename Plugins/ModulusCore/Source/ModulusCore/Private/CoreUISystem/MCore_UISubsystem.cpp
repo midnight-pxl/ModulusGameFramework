@@ -5,8 +5,9 @@
 #include "GameplayTagContainer.h"
 #include "CoreUISystem/MCore_PrimaryGameLayout.h"
 #include "CoreUISystem/CoreWidgets/MCore_GameMenuHub.h"
-
+#include "CoreData/CoreDataAssets/UIDAs/MCore_DA_UITheme_Base.h"
 #include "CommonUI/Public/CommonTabListWidgetBase.h"
+#include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "Engine/LocalPlayer.h"
 #include "CoreData/CoreLogging/LogModulusUI.h"
 
@@ -181,6 +182,16 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 
 void UMCore_UISubsystem::RebuildTabBar()
 {
+}
+
+UMCore_DA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
+{
+	const UMCore_CommonUISettings* UISettings = UMCore_CommonUISettings::Get();
+	if (UISettings && !UISettings->CurrentThemeAsset.IsNull())
+	{
+		return UISettings->CurrentThemeAsset.LoadSynchronous();
+	}
+	return nullptr;	
 }
 
 void UMCore_UISubsystem::LoadWidgetClasses()

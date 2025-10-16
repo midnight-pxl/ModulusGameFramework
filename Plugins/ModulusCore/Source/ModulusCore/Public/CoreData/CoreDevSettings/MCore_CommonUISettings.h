@@ -4,10 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "CoreData/CoreStructEnums/SettingsStructsEnums/CoreGameSettings/MCore_GameSettingType.h"
+#include "CoreData/CoreDataAssets/UIDAs/MCore_DA_UITheme_Base.h"
 #include "Engine/DeveloperSettings.h"
 #include "MCore_CommonUISettings.generated.h"
-
-class UMCore_DA_UITheme_Base;
 
 /**
  * 
@@ -49,4 +48,6 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Configuration",
 		meta=(DisplayName = "Default Settings Config"))
 	TSoftObjectPtr<class UMCore_DA_GameSettings_Organization> CurrentDefaultSettings;
+
+	static const UMCore_CommonUISettings* Get();
 };
