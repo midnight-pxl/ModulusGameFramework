@@ -4,6 +4,11 @@
 #include "CommonTextBlock.h"
 #include "Components/Image.h"
 
+UMCore_ButtonBase::UMCore_ButtonBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
 void UMCore_ButtonBase::SetButtonText(const FText& InText)
 {
 	if (!Text_ButtonTxt)
@@ -36,6 +41,24 @@ void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
 	{
   		Image_ButtonIcon->SetVisibility(ESlateVisibility::Collapsed);
 	}
+}
+
+void UMCore_ButtonBase::SetButtonEnabled(bool bInEnabled)
+{
+}
+
+void UMCore_ButtonBase::NativeOnClicked()
+{
+	Super::NativeOnClicked();
+}
+
+void UMCore_ButtonBase::ApplyUITheme()
+{
+}
+
+void UMCore_ButtonBase::NativePreConstruct()
+{
+	Super::NativePreConstruct();
 }
 
 FText UMCore_ButtonBase::GetButtonText() const

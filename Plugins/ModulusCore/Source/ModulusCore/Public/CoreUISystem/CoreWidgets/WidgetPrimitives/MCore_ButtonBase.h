@@ -58,7 +58,7 @@ public:
 	 * Enable/Disable button's interactivity (greyed out when disabled)
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Button Content")
-	void SetButtonEnabled(bool bIsEnabled);
+	void SetButtonEnabled(bool bInEnabled);
 
 protected:
 	//~ Start UCommonButtonBase Interface

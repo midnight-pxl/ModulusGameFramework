@@ -5,7 +5,6 @@
 #if WITH_EDITOR
 #include "Editor/WidgetCompilerLog.h"
 #include "Blueprint/WidgetTree.h"
-#include "Misc/UObjectToken.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "ModulusCoreUI"
@@ -15,6 +14,7 @@ UMCore_ActivatableBase::UMCore_ActivatableBase(const FObjectInitializer& ObjectI
 {
 }
 
+#if WITH_EDITOR
 void UMCore_ActivatableBase::ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree,
                                                         class IWidgetCompilerLog& CompileLog) const
 {

@@ -36,7 +36,8 @@ public:
 	 * Request theme refresh from Developer Settings.
 	 * Call this in NativeOnInitialized() to apply the initial theme.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Modulus|Theme")
+	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|Theme")
 	void RefreshTheme();
+	virtual void RefreshTheme_Implementation() {}
 	
 };
