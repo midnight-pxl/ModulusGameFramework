@@ -6,22 +6,22 @@
 
 void UMCore_ButtonBase::SetButtonText(const FText& InText)
 {
-	if (!Text_Label)
+	if (!Text_ButtonTxt)
 	{
   		// Widget not bound in Blueprint - silently ignore
   		return;
 	}
 
-	Text_Label->SetText(InText);
+	Text_ButtonTxt->SetText(InText);
 
 	// Show/hide text widget based on whether text is empty
 	const bool bShouldShowText = !InText.IsEmpty();
-	Text_Label->SetVisibility(bShouldShowText ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	Text_ButtonTxt->SetVisibility(bShouldShowText ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 }
 
 void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
 {
-	if (!Image_Icon)
+	if (!Image_ButtonIcon)
 	{
   		// Widget not bound in Blueprint - silently ignore
   		return;
@@ -29,20 +29,20 @@ void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
 
 	if (InIcon)
 	{
-  		Image_Icon->SetBrushFromTexture(InIcon);
-  		Image_Icon->SetVisibility(ESlateVisibility::HitTestInvisible);
+  		Image_ButtonIcon->SetBrushFromTexture(InIcon);
+  		Image_ButtonIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 	else
 	{
-  		Image_Icon->SetVisibility(ESlateVisibility::Collapsed);
+  		Image_ButtonIcon->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 
 FText UMCore_ButtonBase::GetButtonText() const
 {
-	if (Text_Label)
+	if (Text_ButtonTxt)
 	{
-  		return Text_Label->GetText();
+  		return Text_ButtonTxt->GetText();
 	}
 
 	return FText::GetEmpty();

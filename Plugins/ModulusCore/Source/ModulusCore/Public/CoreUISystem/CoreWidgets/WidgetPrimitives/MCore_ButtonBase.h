@@ -22,13 +22,24 @@ class UImage;
  * 
  * If widgets are missing, functions gracefully no-op.
  */
-UCLASS(Abstract, BlueprintType, Blueprintable)
+UCLASS(Abstract, Blueprintable, ClassGroup="ModulusUI", meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ButtonBase : public UCommonButtonBase
 {
 	GENERATED_BODY()
 
 public:
+	UMCore_ButtonBase(const FObjectInitializer& ObjectInitializer);
 
+	//~ Begin UUserWidget Interface
+	virtual void NativePreConstruct() override;
+	//~ End UUserWidget Interface
+
+	/**
+	 * Get current button text
+	 */
+	UFUNCTION(BlueprintPure, Category = "Button Content")
+	FText GetButtonText() const;
+	
 	/**
 	 * Set button text (shows text widget if hidden)
 	 * @param InText - Text to display (empty text hides widget)
@@ -44,18 +55,29 @@ public:
 	void SetButtonIcon(UTexture2D* InIcon);
 
 	/**
-	 * Get current button text
+	 * Enable/Disable button's interactivity (greyed out when disabled)
 	 */
-	UFUNCTION(BlueprintPure, Category = "Button Content")
-	FText GetButtonText() const;
+	UFUNCTION(BlueprintCallable, Category = "Button Content")
+	void SetButtonEnabled(bool bIsEnabled);
 
 protected:
+	//~ Start UCommonButtonBase Interface
+	virtual void NativeOnClicked() override;
+	//~ End UCommonButtonBase Interface
+
 	/** Text label widget (optional - gracefully handles if missing) */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-	TObjectPtr<UCommonTextBlock> Text_Label;
+	TObjectPtr<UCommonTextBlock> Text_ButtonTxt;
 
 	/** Icon image widget (optional - gracefully handles if missing) */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-	TObjectPtr<UImage> Image_Icon;
+	TObjectPtr<UImage> Image_ButtonIcon;
+
+private:
+	/** Apply theme set in Modulus Developer Settings */
+	void ApplyUITheme();
+
+	/** To avoid repeated lookups */
+	bool bHasThemeApplied{false};
 };
 

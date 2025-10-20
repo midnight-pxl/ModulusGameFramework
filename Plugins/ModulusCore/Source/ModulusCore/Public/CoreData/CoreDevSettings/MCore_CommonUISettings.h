@@ -50,4 +50,6 @@ public:
 	TSoftObjectPtr<class UMCore_DA_GameSettings_Organization> CurrentDefaultSettings;
 
 	static const UMCore_CommonUISettings* Get();
+
+	const UMCore_DA_UITheme_Base* GetCurrentTheme() const { return CurrentThemeAsset.Get(); }
 };
