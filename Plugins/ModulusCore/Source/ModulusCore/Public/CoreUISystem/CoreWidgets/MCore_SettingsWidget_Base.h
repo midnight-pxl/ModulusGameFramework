@@ -8,6 +8,7 @@
 #include "MCore_SettingsWidget_Base.generated.h"
 
 class UMCore_UISubsystem;
+class UMCore_DA_UITheme_Base;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
 	FGameplayTag, SettingTag,
@@ -33,7 +34,10 @@ class MODULUSCORE_API UMCore_SettingsWidget_Base : public UCommonUserWidget
 public:
 	UMCore_SettingsWidget_Base(const FObjectInitializer& ObjectInitializer);
 	
-	/** Unique identifier for this setting (e.g., Settings.Audio.MasterVolume) */
+	/**
+	 * Unique identifier for this setting (e.g., Settings.Audio.MasterVolume)
+	 * Used for: Save/Load player settings, Cross-plugin queries, Event system broadcasts
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Configuration",
 		meta = (Categories = "Settings"))
 	FGameplayTag SettingTag;
@@ -117,7 +121,30 @@ public:
 	                     FText InDescription = FText::GetEmpty());
 	
 protected:
+	/**
+	 * Editor-time preview initialization.
+	 * 
+	 * Use for visual preview that doesn't require game world:
+	 * - Apply default styles
+	 * - Set placeholder text
+	 * - Show example values
+	 * 
+	 * DO NOT:
+	 * - Access subsystems (no world)
+	 * - Load player settings (no game instance)
+	 * - Register delegates (no event system)
+	 */
+	virtual void NativePreConstruct() override;
 
+	/**
+	 * Runtime initialization.
+	 * 
+	 * Runs when widget created during gameplay.
+	 * Use for actual game integration:
+	 * - Load values from subsystem
+	 * - Register event listeners
+	 * - Apply runtime theme
+	 */
 	virtual void NativeConstruct() override;
 	
 	/** 
@@ -133,7 +160,7 @@ protected:
 	 * NOTE: This is NOT called automatically when value changes.
 	 * Derived classes must call this explicitly when appropriate.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Setting Widget")
+	UFUNCTION(BlueprintNativeEvent, Category = "SettingWidget")
 	void UpdateVisualState();
 	virtual void UpdateVisualState_Implementation();
 	
@@ -152,7 +179,10 @@ protected:
      * 
      * @param NewValue - New value as string (for generic delegate)
      */
-    virtual void OnValueChangedInternal(const FString& NewValue);
+    virtual void NotifyValueChanged(const FString& NewValue);
+
+	UFUNCTION(BlueprintPure, Category = "SettingHelpers")
+	UMCore_DA_UITheme_Base* GetCurrentTheme() const;
 	
     /** 
      * Get settings subsystem (cached for performance).
@@ -160,10 +190,13 @@ protected:
      * 
      * @return Settings subsystem, or nullptr if not available
      */
-    UFUNCTION(BlueprintPure, Category = "Setting Helpers")
+    UFUNCTION(BlueprintPure, Category = "SettingHelpers")
     UMCore_UISubsystem* GetMCoreUISubsystem() const;
     
-private:
+private:	
     /** Cached settings subsystem reference (performance optimization) */
     mutable TWeakObjectPtr<UMCore_UISubsystem> CachedUISubsystem;
+
+	/** Cached theme reference (fetched once at construction) */
+	mutable TWeakObjectPtr<UMCore_DA_UITheme_Base> CachedTheme;
 };

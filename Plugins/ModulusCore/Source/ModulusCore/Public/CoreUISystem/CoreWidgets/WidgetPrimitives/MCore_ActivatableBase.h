@@ -31,11 +31,7 @@ public:
 
 protected:
 	friend class IMCore_ThemeableInterface;
-	friend class IMCore_NetAwareInterface;
 
 	UPROPERTY(Transient)
 	mutable TWeakObjectPtr<UMCore_DA_UITheme_Base> CachedTheme;
-
-	UPROPERTY(Transient)
-	mutable TWeakObjectPtr<APlayerController> CachedPlayerController;
 };

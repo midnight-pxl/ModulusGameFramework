@@ -18,13 +18,6 @@ class MODULUSCORE_API UMCore_CommonUISettings : public UDeveloperSettings
 
 public:
 	UMCore_CommonUISettings() = default;
-	
-	// Performance settings
-	UPROPERTY(config, EditAnywhere, Category = "Performance")
-	bool bPreloadCommonWidgets{true};
-
-	UPROPERTY(config, EditAnywhere, Category = "Performance")
-	float AsyncLoadTimeoutSeconds{3.0f};
 
 	// Auto-save settings
 	UPROPERTY(config, EditAnywhere, Category = "Save System")

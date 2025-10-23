@@ -78,7 +78,7 @@ void UMCore_SettingsWidget_Toggle::SetToggleValue(bool bNewValue)
 	// Type-specific delegate
 	OnToggleValueChanged.Broadcast(SettingTag, bCurrentValue);
 	// Generic delegate (base class, string-based for compatibility)
-	OnValueChangedInternal(bCurrentValue ? TEXT("true") : TEXT("false"));
+	NotifyValueChanged(bCurrentValue ? TEXT("true") : TEXT("false"));
 }
 
 void UMCore_SettingsWidget_Toggle::UpdateToggleVisuals()

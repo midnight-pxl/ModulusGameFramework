@@ -59,7 +59,7 @@ protected:
 	/** Default value for reset functionality */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Widget")
 	bool bDefaultValue;
-
+	
 	virtual void NativeConstruct() override;
 	
 	//~ Begin UMCore_SettingsWidget_Base Interface
@@ -77,5 +77,4 @@ private:
     
 	/** Update button visual based on current state */
 	void UpdateToggleVisuals();
-	
 };

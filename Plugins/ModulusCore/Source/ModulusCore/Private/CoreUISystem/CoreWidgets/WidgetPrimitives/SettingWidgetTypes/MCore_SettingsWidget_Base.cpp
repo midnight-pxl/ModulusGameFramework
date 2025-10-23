@@ -2,6 +2,8 @@
 
 
 #include "CoreUISystem/CoreWidgets/MCore_SettingsWidget_Base.h"
+
+#include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "CoreUISystem/MCore_UISubsystem.h"
 
 UMCore_SettingsWidget_Base::UMCore_SettingsWidget_Base(const FObjectInitializer& ObjectInitializer)
@@ -9,9 +11,26 @@ UMCore_SettingsWidget_Base::UMCore_SettingsWidget_Base(const FObjectInitializer&
 {
 }
 
+void UMCore_SettingsWidget_Base::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+
+#if WITH_EDITOR
+	// Placeholder text for previewing
+	if (SettingDisplayName.IsEmpty())
+	{
+		SettingDisplayName = INVTEXT("Setting Name Preview");
+	}
+#endif
+
+	UpdateVisualState();
+}
+
 void UMCore_SettingsWidget_Base::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	UpdateVisualState();
 
 	// Load initial value if we have a valid setting tag
 	if (SettingTag.IsValid()) { LoadValue(); }
@@ -61,7 +80,7 @@ bool UMCore_SettingsWidget_Base::IsModifiedFromDefault()
 	return false;
 }
 
-void UMCore_SettingsWidget_Base::OnValueChangedInternal(const FString& NewValue)
+void UMCore_SettingsWidget_Base::NotifyValueChanged(const FString& NewValue)
 {
 	/**
 	 * Fire generic delegate with string-based value 
@@ -72,11 +91,33 @@ void UMCore_SettingsWidget_Base::OnValueChangedInternal(const FString& NewValue)
 	 * Broadcasting events if needed */
 	
 	 OnValueChanged.Broadcast(SettingTag, NewValue);
+
+	if (bBroadcastToEventSystem)
+	{
+		// TODO: tie in broadcast to modulus event system
+	}
+
+	UpdateVisualState();
 }
 
 void UMCore_SettingsWidget_Base::UpdateVisualState_Implementation()
 {
 	// Derived classes override to update their visual appearance
+}
+
+UMCore_DA_UITheme_Base* UMCore_SettingsWidget_Base::GetCurrentTheme() const
+{
+	// Return cached subsystem if still valid
+	if (CachedTheme.IsValid()) { return CachedTheme.Get(); }
+
+	if (const UMCore_CommonUISettings* DevSettings = GetDefault<UMCore_CommonUISettings>())
+	{
+		UMCore_DA_UITheme_Base* CurrentTheme = DevSettings->CurrentThemeAsset.LoadSynchronous();
+		CachedTheme = CurrentTheme;
+		return CurrentTheme;
+	}
+	
+	return nullptr;
 }
 
 UMCore_UISubsystem* UMCore_SettingsWidget_Base::GetMCoreUISubsystem() const
