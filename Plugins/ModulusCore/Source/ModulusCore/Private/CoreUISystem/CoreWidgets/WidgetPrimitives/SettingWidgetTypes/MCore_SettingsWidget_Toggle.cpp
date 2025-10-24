@@ -3,7 +3,6 @@
 
 #include "CoreUISystem/CoreWidgets/MCore_SettingsWidget_Toggle.h"
 #include "CoreUISystem/MCore_UISubsystem.h"
-#include "GameFramework/GameUserSettings.h"
 
 void UMCore_SettingsWidget_Toggle::NativeConstruct()
 {
@@ -19,16 +18,35 @@ void UMCore_SettingsWidget_Toggle::NativeConstruct()
 	LoadValue();
 }
 
+void UMCore_SettingsWidget_Toggle::SetToggleValue(bool bNewValue)
+{
+	if (bCurrentValue == bNewValue) { return; }
+
+	bCurrentValue = bNewValue;
+
+	// Type-specific delegate
+	OnToggleValueChanged.Broadcast(SettingTag, bCurrentValue);
+	
+	// Generic delegate (base class, string-based for compatibility)
+	NotifyValueChanged(bCurrentValue ? TEXT("true") : TEXT("false"));
+}
+
+void UMCore_SettingsWidget_Toggle::OnToggleButtonClicked()
+{
+	// Toggle the value
+	SetToggleValue(!bCurrentValue);
+}
+
 void UMCore_SettingsWidget_Toggle::LoadValue()
 {
 	if (!SettingTag.IsValid()) { return; }
 
-	if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
+	if (UGameUserSettings* Settings = GetGameUserSettings())
 	{
 		// This is where SettingTag should be mapped to a valid UGameUserSettings getter
-		// using bDefaultValue for baseline
-		bCurrentValue = bDefaultValue;
-		UpdateToggleVisuals();
+		// Setting to false as safe default
+		bCurrentValue = false;
+		UpdateVisualState();
 	}
 }
 
@@ -36,12 +54,11 @@ void UMCore_SettingsWidget_Toggle::SaveValue()
 {
 	if (!SettingTag.IsValid()) { return; }
 
-	if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
+	if (UGameUserSettings* Settings = GetGameUserSettings())
 	{
 		// Map SettingTag to actual setter
 		// Example: Settings->SetVSyncEnabled(bCurrentValue);
-
-		UpdateToggleVisuals();
+		
 	}
 }
 
@@ -57,39 +74,5 @@ bool UMCore_SettingsWidget_Toggle::IsModifiedFromDefault()
 
 void UMCore_SettingsWidget_Toggle::UpdateVisualState_Implementation()
 {
-	UpdateToggleVisuals();
-}
 
-void UMCore_SettingsWidget_Toggle::OnToggleButtonClicked()
-{
-	// Toggle the value
-	SetToggleValue(!bCurrentValue);
-}
-
-void UMCore_SettingsWidget_Toggle::SetToggleValue(bool bNewValue)
-{
-	if (bCurrentValue == bNewValue) { return; }
-
-	bCurrentValue = bNewValue;
-	UpdateToggleVisuals();
-
-	SaveValue();
-
-	// Type-specific delegate
-	OnToggleValueChanged.Broadcast(SettingTag, bCurrentValue);
-	// Generic delegate (base class, string-based for compatibility)
-	NotifyValueChanged(bCurrentValue ? TEXT("true") : TEXT("false"));
-}
-
-void UMCore_SettingsWidget_Toggle::UpdateToggleVisuals()
-{
-	if (!Btn_ToggleButton) { return; }
-
-	FText StateText = bCurrentValue ? FText::FromString("ON") : FText::FromString("OFF");
-    
-	// Update text block if it exists
-	if (Text_ButtonLabel)
-	{
-		Text_ButtonLabel->SetText(StateText);
-	}
 }

@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "MCore_SettingsWidget_Base.generated.h"
 
-class UMCore_UISubsystem;
+class UGameUserSettings;
 class UMCore_DA_UITheme_Base;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
@@ -191,11 +191,9 @@ protected:
      * @return Settings subsystem, or nullptr if not available
      */
     UFUNCTION(BlueprintPure, Category = "SettingHelpers")
-    UMCore_UISubsystem* GetMCoreUISubsystem() const;
+    UGameUserSettings* GetGameUserSettings() const;
     
 private:	
-    /** Cached settings subsystem reference (performance optimization) */
-    mutable TWeakObjectPtr<UMCore_UISubsystem> CachedUISubsystem;
 
 	/** Cached theme reference (fetched once at construction) */
 	mutable TWeakObjectPtr<UMCore_DA_UITheme_Base> CachedTheme;

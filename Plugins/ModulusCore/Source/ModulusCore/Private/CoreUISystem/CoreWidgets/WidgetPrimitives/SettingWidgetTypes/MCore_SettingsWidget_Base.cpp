@@ -4,7 +4,7 @@
 #include "CoreUISystem/CoreWidgets/MCore_SettingsWidget_Base.h"
 
 #include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
-#include "CoreUISystem/MCore_UISubsystem.h"
+#include "GameFramework/GameUserSettings.h"
 
 UMCore_SettingsWidget_Base::UMCore_SettingsWidget_Base(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -120,15 +120,7 @@ UMCore_DA_UITheme_Base* UMCore_SettingsWidget_Base::GetCurrentTheme() const
 	return nullptr;
 }
 
-UMCore_UISubsystem* UMCore_SettingsWidget_Base::GetMCoreUISubsystem() const
+UGameUserSettings* UMCore_SettingsWidget_Base::GetGameUserSettings() const
 {
-	// Return cached subsystem if still valid
-	if (CachedUISubsystem.IsValid()) { return CachedUISubsystem.Get(); }
-
-	if (const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
-	{
-		CachedUISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
-	}
-
-	return CachedUISubsystem.Get();
+	return UGameUserSettings::GetGameUserSettings();
 }

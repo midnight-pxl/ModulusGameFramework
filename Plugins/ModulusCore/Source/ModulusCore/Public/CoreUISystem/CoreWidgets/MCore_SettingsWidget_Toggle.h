@@ -29,7 +29,7 @@ class MODULUSCORE_API UMCore_SettingsWidget_Toggle : public UMCore_SettingsWidge
 public:
 	
 	/**
-	 * Set toggle value (triggers events and save)
+	 * Set toggle value (triggers events)
 	 * Fires both OnValueChanged (generic) and OnToggleValueChanged (type-safe)
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Settings Widget")
@@ -74,7 +74,4 @@ private:
 	/** Handle toggle button clicked */
 	UFUNCTION()
 	void OnToggleButtonClicked();
-    
-	/** Update button visual based on current state */
-	void UpdateToggleVisuals();
 };
