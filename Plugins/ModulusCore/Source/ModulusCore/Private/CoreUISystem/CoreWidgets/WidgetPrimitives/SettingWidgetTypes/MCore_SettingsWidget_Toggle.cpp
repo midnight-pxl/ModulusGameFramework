@@ -1,7 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 
-#include "CoreUISystem/CoreWidgets/MCore_SettingsWidget_Toggle.h"
+#include "CoreUISystem/CoreWidgets/WidgetPrimitives/SettingWidgetTypes/MCore_SettingsWidget_Toggle.h"
 #include "CoreUISystem/MCore_UISubsystem.h"
 
 void UMCore_SettingsWidget_Toggle::NativeConstruct()

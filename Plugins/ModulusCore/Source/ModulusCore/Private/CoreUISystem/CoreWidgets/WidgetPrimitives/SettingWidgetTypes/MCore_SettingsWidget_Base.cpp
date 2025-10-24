@@ -1,7 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 
-#include "CoreUISystem/CoreWidgets/MCore_SettingsWidget_Base.h"
+#include "CoreUISystem/CoreWidgets/WidgetPrimitives/SettingWidgetTypes/MCore_SettingsWidget_Base.h"
 
 #include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "GameFramework/GameUserSettings.h"
