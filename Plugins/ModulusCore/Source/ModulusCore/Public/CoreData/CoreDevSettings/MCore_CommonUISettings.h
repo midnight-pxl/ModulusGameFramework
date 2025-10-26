@@ -19,10 +19,6 @@ class MODULUSCORE_API UMCore_CommonUISettings : public UDeveloperSettings
 public:
 	UMCore_CommonUISettings() = default;
 
-	// Auto-save settings
-	UPROPERTY(config, EditAnywhere, Category = "Save System")
-	bool bAutoSaveOnChange{true};
-
 	UPROPERTY(config, EditAnywhere, Category = "Save System")
 	FString DefaultSaveSlotName = TEXT("GameSettings");
 	

@@ -14,6 +14,15 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
 	FGameplayTag, SettingTag,
 	FString, NewValue);
 
+UENUM()
+enum class EMCore_SettingFunctionType : uint8
+{
+	Getter		UMETA(DisplayName="Get current value"),
+	Setter		UMETA(DisplayName="Set new value"),
+	Query		UMETA(DisplayName="Query (is available/enabled)"),
+	Dirty		UMETA(DisplayName="Dirty check (has unsaved changes)")
+};
+
 /**
  * Base class for all setting widgets
  *
@@ -49,6 +58,31 @@ public:
 	/** Optional description/tooltip text */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting Configuration")
 	FText SettingDescription;
+	
+	/**
+	 * UGameUserSettings function names to call via reflection.
+	 * 
+	 * STANDARD UE SETTINGS (fill in function names):
+	 * VSync Example:
+	 *   Getter: "IsVSyncEnabled"
+	 *   Setter: "SetVSyncEnabled"
+	 *   Dirty:  "IsVSyncDirty"
+	 * 
+	 * Shadow Quality Example:
+	 *   Getter: "GetShadowQuality"
+	 *   Setter: "SetShadowQuality"
+	 * 
+	 * Resolution Scale Example:
+	 *   Getter: "GetResolutionScaleNormalized"
+	 *   Setter: "SetResolutionScaleNormalized"
+	 * 
+	 * CUSTOM SETTINGS (leave map empty):
+	 * - Uses SettingTag + custom storage (TMap in UMCore_GameUserSettings)
+	 * - Automatically persisted to GameUserSettings.ini
+	 * - No function names needed
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Widget")
+	TMap<EMCore_SettingFunctionType,FString> SettingChangeFunctions;
 	
 	/** Is this setting currently enabled? Disabled settings are grayed out and non-interactive */
 	UPROPERTY(BlueprintReadOnly, Category = "Setting State")

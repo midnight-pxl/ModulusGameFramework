@@ -8,15 +8,6 @@
 #include "MCore_SettingsWidget_Base.h"
 #include "MCore_SettingsWidget_Toggle.generated.h"
 
-UENUM()
-enum class EMCore_ToggleFunctionCallers : uint8
-{
-	Getter		UMETA(DisplayName="Function to Get setting"),
-	Setter		UMETA(DisplayName="Function to Set setting"),
-	Query		UMETA(DisplayName="Query if setting enabled"),
-	Dirty		UMETA(DisplayName="Query if setting is dirty (different than saved value)")
-};
-
 /**
  * Delegate for type-safe toggle value changes
  * @param SettingTag - Setting that changed
@@ -68,9 +59,6 @@ protected:
 	/** Default value for reset functionality */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Widget")
 	bool bDefaultValue;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Widget")
-	TMap<EMCore_ToggleFunctionCallers,FString> SettingChangeFunctions;
 	
 	virtual void NativeConstruct() override;
 	
