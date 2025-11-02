@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CoreData/CoreStructEnums/UIStructsEnums/MCore_SettingTypes.h"
+#include "CoreData/CoreStructEnums/SettingsStructsEnums/MCore_SettingsPresets.h"
 #include "GameFramework/SaveGame.h"
 #include "MCore_PlayerSettingsSave.generated.h"
 

@@ -54,7 +54,7 @@ public:
 	 * Returns stored horizontal look sensitivity (default: 1.0)
 	 */
 	UFUNCTION(BlueprintPure, Category = "InputSettings")
-	static float GetLookSensitivityX(float XSensitivity);
+	static float GetLookSensitivityX();
 
 	/**
 	 * Set Look Sensitivity Y (Vertical)
@@ -69,7 +69,7 @@ public:
 	 * Returns stored vertical look sensitivity (default: 1.0)
 	 */
 	UFUNCTION(BlueprintPure, Category = "InputSettings")
-	static float GetLookSensitivityY(float YSensitivity);
+	static float GetLookSensitivityY();
 	
 	/**
 	 * Set Invert Look Y (Vertical)

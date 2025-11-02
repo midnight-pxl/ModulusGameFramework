@@ -6,7 +6,6 @@
 #include "CommonInputBaseTypes.h"
 #include "MCore_GameSettingType.h"
 #include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
-#include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "MCore_GameSettingTemplates.generated.h"
 
 enum class EPlayerMappableKeySlot : uint8;
@@ -78,6 +77,7 @@ public:
 	 * Discovers player-mappable actions from Enhanced Input User Settings.
 	 * Groups actions by their Display Category for organized settings menus.
 	 *
+	 * @param WorldContext
 	 * @param InputType - Filter by KeyboardAndMouse or Gamepad bindings
 	 * @return Array of key binding categories (Movement, Combat, Inventory, etc.)
 	 */
@@ -107,17 +107,6 @@ public:
 	static FKey GetCurrentKeyForAction(
 		const UInputAction* Action,
 		EPlayerMappableKeySlot Slot);
-
-	/** Create an empty setting category (for custom settings) */
-    UFUNCTION(BlueprintCallable, CallInEditor, Category = "Modulus Settings|Templates")
-    static FMCore_SettingCategory CreateEmptyCategory(const FString& CategoryName, const FString& Description = "")
-    {
-        FMCore_SettingCategory Category;
-        Category.CategoryName = FText::FromString(CategoryName);
-        Category.CategoryDescription = FText::FromString(Description.IsEmpty() ? CategoryName + " settings" : Description);
-        Category.CategoryTag = MCore_UISettingsTags::GenerateCustomUISettingTag("Category", CategoryName);
-        return Category;
-    }
 
 private:
 

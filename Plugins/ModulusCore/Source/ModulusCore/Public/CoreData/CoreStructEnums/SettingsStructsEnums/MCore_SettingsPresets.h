@@ -5,6 +5,21 @@
 #include "CoreMinimal.h"
 #include "MCore_SettingsPresets.generated.h"
 
+/**
+ * Core settings tabs - type-safe alternative to FString
+ */
+UENUM(BlueprintType, meta=(DisplayName="Settings Tab"))
+enum class EMCore_SettingsTab : uint8
+{
+    None          UMETA(DisplayName="None"),
+    Graphics      UMETA(DisplayName="Graphics"),
+    Audio         UMETA(DisplayName="Audio"), 
+    Controls      UMETA(DisplayName="Controls"),
+    Gameplay	  UMETA(DisplayName="Gameplay"),
+    Accessibility UMETA(DisplayName="Accessibility"),
+    Advanced      UMETA(DisplayName="Advanced")
+};
+
 // Graphics preset options
 UENUM(BlueprintType)
 enum class EMCore_GraphicsPreset : uint8
@@ -103,3 +118,9 @@ enum class EMCore_UpscalingMethod : uint8
     XeSS        UMETA(DisplayName = "Intel XeSS"),
     TSR         UMETA(DisplayName = "Temporal Super Resolution")
 };
+
+// Simple inline conversion functions (no utility class needed)
+inline FString EnumToString(EMCore_SettingsTab Tab)
+{
+    return StaticEnum<EMCore_SettingsTab>()->GetNameStringByValue(static_cast<uint8>(Tab));
+}
