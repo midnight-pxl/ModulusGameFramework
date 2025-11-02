@@ -1,6 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/CoreGameplayTags/MCore_UISettingsTags.h"
+
 #include "CoreData/CoreStructEnums/SettingsStructsEnums/CoreGameSettings/MCore_GameSettingType.h" // For EMCore_SettingType
 
 namespace MCore_UISettingsTags
@@ -46,36 +47,13 @@ namespace MCore_UISettingsTags
     UE_DEFINE_GAMEPLAY_TAG(Settings_Accessibility_UIScale, "Settings.Accessibility.UIScale");
     UE_DEFINE_GAMEPLAY_TAG(Settings_Accessibility_ReduceMotion, "Settings.Accessibility.ReduceMotion");
 
-    // Widget Pool Management
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Widget_Toggle, "Settings.Widget.Toggle");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Widget_Slider, "Settings.Widget.Slider");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Widget_Dropdown, "Settings.Widget.Dropdown");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Widget_TextInput, "Settings.Widget.TextInput");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Widget_KeyBinding, "Settings.Widget.KeyBinding");
-    UE_DEFINE_GAMEPLAY_TAG(Settings_Widget_Action, "Settings.Widget.Action");
+    // Input Settings
+    UE_DEFINE_GAMEPLAY_TAG(Settings_Input_SensitivityX, "Settings.Input.SensitivityX");
+    UE_DEFINE_GAMEPLAY_TAG(Settings_Input_SensitivityY, "Settings.Input.SensitivityY");
+    UE_DEFINE_GAMEPLAY_TAG(Settings_Input_InvertLookX, "Settings.Input.InvertLookX");
+    UE_DEFINE_GAMEPLAY_TAG(Settings_Input_InvertLookY, "Settings.Input.InvertLookY");
 
     // Utility Functions
-    FGameplayTag GetWidgetTypeTag(EMCore_SettingType SettingType)
-    {
-        switch (SettingType)
-        {
-        case EMCore_SettingType::Toggle:
-            return Settings_Widget_Toggle;
-        case EMCore_SettingType::Slider:
-            return Settings_Widget_Slider;
-        case EMCore_SettingType::Dropdown:
-            return Settings_Widget_Dropdown;
-        case EMCore_SettingType::TextInput:
-            return Settings_Widget_TextInput;
-        case EMCore_SettingType::KeyBinding:
-            return Settings_Widget_KeyBinding;
-        case EMCore_SettingType::Action:
-            return Settings_Widget_Action;
-        default:
-            return FGameplayTag::EmptyTag;
-        }
-    }
-
     FGameplayTag GetCategoryTag(const FString& CategoryName)
     {
         if (CategoryName.Equals(TEXT("Display"), ESearchCase::IgnoreCase))

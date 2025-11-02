@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonUserWidget.h"
-#include "MCore_HUDLayout.generated.h"
+#include "MCore_HUDLayoutPoints.generated.h"
 
 /** HUD NamedSlots for gameplay widgets */
 UENUM(BlueprintType)
@@ -81,13 +80,4 @@ enum class EMCore_HUDSlot : uint8
      * Examples: Crafting materials, survival stats, XP bar, buffs/debuffs
      */
     Bottom_Right
-};
-
-/**
- * 
- */
-UCLASS()
-class MODULUSCORE_API UMCore_HUDLayout : public UCommonUserWidget
-{
-	GENERATED_BODY()
 };

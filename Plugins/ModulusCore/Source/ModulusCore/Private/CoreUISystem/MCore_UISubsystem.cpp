@@ -3,13 +3,14 @@
 #include "CoreUISystem/MCore_UISubsystem.h"
 
 #include "GameplayTagContainer.h"
-#include "CoreUISystem/MCore_PrimaryGameLayout.h"
-#include "CoreUISystem/CoreWidgets/MCore_GameMenuHub.h"
-#include "CoreData/CoreDataAssets/UIDAs/MCore_DA_UITheme_Base.h"
-#include "CommonUI/Public/CommonTabListWidgetBase.h"
-#include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "Engine/LocalPlayer.h"
+
 #include "CoreData/CoreLogging/LogModulusUI.h"
+#include "CoreUISystem/CoreWidgets/MCore_GameMenuHub.h"
+#include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
+#include "CoreUISystem/CoreWidgets/MCore_PrimaryGameLayout.h"
+#include "CoreData/CoreDataAssets/UIDAs/MCore_DA_UITheme_Base.h"
+
 
 void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

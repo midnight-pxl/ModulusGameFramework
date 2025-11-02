@@ -6,7 +6,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraActor.h"
 #include "CoreData/CoreLogging/LogModulusSettings.h"
-#include "CoreUISystem/MCore_PrimaryGameLayout.h"
+#include "CoreUISystem/CoreWidgets/MCore_PrimaryGameLayout.h"
 #include "CoreUISystem/MCore_UISubsystem.h"
 #include "Kismet/GameplayStatics.h"
 

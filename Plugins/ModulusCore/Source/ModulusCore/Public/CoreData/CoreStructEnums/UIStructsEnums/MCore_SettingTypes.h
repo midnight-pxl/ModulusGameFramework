@@ -20,6 +20,19 @@ enum class EMCore_SettingsTab : uint8
 	Advanced      UMETA(DisplayName="Advanced")
 };
 
+/**
+ * Graphics Presets
+ */
+UENUM(BlueprintType)
+enum class EMCore_GraphicsPreset : uint8
+{
+	Low      UMETA(DisplayName = "Low"),
+	Medium   UMETA(DisplayName = "Medium"),
+	High     UMETA(DisplayName = "High"),
+	Ultra    UMETA(DisplayName = "Ultra"),
+	Custom   UMETA(DisplayName = "Custom")
+};
+
 // Simple inline conversion functions (no utility class needed)
 inline FString EnumToString(EMCore_SettingsTab Tab)
 {

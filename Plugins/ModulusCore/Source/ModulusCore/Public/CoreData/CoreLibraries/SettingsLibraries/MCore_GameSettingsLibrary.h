@@ -28,199 +28,92 @@ class MODULUSCORE_API UMCore_GameSettingsLibrary : public UBlueprintFunctionLibr
 
 public:
 
-    /** Get Unreal's built-in game user settings object */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings Access")
-    static UGameUserSettings* GetGameUserSettings();
-
-	// Graphics Settings
-
     /** Apply graphics quality preset (affects all scalability settings) */
     UFUNCTION(BlueprintCallable, Category = "Graphics")
     static void ApplyGraphicsPreset(EMCore_GraphicsPreset Preset);
 
 	/** Get current graphics preset based on scalability levels */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Graphics")
+	UFUNCTION(BlueprintPure, Category = "Graphics")
 	static EMCore_GraphicsPreset GetCurrentGraphicsPreset();
 
-	/** Set screen resolution and window mode (Fullscreen, Windowed, Borderless) */
-    UFUNCTION(BlueprintCallable, Category = "Graphics")
-    static void SetResolution(FIntPoint Resolution, EWindowMode::Type WindowMode = EWindowMode::Fullscreen);
-
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static void SetVSyncEnabled(bool bIsEnabled);
-
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static EMCore_FrameRate GetFrameRateLimit();
-
-	/** Set frame rate limit (0 = unlimited) */
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static void SetFrameRateLimit(EMCore_FrameRate FrameRate);
-
-	/** Set texture quality (0-3: Low to Ultra) */
-    UFUNCTION(BlueprintCallable, Category = "Graphics")
-    static void SetTextureQuality(int32 Quality);
-
-	/** Set shadow quality (0-3: Low to Ultra) */
-    UFUNCTION(BlueprintCallable, Category = "Graphics")
-    static void SetShadowQuality(int32 Quality);
-
-	/** Set anti-aliasing quality (0-3: Low to Ultra) */
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static void SetAntiAliasingQuality(int32 Quality);
-
-	/** Set view distance quality (0-3: Low to Ultra) */
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static void SetViewDistanceQuality(int32 Quality);
-
-	/** Set foliage quality (0-3: Low to Ultra) */
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static void SetFoliageQuality(int32 Quality);
-
-	/** Set shading quality (0-3: Low to Ultra) */
-	UFUNCTION(BlueprintCallable, Category = "Graphics")
-	static void SetShadingQuality(int32 Quality);
-
 	/**
-	 * Audio Settings
+	 * Set Look Sensitivity X (Horizontal)
+	 * 
+	 * @param XSensitivity Multiplier (0.1 = very slow, 1.0 = default, 10.0 = very fast)
+	 * 
+	 * Enhanced Input Scalar modifier:
+	 *   1. Get current sensitivity via this function
+	 *   2. Apply to InputModifierScalar on your IA_Look action
+	 *   3. Modifier automatically multiplies input by sensitivity value
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetMasterVolume(float Volume);
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Audio")
-	static float GetMasterVolume();
-    
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetAudioQuality(EMCore_AudioQuality Quality);
-    
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetAudioDevice(const FString& DeviceName);
+	UFUNCTION(BlueprintCallable, Category = "InputSettings")
+	static void SetLookSensitivityX(float XSensitivity);
 
 	/**
-	 * Audio Extension Placeholders -- See documentation for Sound Class integration
+	 * Get Look Sensitivity X (Horizontal)
+	 * Returns stored horizontal look sensitivity (default: 1.0)
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetMusicVolume(float Volume);
-    
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetSFXVolume(float Volume);
-    
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetVoiceVolume(float Volume);
+	UFUNCTION(BlueprintPure, Category = "InputSettings")
+	static float GetLookSensitivityX(float XSensitivity);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Hardware Detection")
-	static TArray<FString> GetAvailableAudioDevices();
-	
-	// Basic Implementations    
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetSubtitlesEnabled(bool bIsEnabled);
-    
-	UFUNCTION(BlueprintCallable, Category = "Audio")
-	static void SetSubtitleSize(float Scale);
+	/**
+	 * Set Look Sensitivity Y (Vertical)
+	 * 
+	 * @param YSensitivity Multiplier (0.1 = very slow, 1.0 = default, 10.0 = very fast)
+	 */
+	UFUNCTION(BlueprintCallable, Category = "InputSettings")
+	static void SetLookSensitivityY(float YSensitivity);
+
+	/**
+	 * Get Look Sensitivity Y (Vertical)
+	 * Returns stored vertical look sensitivity (default: 1.0)
+	 */
+	UFUNCTION(BlueprintPure, Category = "InputSettings")
+	static float GetLookSensitivityY(float YSensitivity);
 	
 	/**
-	 *Controls Settings
-	 */	
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetMouseLeftRightSensitivity(float Sensitivity);
-
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetMouseUpDownSensitivity(float Sensitivity);
+	 * Set Invert Look Y (Vertical)
+	 * 
+	 * Standard Y-axis inversion for flight controls or user preference.
+	 * Conditionally add/remove InputModifierNegate based on this setting
+	 * 
+	 * @param bInvert True = inverted (up input looks down), False = normal
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus Settings|Input")
+	static void SetInvertLookY(bool bInvert);
     
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetMouseInvertY(bool bInvert);
+	/**
+	 * Get Invert Look Y
+	 * Returns current Y-axis invert state (default: false)
+	 */
+	UFUNCTION(BlueprintPure, Category = "Modulus Settings|Input")
+	static bool GetInvertLookY();
     
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Controls")
-	static float GetMouseLeftRightSensitivity();
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Controls")
-	static float GetMouseUpDownSensitivity();
+	/**
+	 * Set Invert Look X (Horizontal)
+	 * 
+	 * Less common than Y invert, but useful for some control schemes.
+	 * 
+	 * @param bInvert True = inverted (right input looks left), False = normal
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus Settings|Input")
+	static void SetInvertLookX(bool bInvert);
     
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetGamepadEnabled(bool bIsEnabled);
-
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetGamepadLeftRightSensitivity(float Sensitivity);
-    
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetGamepadUpDownSensitivity(float Sensitivity);
-    
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetGamepadVibration(bool bIsEnabled);
-    
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetGamepadInvertY(bool bInvert);
-    
-	UFUNCTION(BlueprintCallable, Category = "Controls")
-	static void SetGamepadDeadZone(float DeadZone);
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Controls")
-	static EMCore_InputDeviceType GetCurrentInputDevice();
-	
-    /**
-     * Accessibility Settings
-     */
-	UFUNCTION(BlueprintCallable, Category = "Accessibility")
-	static void SetColorBlindMode(EMCore_ColorBlindType ColorBlindType);
-    
-	UFUNCTION(BlueprintCallable, Category = "Accessibility")
-	static void SetUITextScale(float Scale);
-    
-	UFUNCTION(BlueprintCallable, Category = "Accessibility")
-	static void SetHighContrastMode(bool bIsEnabled);
-    
-	UFUNCTION(BlueprintCallable, Category = "Accessibility")
-	static void SetPhotosensitivityReduction(bool bIsEnabled);
-
-    /**
-     * Hardware Detection - For system access
-     */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Hardware Detection")
-	static TArray<FIntPoint> GetSupportedResolutions();
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Hardware Detection")
-	static bool SupportsRayTracing();
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Hardware Detection")
-	static bool SupportsHDR();
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Hardware Detection")
-	static TArray<FString> GetAvailableUpscalingMethods();
-
-    /**
-     * Platform Detection - For system queries
-     */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Platform Detection")
-	static EMCore_PlatformType GetCurrentPlatform();
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Platform Detection")
-	static bool IsConsole();
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Platform Detection")
-	static bool IsMobile();
-    
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Platform Detection")
-	static bool IsSteamDeck();
-
-	// Settings Management
-
-	/** Apply all pending settings changes and save to disk. Call this when user clicks "Apply" button */
-	UFUNCTION(BlueprintCallable, Category = "Settings Management")
-	static void ApplyAndSaveAllSettings();
-
-	/** Reset all settings to engine defaults. Usually requires confirmation prompt */
-	UFUNCTION(BlueprintCallable, Category = "Settings Management")
-	static void ResetAllSettingsToDefaults();
+	/**
+	 * Get Invert Look X
+	 * Returns current X-axis invert state (default: false)
+	 */
+	UFUNCTION(BlueprintPure, Category = "Modulus Settings|Input")
+	static bool GetInvertLookX();
 
 private:
-	// Internal helper functions
+	// Console variable names for look sensitivity storage
+	static constexpr const TCHAR* CVAR_LOOK_SENSITIVITY_X = TEXT("Settings.Input.LookSensitivityX");
+	static constexpr const TCHAR* CVAR_LOOK_SENSITIVITY_Y = TEXT("Settings.Input.LookSensitivityY");
+	static constexpr const TCHAR* CVAR_INVERT_LOOK_X = TEXT("Settings.Input.InvertLookX");
+	static constexpr const TCHAR* CVAR_INVERT_LOOK_Y = TEXT("Settings.Input.InvertLookY");
+    
+	// Graphics preset helpers
 	static int32 ConvertPresetToScalabilityLevel(EMCore_GraphicsPreset Preset);
 	static EMCore_GraphicsPreset ConvertScalabilityLevelToPreset(int32 Level);
-	static float ConvertFrameRateEnumToFloat(EMCore_FrameRate FrameRate);
-	static EMCore_FrameRate ConvertFloatToFrameRateEnum(float FrameRateFloat);
-
-	// Settings storage helpers
-	static float GetStoredMasterVolume();
-	static void SetStoredMasterVolume(float Volume);
-	static float GetStoredMouseSensitivity(bool bYAxis = false);
-	static void SetStoredMouseSensitivity(float Sensitivity, bool bYAxis = false);
 };

@@ -49,13 +49,11 @@ namespace MCore_UISettingsTags
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Accessibility_UIScale);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Accessibility_ReduceMotion);
 
-    // Widget Pool Management
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Widget_Toggle);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Widget_Slider);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Widget_Dropdown);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Widget_TextInput);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Widget_KeyBinding);
-    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Widget_Action);
+    // Input Settings
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Input_SensitivityX);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Input_SensitivityY);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Input_InvertLookX);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Settings_Input_InvertLookY);
 
     // Utility Functions
     MODULUSCORE_API FGameplayTag GetWidgetTypeTag(EMCore_SettingType SettingType);

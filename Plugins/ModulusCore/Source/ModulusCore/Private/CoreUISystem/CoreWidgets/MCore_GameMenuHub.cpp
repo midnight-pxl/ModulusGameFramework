@@ -3,12 +3,12 @@
 #include "CoreUISystem/CoreWidgets/MCore_GameMenuHub.h"
 
 #include "GameplayTagContainer.h"
+#include "CommonButtonBase.h"
 #include "CommonTabListWidgetBase.h"
 #include "CommonAnimatedSwitcher.h"
 #include "CoreUISystem/MCore_UISubsystem.h"
 #include "CoreData/CoreLogging/LogModulusUI.h"
 #include "CoreData/CoreStructEnums/UIStructsEnums/MCore_MenuTabTypes.h"
-#include "CoreUISystem/CoreWidgets/WidgetPrimitives/MCore_ButtonBase.h"
 
 UMCore_GameMenuHub::UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializer)
   : Super(ObjectInitializer)
@@ -74,14 +74,14 @@ void UMCore_GameMenuHub::RebuildTabBar()
     ScreenWidgets.Empty();
     
     // Validate button class with framework default fallback
-    TSubclassOf<UMCore_ButtonBase> ButtonClass;
+    TSubclassOf<UCommonButtonBase> ButtonClass;
     if (TabButtonClass)
     {
         ButtonClass = TabButtonClass;
     }
     else
     {
-        ButtonClass = UMCore_ButtonBase::StaticClass();
+        ButtonClass = UCommonButtonBase::StaticClass();
         UE_LOG(LogModulusUI, Warning, 
             TEXT("GameMenuHub: TabButtonClass not set, using framework default"));
     }
@@ -120,35 +120,6 @@ void UMCore_GameMenuHub::RebuildTabBar()
         
         // Cache widget reference for future queries
         ScreenWidgets.Add(TabNameID, ScreenWidget);
-        
-        // Configure tab button (text + optional icon)
-        if (UCommonButtonBase* ButtonBase = TabList->GetTabButtonBaseByID(TabNameID))
-        {
-            // Cast to MCore_ButtonBase - guaranteed to succeed due to type enforcement
-            UMCore_ButtonBase* Button = Cast<UMCore_ButtonBase>(ButtonBase);
-            check(Button); // Should never fail - ButtonClass is TSubclassOf<UMCore_ButtonBase>
-            
-            // Set button text - API guaranteed to exist
-            Button->SetButtonText(DisplayName);
-            
-            // Set icon if provided - API guaranteed to exist
-            if (Tab.TabIcon)
-            {
-                Button->SetButtonIcon(Tab.TabIcon);
-            }
-        }
-        else
-        {
-            UE_LOG(LogModulusUI, Warning, 
-                TEXT("GameMenuHub: Failed to get button for tab '%s'"),
-                *Tab.TabID.ToString());
-        }
-        
-        UE_LOG(LogModulusUI, Verbose, 
-            TEXT("GameMenuHub: Registered tab '%s' → Display: '%s'%s"),
-            *Tab.TabID.ToString(),
-            *DisplayName.ToString(),
-            Tab.TabIcon ? TEXT(" (with icon)") : TEXT(""));
     }
     
     // Bind tab selection delegate

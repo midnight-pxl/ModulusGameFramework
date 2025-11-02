@@ -1,7 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 
-#include "CoreUISystem/MCore_PrimaryGameLayout.h"
+#include "CoreUISystem/CoreWidgets/MCore_PrimaryGameLayout.h"
 
 #include "CoreData/CoreLogging/LogModulusUI.h"
 #include "CoreUISystem/MCore_UISubsystem.h"

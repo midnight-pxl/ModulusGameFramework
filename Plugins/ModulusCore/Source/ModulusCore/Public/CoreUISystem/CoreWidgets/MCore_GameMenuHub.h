@@ -6,7 +6,7 @@
 #include "CommonActivatableWidget.h"
 #include "MCore_GameMenuHub.generated.h"
 
-class UMCore_ButtonBase;
+class UCommonButtonBase;
 class UCommonAnimatedSwitcher;
 class UCommonTabListWidgetBase;
 
@@ -23,11 +23,6 @@ class UCommonTabListWidgetBase;
  * 
  * Plugin Registration:
  *   UISubsystem->RegisterMenuScreen(ScreenClass, CategoryTag, Priority);
- * 
- * Performance:
- *   Tab rebuild: ~3ms for 10 tabs (one-time or on registration)
- *   Tab switch: ~0.5ms (CommonUI activation overhead)
- *   Memory: ~200 bytes per registered screen
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API UMCore_GameMenuHub : public UCommonActivatableWidget
@@ -45,6 +40,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Menu Hub")
     void RebuildTabBar();
 
+    UFUNCTION(BlueprintNativeEvent, Category = "Menu Hub")
+    void OnTabCreated(FName TabID, UCommonButtonBase* TabButton);
+    void OnTabCreated_Implementation(FName TabID, UCommonButtonBase* TabButton)
+    {}
+
+    UFUNCTION(BlueprintNativeEvent, Category = "Menu Hub")
+    void OnPageCreated(FName TabID, UCommonActivatableWidget* PageWidget);
+    void OnPageCreated_Implementation(FName TabID, UCommonActivatableWidget* PageWidget)
+    {}
+
+
 protected:
     /** Handles button creation, clicks, visual states, gamepad nav */
     UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
@@ -56,7 +62,7 @@ protected:
 
     /** Tab button class UMCore_ButtonBase for text and icon integration */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu Hub")
-    TSubclassOf<UMCore_ButtonBase> TabButtonClass;
+    TSubclassOf<UCommonButtonBase> TabButtonClass;
 
     UPROPERTY(EditDefaultsOnly, Category = "Menu Hub")
     TSubclassOf<UCommonActivatableWidget> EmptyStateWidgetClass;
