@@ -7,6 +7,7 @@
 #include "CoreData/CoreStructEnums/UIStructsEnums/MCore_MenuTabTypes.h"
 #include "MCore_UISubsystem.generated.h"
 
+class UCommonActivatableWidgetStack;
 class UMCore_DA_UITheme_Base;
 class UTexture2D;
 class UCommonTabListWidgetBase;
@@ -113,7 +114,7 @@ private:
 	/** Registered menu screens for this local player */
 	UPROPERTY(Transient)
 	TArray<FMCore_MenuTab> RegisteredMenuScreens;
-
+	
 	/**
 	 * Load widget classes from configuration
 	 * 

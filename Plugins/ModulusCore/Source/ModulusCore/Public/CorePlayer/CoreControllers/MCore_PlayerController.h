@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "GameplayTagContainer.h"
+
 #include "MCore_PlayerController.generated.h"
 
 class UInputAction;
@@ -30,7 +32,21 @@ class MODULUSCORE_API AMCore_PlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	AMCore_PlayerController() {}
+	AMCore_PlayerController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Modulus|State")
+	void AddPlayerStateTag(FGameplayTag Tag);
+
+	UFUNCTION(BlueprintCallable, Category = "Modulus|State")
+	void RemovePlayerStateTag(FGameplayTag Tag);
+
+	UFUNCTION(BlueprintPure, Category = "Modulus|State")
+	bool HasPlayerStateTag(FGameplayTag Tag) const;
+
+	UFUNCTION(BlueprintPure, Category = "Modulus|State")
+	bool HasAnyPlayerStateTags(const FGameplayTagContainer& BlockTags) const;
 	
 protected:
 	//~ Begin AActor Interface
@@ -44,6 +60,11 @@ protected:
 	virtual void OnPossess(APawn* aPawn) override;
 
 	void ToggleInGameMenu();
+	
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = "State")
+	FGameplayTagContainer PlayerStateTags;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|Input")
 	TObjectPtr<UInputMappingContext> DefaultModulusContext;

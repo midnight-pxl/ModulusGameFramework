@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "GameplayTagContainer.h"
 #include "MCore_ActivatableBase.generated.h"
 
 class UMCore_DA_UITheme_Base;
@@ -17,7 +18,10 @@ class MODULUSCORE_API UMCore_ActivatableBase : public UCommonActivatableWidget
 
 public:
 	UMCore_ActivatableBase(const FObjectInitializer& ObjectInitializer);
-
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Activation", meta=(Categories = "State"))
+	FGameplayTagContainer BlockTags;
+	
 #if WITH_EDITOR
 	//~ Begin UWidget Interface
 	/**
@@ -30,6 +34,10 @@ public:
 #endif
 
 protected:
+	virtual void NativeOnActivated() override;
+	
+	bool bShouldBlockActivation() const;
+	
 	friend class IMCore_ThemeableInterface;
 
 	UPROPERTY(Transient)
