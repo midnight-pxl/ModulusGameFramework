@@ -3,6 +3,8 @@
 #include "CoreUISystem/CoreWidgets/WidgetPrimitives/MCore_ActivatableBase.h"
 #include "GameplayTagAssetInterface.h"
 #include "CoreData/CoreLogging/LogModulusUI.h"
+#include "Input/CommonUIInputTypes.h"
+
 
 #if WITH_EDITOR
 #include "Editor/WidgetCompilerLog.h"
@@ -14,6 +16,69 @@
 UMCore_ActivatableBase::UMCore_ActivatableBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+}
+
+void UMCore_ActivatableBase::RegisterBinding(
+	FDataTableRowHandle InputAction,
+	const FInputActionExecutedDelegate& Callback,
+	FInputActionBindingHandle& IABindingHandle,
+	FText OverrideDisplayName,
+	bool bShouldDisplayInActionBar)
+{
+	if (InputAction.IsNull() || InputAction.RowName.IsNone())
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("[%s] RegisterBinding: InputAction row handle is invalid"),
+			*GetName());
+		return;
+	}
+	
+	if (!Callback.IsBound())
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("[%s] RegisterBinding: Callback delegate not bound"),
+			*GetName());
+		return;
+	}
+	
+	FBindUIActionArgs BindArgs(InputAction, FSimpleDelegate::CreateLambda([InputAction, Callback]()
+	{
+		Callback.ExecuteIfBound(InputAction.RowName);
+	}));
+	
+	BindArgs.bDisplayInActionBar = bShouldDisplayInActionBar;
+	
+	if (!OverrideDisplayName.IsEmpty())
+	{
+		BindArgs.OverrideDisplayName = OverrideDisplayName;
+	}
+	
+	FUIActionBindingHandle NewHandle = RegisterUIActionBinding(BindArgs);
+	
+	IABindingHandle.CommonHandle = NewHandle;
+	
+	IABindingHandles.Add(NewHandle);
+	
+	UE_LOG(LogModulusUI, Log, 
+	TEXT("[%s] Registered input binding for action: %s (Display in ActionBar set to %s)"),
+		*GetName(), 
+		*InputAction.RowName.ToString(),
+		bShouldDisplayInActionBar ? TEXT("Yes") : TEXT("No"));
+}
+
+void UMCore_ActivatableBase::UnregisterAllBindings()
+{
+	if (IABindingHandles.Num() == 0) { return; }
+	
+	UE_LOG(LogModulusUI, Log, TEXT("UnregisterAllBindings: Unregistering input binding(s) for %s"),
+		*GetName());
+	
+	// Unregister all tracked input bindings
+	for (FUIActionBindingHandle& Handle : IABindingHandles)
+	{
+		if (Handle.IsValid()){ Handle.Unregister(); }
+	}
+	
+	// Clear IABindingHandles array
+	IABindingHandles.Empty();
 }
 
 void UMCore_ActivatableBase::NativeOnActivated()
@@ -29,6 +94,33 @@ void UMCore_ActivatableBase::NativeOnActivated()
 	
 	// No BlockTags, activate normally
 	Super::NativeOnActivated();
+	
+	// Autofocus target widget
+	if (bShouldFocusOnActivation)
+	{
+		if (UWidget* WidgetToFocus = NativeGetDesiredFocusTarget())
+		{
+			WidgetToFocus->SetFocus();
+			
+			UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Auto focusing on widget %s"),
+				*GetName());
+			return;
+		}
+	}
+	
+	UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Widget %s not set to autofocus"),
+	*GetName());
+}
+
+void UMCore_ActivatableBase::NativeOnDeactivated()
+{
+	// Cleanup own input bindings BEFORE calling Super (memory leaks)
+	UnregisterAllBindings();
+	
+	Super::NativeOnDeactivated();
+	
+	UE_LOG(LogModulusUI, Log, TEXT("Widget %s deactivated, input bindings cleared"),
+		*GetName());
 }
 
 bool UMCore_ActivatableBase::bShouldBlockActivation() const
