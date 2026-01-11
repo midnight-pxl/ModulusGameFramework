@@ -24,8 +24,8 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UMCore_UISubsystem::Deinitialize()
 {
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize - Cleaning up"));
-	
-	// Clean up cached widgets
+
+	/** Clean up cached widgets */
 	if (CachedPrimaryGameLayout.IsValid())
 	{
 		CachedPrimaryGameLayout->RemoveFromParent();
@@ -69,7 +69,7 @@ bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InL
 
 UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 {
-	// Return cached instance if valid
+	/** Return cached instance if valid */
 	if (CachedMenuHub.IsValid())
 	{
 		return CachedMenuHub.Get();
@@ -104,8 +104,8 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 			TEXT("UISubsystem: Cannot create MenuHub - no PlayerController"));
 		return nullptr;
 	}
-    
-	// Create MenuHub widget
+
+	/** Create MenuHub widget */
 	CachedMenuHub = CreateWidget<UMCore_GameMenuHub>(PlayerController, MenuHubClass);
 	if (!CachedMenuHub.IsValid())
 	{
@@ -113,8 +113,8 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 			TEXT("UISubsystem: CreateWidget failed for MenuHub"));
 		return nullptr;
 	}
-    
-	// Build tab bar with registered screens
+
+	/** Build tab bar with registered screens */
 	CachedMenuHub->RebuildTabBar();
     
 	UE_LOG(LogModulusUI, Log, 
@@ -152,8 +152,8 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 			*TabID.ToString());
 		return;
 	}
-    
-	// Create registration entry
+
+	/** Create registration entry */
 	FMCore_MenuTab NewTab;
 	NewTab.TabID = TabID;
 	NewTab.ScreenWidgetClass = ScreenWidgetClass;
@@ -170,11 +170,11 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	}
 	RegisteredMenuScreens.Insert(NewTab, InsertIndex);
     
-	UE_LOG(LogModulusUI, Log, 
+	UE_LOG(LogModulusUI, Log,
 		TEXT("RegisterMenuScreen: %s registered at priority %d (Total: %d)"),
 		*NewTab.GetDisplayName().ToString(), Priority, RegisteredMenuScreens.Num());
-    
-	// If MenuHub already created, rebuild tab bar to show new screen
+
+	/** If MenuHub already created, rebuild tab bar to show new screen */
 	if (CachedMenuHub.IsValid())
 	{
 		CachedMenuHub.Get()->RebuildTabBar();
@@ -197,11 +197,11 @@ UMCore_DA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
 
 void UMCore_UISubsystem::LoadWidgetClasses()
 {
-	// Hard-coded defaults - no project settings complexity for v1.0
+	/** Hard-coded defaults - no project settings complexity for v1.0 */
 	PrimaryGameLayoutClass = UMCore_PrimaryGameLayout::StaticClass();
 	MenuHubClass = UMCore_GameMenuHub::StaticClass();
-    
-	// Validation with actionable error messages
+
+	/** Validation with actionable error messages */
 	if (!PrimaryGameLayoutClass)
 	{
 		UE_LOG(LogModulusUI, Error, 
@@ -240,18 +240,18 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	APlayerController* PC = LP->GetPlayerController(GetWorld());
 	if (!PC)
 	{
-		UE_LOG(LogModulusUI, Warning, 
+		UE_LOG(LogModulusUI, Warning,
 			TEXT("UISubsystem: PlayerController not ready, delaying layout creation"));
-        
-		// Retry on next tick - PlayerController may not exist yet during Initialize()
+
+		/** Retry on next tick - PlayerController may not exist yet during Initialize() */
 		FTSTicker::GetCoreTicker().AddTicker(
 			FTickerDelegate::CreateUObject(this, &UMCore_UISubsystem::RetryLayoutCreation),
 			0.1f
 		);
 		return;
 	}
-    
-	// Create layout widget
+
+	/** Create layout widget */
 	CachedPrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(PC, PrimaryGameLayoutClass);
 	if (!CachedPrimaryGameLayout.IsValid())
 	{
@@ -259,8 +259,8 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 			TEXT("UISubsystem: CreateWidget failed for PrimaryGameLayout"));
 		return;
 	}
-    
-	// Add to viewport at Z-order 0 (base UI layer)
+
+	/** Add to viewport at Z-order 0 (base UI layer) */
 	CachedPrimaryGameLayout->AddToViewport(0);
     
 	UE_LOG(LogModulusUI, Log, 
@@ -278,8 +278,8 @@ bool UMCore_UISubsystem::RetryLayoutCreation(float DeltaTime)
 	{
 		CreatePrimaryGameLayout();
 	}
-    
-	// Return false to stop ticker once created
+
+	/** Return false to stop ticker once created */
 	return CachedPrimaryGameLayout == nullptr;
 }
 

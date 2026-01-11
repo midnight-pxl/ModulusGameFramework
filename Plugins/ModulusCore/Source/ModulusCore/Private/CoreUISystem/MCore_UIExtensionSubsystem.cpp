@@ -6,9 +6,9 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogMCoreUIExtension, Log, All);
 
-//=============================================================================
-// USubsystem Interface
-//=============================================================================
+/**=============================================================================
+ * USubsystem Interface
+ *=============================================================================*/
 
 void UMCore_UIExtensionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -32,9 +32,9 @@ void UMCore_UIExtensionSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-//=============================================================================
-// Extension Point Registration
-//=============================================================================
+/**=============================================================================
+ * Extension Point Registration
+ *=============================================================================*/
 
 FMCore_UIExtensionPointHandle UMCore_UIExtensionSubsystem::RegisterExtensionPoint(
 	const FGameplayTag& ExtensionPointTag,
@@ -113,9 +113,9 @@ void UMCore_UIExtensionSubsystem::UnregisterExtensionPoint(
 		TEXT("Unregistered extension point: HandleID=%u"), HandleID);
 }
 
-//=============================================================================
-// Extension Registration
-//=============================================================================
+/**=============================================================================
+ * Extension Registration
+ *=============================================================================*/
 
 FMCore_UIExtensionHandle UMCore_UIExtensionSubsystem::RegisterExtension(
 	const FGameplayTag& ExtensionPointTag,
@@ -145,7 +145,7 @@ FMCore_UIExtensionHandle UMCore_UIExtensionSubsystem::RegisterExtension(
 	Extension->Priority = Priority;
 
 	const uint32 HandleID = NextHandleID++;
-	Extension->HandleID = HandleID;  // Store handle ID in extension
+	Extension->HandleID = HandleID;  /** Store handle ID in extension */
 
 	ExtensionMap.FindOrAdd(ExtensionPointTag).Add(Extension);
 	ExtensionHandles.Add(HandleID, Extension);
@@ -201,9 +201,9 @@ void UMCore_UIExtensionSubsystem::UnregisterExtension(FMCore_UIExtensionHandle& 
 		TEXT("Unregistered extension: HandleID=%u"), HandleID);
 }
 
-//=============================================================================
-// Query Functions
-//=============================================================================
+/**=============================================================================
+ * Query Functions
+ *=============================================================================*/
 
 TSubclassOf<UUserWidget> UMCore_UIExtensionSubsystem::GetWidgetClassForExtension(
 	const FMCore_UIExtensionHandle& ExtensionHandle) const
@@ -244,9 +244,9 @@ bool UMCore_UIExtensionSubsystem::IsExtensionPointRegistered(
 	return ExtensionPointHandles.Contains(ExtensionPointHandle.GetID());
 }
 
-//=============================================================================
-// Internal Notification System
-//=============================================================================
+/**=============================================================================
+ * Internal Notification System
+ *=============================================================================*/
 
 void UMCore_UIExtensionSubsystem::NotifyExtensionPointsOfExtension(
 	EMCore_UIExtensionAction Action,
@@ -265,7 +265,7 @@ void UMCore_UIExtensionSubsystem::NotifyExtensionPointsOfExtension(
 		return;
 	}
 
-	// Use stored handle ID (no reverse lookup needed)
+	/** Use stored handle ID (no reverse lookup needed) */
 	FMCore_UIExtensionHandle Handle(Extension->HandleID);
 
 	for (const TSharedPtr<FMCore_UIExtensionPoint>& Point : *Points)
@@ -293,7 +293,7 @@ void UMCore_UIExtensionSubsystem::NotifyExtensionPointOfExtensions(
 		return;
 	}
 
-	// Sort by priority (higher first) - fixes Lyra bug where they store but never sort
+	/** Sort by priority (higher first) - fixes Lyra bug where they store but never sort */
 	TArray<TSharedPtr<FMCore_UIExtension>> SortedExtensions = *Extensions;
 	SortedExtensions.Sort([](const TSharedPtr<FMCore_UIExtension>& A,
 	                         const TSharedPtr<FMCore_UIExtension>& B)
@@ -305,7 +305,7 @@ void UMCore_UIExtensionSubsystem::NotifyExtensionPointOfExtensions(
 	{
 		if (ExtensionPoint->DoesExtensionPassContract(Extension.Get()))
 		{
-			// Use stored handle ID (no reverse lookup needed)
+			/** Use stored handle ID (no reverse lookup needed) */
 			FMCore_UIExtensionHandle Handle(Extension->HandleID);
 			ExtensionPoint->OnChangeCallback.ExecuteIfBound(EMCore_UIExtensionAction::Added, Handle);
 		}

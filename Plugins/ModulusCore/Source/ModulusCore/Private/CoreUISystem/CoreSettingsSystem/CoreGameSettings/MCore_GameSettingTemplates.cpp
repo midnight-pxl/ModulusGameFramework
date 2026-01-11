@@ -11,7 +11,9 @@
 #include "InputAction.h"
 #include "CoreData/CoreLogging/LogModulusUI.h"
 
-/** Display Settings */
+/**=============================================================================
+ * Display Settings
+ *=============================================================================*/
 
 FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
 {
@@ -20,7 +22,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     Category.CategoryDescription = FText::FromString("Screen Resolution, Window Mode, and Display Options");
     Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Display;
 
-    // Screen Resolution
+    /** Screen Resolution */
     FMCore_SettingDefinition Resolution;
     Resolution.DisplayName = FText::FromString("Resolution");
     Resolution.Description = FText::FromString("Screen Resolution");
@@ -40,7 +42,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     Resolution.DefaultDropdownIndex = 0;
     Category.Settings.Add(Resolution);
 
-    // Window Mode
+    /** Window Mode */
     FMCore_SettingDefinition WindowMode;
     WindowMode.DisplayName = FText::FromString("Window Mode");
     WindowMode.Description = FText::FromString("Fullscreen, Windowed, or Borderless");
@@ -54,7 +56,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     WindowMode.DefaultDropdownIndex = 0;
     Category.Settings.Add(WindowMode);
 
-    // VSync
+    /** VSync */
     FMCore_SettingDefinition VSync;
     VSync.DisplayName = FText::FromString("Vertical Sync");
     VSync.Description = FText::FromString("Prevents screen tearing but may reduce performance");
@@ -63,7 +65,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     VSync.DefaultToggleValue = true;
     Category.Settings.Add(VSync);
 
-    // Frame Rate Limit
+    /** Frame Rate Limit */
     FMCore_SettingDefinition FrameRate;
     FrameRate.DisplayName = FText::FromString("Frame Rate Limit");
     FrameRate.Description = FText::FromString("Maximum frames per second (0 = unlimited)");
@@ -77,13 +79,15 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
         FText::FromString("165 FPS"),
         FText::FromString("220 FPS")
     };
-    FrameRate.DefaultDropdownIndex = 1; // 60 FPS
+    FrameRate.DefaultDropdownIndex = 1; /** 60 FPS */
     Category.Settings.Add(FrameRate);
 
     return Category;
 }
 
-/** Graphic Settings */
+/**=============================================================================
+ * Graphic Settings
+ *=============================================================================*/
 
 FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
 {
@@ -92,7 +96,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     Category.CategoryDescription = FText::FromString("Visual quality and rendering options");
     Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Graphics;
 
-    // Overall Quality Preset
+    /** Overall Quality Preset */
     FMCore_SettingDefinition QualityPreset;
     QualityPreset.DisplayName = FText::FromString("Quality Preset");
     QualityPreset.Description = FText::FromString("Overall graphics quality level");
@@ -105,10 +109,10 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
         FText::FromString("Ultra"),
         FText::FromString("Custom")
     };
-    QualityPreset.DefaultDropdownIndex = 1; // Medium
+    QualityPreset.DefaultDropdownIndex = 1; /** Medium */
     Category.Settings.Add(QualityPreset);
 
-    // Texture Quality
+    /** Texture Quality */
     FMCore_SettingDefinition TextureQuality;
     TextureQuality.DisplayName = FText::FromString("Texture Quality");
     TextureQuality.Description = FText::FromString("Detail level of textures");
@@ -120,10 +124,10 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
         FText::FromString("High"),
         FText::FromString("Ultra")
     };
-    TextureQuality.DefaultDropdownIndex = 1; // Medium
+    TextureQuality.DefaultDropdownIndex = 1; /** Medium */
     Category.Settings.Add(TextureQuality);
 
-    // Shadow Quality
+    /** Shadow Quality */
     FMCore_SettingDefinition ShadowQuality;
     ShadowQuality.DisplayName = FText::FromString("Shadow Quality");
     ShadowQuality.Description = FText::FromString("Quality and distance of shadows");
@@ -135,10 +139,10 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
         FText::FromString("Medium"),
         FText::FromString("High")
     };
-    ShadowQuality.DefaultDropdownIndex = 2; // Medium
+    ShadowQuality.DefaultDropdownIndex = 2; /** Medium */
     Category.Settings.Add(ShadowQuality);
 
-    // Anti-Aliasing
+    /** Anti-Aliasing */
     FMCore_SettingDefinition AntiAliasing;
     AntiAliasing.DisplayName = FText::FromString("Anti-Aliasing");
     AntiAliasing.Description = FText::FromString("Smooths jagged edges");
@@ -151,10 +155,10 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
         FText::FromString("MSAA 2x"),
         FText::FromString("MSAA 4x")
     };
-    AntiAliasing.DefaultDropdownIndex = 2; // TAA
+    AntiAliasing.DefaultDropdownIndex = 2; /** TAA */
     Category.Settings.Add(AntiAliasing);
 
-    // View Distance
+    /** View Distance */
     FMCore_SettingDefinition ViewDistance;
     ViewDistance.DisplayName = FText::FromString("View Distance");
     ViewDistance.Description = FText::FromString("How far objects are rendered");
@@ -169,7 +173,9 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     return Category;
 }
 
-/** Audio Settings */
+/**=============================================================================
+ * Audio Settings
+ *=============================================================================*/
 
 FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
 {
@@ -178,7 +184,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     Category.CategoryDescription = FText::FromString("Volume levels and audio options");
     Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Audio;
 
-    // Master Volume
+    /** Master Volume */
     FMCore_SettingDefinition MasterVolume;
     MasterVolume.DisplayName = FText::FromString("Master Volume");
     MasterVolume.Description = FText::FromString("Overall game volume");
@@ -190,7 +196,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     MasterVolume.StepSize = 0.01f;
     Category.Settings.Add(MasterVolume);
 
-    // Music Volume
+    /** Music Volume */
     FMCore_SettingDefinition MusicVolume;
     MusicVolume.DisplayName = FText::FromString("Music Volume");
     MusicVolume.Description = FText::FromString("Background music volume");
@@ -202,7 +208,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     MusicVolume.StepSize = 0.01f;
     Category.Settings.Add(MusicVolume);
 
-    // SFX Volume
+    /** SFX Volume */
     FMCore_SettingDefinition SFXVolume;
     SFXVolume.DisplayName = FText::FromString("Effects Volume");
     SFXVolume.Description = FText::FromString("Sound effects volume");
@@ -214,7 +220,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     SFXVolume.StepSize = 0.01f;
     Category.Settings.Add(SFXVolume);
 
-    // Voice Volume
+    /** Voice Volume */
     FMCore_SettingDefinition VoiceVolume;
     VoiceVolume.DisplayName = FText::FromString("Voice Volume");
     VoiceVolume.Description = FText::FromString("Character dialogue volume");
@@ -226,7 +232,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     VoiceVolume.StepSize = 0.01f;
     Category.Settings.Add(VoiceVolume);
 
-    // Audio Quality
+    /** Audio Quality */
     FMCore_SettingDefinition AudioQuality;
     AudioQuality.DisplayName = FText::FromString("Audio Quality");
     AudioQuality.Description = FText::FromString("Audio processing quality");
@@ -237,13 +243,15 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
         FText::FromString("Medium"),
         FText::FromString("High")
     };
-    AudioQuality.DefaultDropdownIndex = 1; // Medium
+    AudioQuality.DefaultDropdownIndex = 1; /** Medium */
     Category.Settings.Add(AudioQuality);
 
     return Category;
 }
 
-//** Controls Settings */
+/**=============================================================================
+ * Controls Settings
+ *=============================================================================*/
 
 FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
 {
@@ -252,7 +260,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     Category.CategoryDescription = FText::FromString("Input sensitivity and key bindings");
     Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Controls;
 
-    // Mouse Sensitivity
+    /** Mouse Sensitivity */
     FMCore_SettingDefinition MouseSensitivity;
     MouseSensitivity.DisplayName = FText::FromString("Mouse Sensitivity");
     MouseSensitivity.Description = FText::FromString("How fast the camera moves with mouse input");
@@ -264,7 +272,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     MouseSensitivity.StepSize = 0.02f;
     Category.Settings.Add(MouseSensitivity);
 
-    // Invert Y Axis
+    /** Invert Y Axis */
     FMCore_SettingDefinition InvertY;
     InvertY.DisplayName = FText::FromString("Invert Y Axis");
     InvertY.Description = FText::FromString("Invert vertical mouse movement");
@@ -273,7 +281,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     InvertY.DefaultToggleValue = false;
     Category.Settings.Add(InvertY);
 
-    // Gamepad Sensitivity
+    /** Gamepad Sensitivity */
     FMCore_SettingDefinition GamepadSensitivity;
     GamepadSensitivity.DisplayName = FText::FromString("Gamepad Sensitivity");
     GamepadSensitivity.Description = FText::FromString("Controller stick sensitivity");
@@ -285,7 +293,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     GamepadSensitivity.StepSize = 0.02f;
     Category.Settings.Add(GamepadSensitivity);
 
-    // Key Binding Examples (commonly remapped keys)
+    /** Key Binding Examples (commonly remapped keys) */
     FMCore_SettingDefinition MoveForward;
     MoveForward.DisplayName = FText::FromString("Move Forward");
     MoveForward.Description = FText::FromString("Key to move forward");
@@ -305,7 +313,9 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     return Category;
 }
 
-/** Accessibility Settings */
+/**=============================================================================
+ * Accessibility Settings
+ *=============================================================================*/
 
 FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings()
 {
@@ -314,7 +324,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     Category.CategoryDescription = FText::FromString("Options to improve game accessibility");
     Category.CategoryTag = MCore_UISettingsTags::UI_Categories_Accessibility;
 
-    // Subtitles
+    /** Subtitles */
     FMCore_SettingDefinition Subtitles;
     Subtitles.DisplayName = FText::FromString("Subtitles");
     Subtitles.Description = FText::FromString("Show text for spoken dialogue");
@@ -323,7 +333,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     Subtitles.DefaultToggleValue = false;
     Category.Settings.Add(Subtitles);
 
-    // Subtitle Size
+    /** Subtitle Size */
     FMCore_SettingDefinition SubtitleSize;
     SubtitleSize.DisplayName = FText::FromString("Subtitle Size");
     SubtitleSize.Description = FText::FromString("Size of subtitle text");
@@ -335,10 +345,10 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
         FText::FromString("Large"),
         FText::FromString("Extra Large")
     };
-    SubtitleSize.DefaultDropdownIndex = 1; // Medium
+    SubtitleSize.DefaultDropdownIndex = 1; /** Medium */
     Category.Settings.Add(SubtitleSize);
 
-    // Colorblind Support
+    /** Colorblind Support */
     FMCore_SettingDefinition ColorblindMode;
     ColorblindMode.DisplayName = FText::FromString("Colorblind Support");
     ColorblindMode.Description = FText::FromString("Adjust colors for colorblind players");
@@ -350,10 +360,10 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
         FText::FromString("Deuteranopia"),
         FText::FromString("Tritanopia")
     };
-    ColorblindMode.DefaultDropdownIndex = 0; // None
+    ColorblindMode.DefaultDropdownIndex = 0; /** None */
     Category.Settings.Add(ColorblindMode);
 
-    // UI Scale
+    /** UI Scale */
     FMCore_SettingDefinition UIScale;
     UIScale.DisplayName = FText::FromString("UI Scale");
     UIScale.Description = FText::FromString("Size of user interface elements");
@@ -365,7 +375,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     UIScale.StepSize = 0.2f;
     Category.Settings.Add(UIScale);
 
-    // Reduce Motion
+    /** Reduce Motion */
     FMCore_SettingDefinition ReduceMotion;
     ReduceMotion.DisplayName = FText::FromString("Reduce Motion");
     ReduceMotion.Description = FText::FromString("Reduce screen shake and camera effects");
@@ -412,8 +422,8 @@ TArray<FMCore_KeyBindingCategory> UMCore_GameSettingTemplates::GetAllKeyBindingC
         UE_LOG(LogTemp, Error, TEXT("GetAllKeyBindingCategories: Invalid WorldContext"));
         return Categories;
     }
-    
-    // Get Enhanced Input subsystem
+
+    /** Get Enhanced Input subsystem */
     const UWorld* World = WorldContext->GetWorld();
     if (!World)
     {
@@ -461,8 +471,8 @@ TArray<FMCore_KeyBindingCategory> UMCore_GameSettingTemplates::GetAllKeyBindingC
             TEXT("GetAllKeyBindingCategories: No active key profile found."));
         return Categories;
     }
-    
-    // Get all player mapping rows from the key profile
+
+    /** Get all player mapping rows from the key profile */
     const TMap<FName, FKeyMappingRow>& MappingRows = Profile->GetPlayerMappingRows();
     
     if (MappingRows.Num() == 0)
@@ -477,7 +487,7 @@ TArray<FMCore_KeyBindingCategory> UMCore_GameSettingTemplates::GetAllKeyBindingC
     
     for (const auto& [ActionName, MappingRow] : MappingRows)
     {
-        // Each row contains potentially multiple key mappings for the same action
+        /** Each row contains potentially multiple key mappings for the same action */
         for (const FPlayerKeyMapping& Mapping : MappingRow.Mappings)
         {
             const bool bIsGamepadKey = Mapping.GetCurrentKey().IsGamepadKey();
@@ -490,36 +500,36 @@ TArray<FMCore_KeyBindingCategory> UMCore_GameSettingTemplates::GetAllKeyBindingC
             const UPlayerMappableKeySettings* MappableSettings = Action->GetPlayerMappableKeySettings();
             if (!MappableSettings)
             {
-                // Action isn't marked as player mappable - skip it
+                /** Action isn't marked as player mappable - skip it */
                 continue;
             }
-            
-            // Get category from action metadata
+
+            /** Get category from action metadata */
             FName CategoryName = GetActionDisplayCategory(Action);
-            
-            // Create setting definition from mapping
+
+            /** Create setting definition from mapping */
             FMCore_SettingDefinition KeyBinding;
             KeyBinding.SettingType = EMCore_SettingType::KeyBinding;
             KeyBinding.DisplayName = MappableSettings->DisplayName;
-            KeyBinding.Description = FText::FromString(MappableSettings->DisplayCategory.ToString()); // Category as description
-            
-            // Create tag from action name
-            const FString TagString = FString::Printf(TEXT("MCore.Settings.Controls.%s"), 
+            KeyBinding.Description = FText::FromString(MappableSettings->DisplayCategory.ToString()); /** Category as description */
+
+            /** Create tag from action name */
+            const FString TagString = FString::Printf(TEXT("MCore.Settings.Controls.%s"),
                 *ActionName.ToString());
             KeyBinding.SettingTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
-            
-            // Store current key
+
+            /** Store current key */
             KeyBinding.DefaultKey = Mapping.GetCurrentKey();
-            
-            // Add to category map
+
+            /** Add to category map */
             if (KeyBinding.SettingTag.IsValid())
             {
                 CategoryMap.FindOrAdd(CategoryName).Add(KeyBinding);
             }
         }
     }
-    
-    // Convert map to array of structs for Blueprint compatibility
+
+    /** Convert map to array of structs for Blueprint compatibility */
     for (const auto& [CategoryName, KeyBindings] : CategoryMap)
     {
         FMCore_KeyBindingCategory Category;
@@ -527,8 +537,8 @@ TArray<FMCore_KeyBindingCategory> UMCore_GameSettingTemplates::GetAllKeyBindingC
         Category.KeyBindings = KeyBindings;
         Categories.Add(Category);
     }
-    
-    // Sort categories alphabetically for consistent UI
+
+    /** Sort categories alphabetically for consistent UI */
     Categories.Sort([](const FMCore_KeyBindingCategory& A, const FMCore_KeyBindingCategory& B)
     {
         return A.CategoryName.CompareTo(B.CategoryName) < 0;
@@ -617,7 +627,7 @@ FKey UMCore_GameSettingTemplates::GetCurrentKeyForAction(const UInputAction* Act
     const FKeyMappingRow* Row = Profile->FindKeyMappingRow(Action->GetFName());
     if (!Row) return EKeys::Invalid;
 
-    // TSet - iterate to find the mapping with matching Slot
+    /** TSet - iterate to find the mapping with matching Slot */
     for (const FPlayerKeyMapping& Mapping : Row->Mappings)
     {
         if (Mapping.GetSlot() == Slot)
@@ -643,15 +653,15 @@ FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateSliderSetting(
     Setting.SettingTag = SettingTag;
     Setting.DisplayName = DisplayName;
     Setting.Description = Description;
-    
-    // Ensure valid range
+
+    /** Ensure valid range */
     Setting.MinValue = FMath::Min(MinValue, MaxValue);
     Setting.MaxValue = FMath::Max(MinValue, MaxValue);
-    
-    // Clamp default to valid range
+
+    /** Clamp default to valid range */
     Setting.DefaultValue = FMath::Clamp(DefaultValue, Setting.MinValue, Setting.MaxValue);
-    
-    // Ensure positive step size
+
+    /** Ensure positive step size */
     Setting.StepSize = FMath::Max(0.001f, StepValue);
     
     return Setting;
@@ -670,8 +680,8 @@ FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateDropdownSetting(
     Setting.DisplayName = DisplayName;
     Setting.Description = Description;
     Setting.DropdownOptions = Options;
-    
-    // Ensure valid default index
+
+    /** Ensure valid default index */
     if (Options.Num() > 0)
     {
         Setting.DefaultDropdownIndex = FMath::Clamp(DefaultIndex, 0, Options.Num() - 1);
@@ -713,8 +723,8 @@ FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateKeyBindingSetting(
         UE_LOG(LogModulusUI, Error, TEXT("CreateKeyBindingSetting: InputAction is null"));
         return KeyBinding;
     }
-    
-    // Check if action is player-mappable
+
+    /** Check if action is player-mappable */
     const UPlayerMappableKeySettings* MappableSettings = InputAction->GetPlayerMappableKeySettings();
     if (!MappableSettings)
     {
@@ -724,65 +734,67 @@ FMCore_SettingDefinition UMCore_GameSettingTemplates::CreateKeyBindingSetting(
             *InputAction->GetName());
         return KeyBinding;
     }
-    
-    // Configure setting definition from player mappable settings
+
+    /** Configure setting definition from player mappable settings */
     KeyBinding.SettingType = EMCore_SettingType::KeyBinding;
     KeyBinding.DisplayName = MappableSettings->DisplayName;
     KeyBinding.Description = MappableSettings->DisplayCategory;
-    
-    // Create tag from action name for identification
-    const FString TagString = FString::Printf(TEXT("MCore.Settings.Controls.%s"), 
+
+    /** Create tag from action name for identification */
+    const FString TagString = FString::Printf(TEXT("MCore.Settings.Controls.%s"),
         *InputAction->GetFName().ToString());
     KeyBinding.SettingTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
-    
-    // Get current key mapping (defaults to first slot)
+
+    /** Get current key mapping (defaults to first slot) */
     KeyBinding.DefaultKey = GetCurrentKeyForAction(InputAction, EPlayerMappableKeySlot::First);
     
     return KeyBinding;
 }
 
-/**
+/**=============================================================================
  * Template Functions
- */
+ *=============================================================================*/
 
 TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControlDefinition()
 {
     TArray<FMCore_SettingDefinition> BasicControls;
-    
-    // Mouse Sensitivity
+
+    /** Mouse Sensitivity */
     BasicControls.Add(CreateSliderSetting(
         MCore_UISettingsTags::Settings_Controls_MouseSensitivity,
         FText::FromString("Mouse Sensitivity"),
         FText::FromString("How fast the camera moves with mouse input"),
-        0.1f,  // Min
-        3.0f,  // Max
-        1.0f,  // Default
-        0.05f  // Step
+        0.1f,  /** Min */
+        3.0f,  /** Max */
+        1.0f,  /** Default */
+        0.05f  /** Step */
     ));
-    
-    // Invert Y Axis
+
+    /** Invert Y Axis */
     BasicControls.Add(CreateToggleSetting(
         MCore_UISettingsTags::Settings_Controls_InvertY,
         FText::FromString("Invert Y Axis"),
         FText::FromString("Invert vertical mouse movement"),
-        false // Default off
+        false /** Default off */
     ));
-    
-    // Gamepad Sensitivity
+
+    /** Gamepad Sensitivity */
     BasicControls.Add(CreateSliderSetting(
         MCore_UISettingsTags::Settings_Controls_GamepadSensitivity,
         FText::FromString("Gamepad Sensitivity"),
         FText::FromString("Controller stick sensitivity"),
-        0.1f,  // Min
-        3.0f,  // Max
-        1.0f,  // Default
-        0.05f  // Step
+        0.1f,  /** Min */
+        3.0f,  /** Max */
+        1.0f,  /** Default */
+        0.05f  /** Step */
     ));
     
     return BasicControls;
 }
 
-/** Validation utilities */
+/**=============================================================================
+ * Validation utilities
+ *=============================================================================*/
 
 bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
     UObject* WorldContext, 
@@ -816,9 +828,9 @@ bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
         ValidationErrors.Add("No LocalPlayer found - is this being called before player initialization?");
         return false;
     }
-    
-    // Validate Enhanced Input subsystem exists
-    const UEnhancedInputLocalPlayerSubsystem* Subsystem = 
+
+    /** Validate Enhanced Input subsystem exists */
+    const UEnhancedInputLocalPlayerSubsystem* Subsystem =
         LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
     if (!Subsystem)
     {
@@ -826,8 +838,8 @@ bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
         ValidationErrors.Add("Solution: Enable the Enhanced Input plugin in Project Settings");
         return false;
     }
-    
-    // Validate user settings initialized
+
+    /** Validate user settings initialized */
     const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
     if (!UserSettings)
     {
@@ -835,8 +847,8 @@ bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
         ValidationErrors.Add("Solution: Enable 'User Settings' in Project Settings > Enhanced Input");
         return false;
     }
-    
-    // Validate active key profile exists
+
+    /** Validate active key profile exists */
     const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
     if (!Profile)
     {
@@ -844,8 +856,8 @@ bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
         ValidationErrors.Add("Solution: Ensure at least one key profile is created in User Settings");
         return false;
     }
-    
-    // Validate mappings exist in profile
+
+    /** Validate mappings exist in profile */
     const TMap<FName, FKeyMappingRow>& MappingRows = Profile->GetPlayerMappingRows();
     if (MappingRows.Num() == 0)
     {
@@ -853,8 +865,8 @@ bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
         ValidationErrors.Add("Solution: Register Input Mapping Contexts with UserSettings->RegisterInputMappingContext()");
         return false;
     }
-    
-    // Check if contexts have player-mappable actions
+
+    /** Check if contexts have player-mappable actions */
     int32 TotalMappableActions = 0;
     for (const auto& [ActionName, MappingRow] : MappingRows)
     {
@@ -867,8 +879,8 @@ bool UMCore_GameSettingTemplates::ValidateEnhancedInputSetup(
         ValidationErrors.Add("Solution: Mark Input Actions as 'Player Mappable' in their asset settings");
         return false;
     }
-    
-    // Validation passed
+
+    /** Validation passed */
     UE_LOG(LogTemp, Log, 
         TEXT("Enhanced Input validation passed: %d mapping rows, %d mappable actions"), 
         MappingRows.Num(), TotalMappableActions);

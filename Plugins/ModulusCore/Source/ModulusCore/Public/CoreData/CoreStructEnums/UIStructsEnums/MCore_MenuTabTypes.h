@@ -65,8 +65,8 @@ public:
         
 		return FText::FromString(TagString);
 	}
-	
-  	// Default constructor
+
+	/** Default constructor */
   	FMCore_MenuTab()
   		: Priority(0)
 		, TabIcon(nullptr)

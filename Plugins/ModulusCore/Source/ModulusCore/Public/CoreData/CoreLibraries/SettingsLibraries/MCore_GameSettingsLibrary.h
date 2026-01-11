@@ -107,13 +107,13 @@ public:
 	static bool GetInvertLookX();
 
 private:
-	// Console variable names for look sensitivity storage
+	/** Console variable names for look sensitivity storage */
 	static constexpr const TCHAR* CVAR_LOOK_SENSITIVITY_X = TEXT("Settings.Input.LookSensitivityX");
 	static constexpr const TCHAR* CVAR_LOOK_SENSITIVITY_Y = TEXT("Settings.Input.LookSensitivityY");
 	static constexpr const TCHAR* CVAR_INVERT_LOOK_X = TEXT("Settings.Input.InvertLookX");
 	static constexpr const TCHAR* CVAR_INVERT_LOOK_Y = TEXT("Settings.Input.InvertLookY");
-    
-	// Graphics preset helpers
+
+	/** Graphics preset helpers */
 	static int32 ConvertPresetToScalabilityLevel(EMCore_GraphicsPreset Preset);
 	static EMCore_GraphicsPreset ConvertScalabilityLevelToPreset(int32 Level);
 };

@@ -49,13 +49,13 @@ public:
 	bool HasAnyPlayerStateTags(const FGameplayTagContainer& BlockTags) const;
 	
 protected:
-	//~ Begin AActor Interface
+	/**~ Begin AActor Interface */
 	virtual void BeginPlay() override;
-	//~ End AActor Interface
+	/**~ End AActor Interface */
 
-	//~ Begin APlayerController Interface
+	/**~ Begin APlayerController Interface */
 	virtual void SetupInputComponent() override;
-	//~ End APlayerController Interface
+	/**~ End APlayerController Interface */
 	
 	virtual void OnPossess(APawn* aPawn) override;
 

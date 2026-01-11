@@ -5,7 +5,7 @@
 
 UMCore_DA_GameSettings_Organization::UMCore_DA_GameSettings_Organization()
 {
-    // Initialize UI categories for organization
+    /** Initialize UI categories for organization */
     GraphicsCategories = {
         NSLOCTEXT("ModulusSettings", "Display", "Display & Resolution"),
         NSLOCTEXT("ModulusSettings", "Quality", "Graphics Quality"),
@@ -34,7 +34,7 @@ UMCore_DA_GameSettings_Organization::UMCore_DA_GameSettings_Organization()
         NSLOCTEXT("ModulusSettings", "Cognitive", "Cognitive Accessibility")
     };
 
-    // Platform defaults - simple configuration
+    /** Platform defaults - simple configuration */
     PlatformGraphicsDefaults = {
         {EMCore_PlatformType::PC, EMCore_GraphicsPreset::Ultra},
         {EMCore_PlatformType::Console, EMCore_GraphicsPreset::High},

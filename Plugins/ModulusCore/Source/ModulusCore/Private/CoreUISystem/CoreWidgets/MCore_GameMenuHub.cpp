@@ -17,7 +17,7 @@ UMCore_GameMenuHub::UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializ
 
 void UMCore_GameMenuHub::RebuildTabBar()
 {
-    // Validate BindWidget components
+    /** Validate BindWidget components */
     if (!TabList || !PageSwitcher)
     {
         UE_LOG(LogModulusUI, Error,
@@ -25,7 +25,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    // Get owning player context
+    /** Get owning player context */
     ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
     if (!LocalPlayer)
     {
@@ -33,7 +33,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    // Get UI subsystem for registered screens
+    /** Get UI subsystem for registered screens */
     UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
     if (!UISubsystem)
     {
@@ -42,8 +42,8 @@ void UMCore_GameMenuHub::RebuildTabBar()
     }
 
     const TArray<FMCore_MenuTab>& RegisteredScreens = UISubsystem->GetRegisteredMenuScreens();
-    
-    // Empty state: No screens registered
+
+    /** Empty state: No screens registered */
     if (RegisteredScreens.IsEmpty())
     {
         PageSwitcher->ClearChildren();
@@ -68,12 +68,12 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    // Clear existing tabs
+    /** Clear existing tabs */
     TabList->RemoveAllTabs();
     PageSwitcher->ClearChildren();
     ScreenWidgets.Empty();
-    
-    // Validate button class with framework default fallback
+
+    /** Validate button class with framework default fallback */
     TSubclassOf<UCommonButtonBase> ButtonClass;
     if (TabButtonClass)
     {
@@ -92,8 +92,8 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    // Register tabs with CommonUI
-    // Performance: 8 tabs × 0.17ms = 1.36ms total (widget creation dominates)
+    /** Register tabs with CommonUI */
+    /** Performance: 8 tabs × 0.17ms = 1.36ms total (widget creation dominates) */
     for (int32 Index = 0; Index < RegisteredScreens.Num(); ++Index)
     {
         const FMCore_MenuTab& Tab = RegisteredScreens[Index];
@@ -101,7 +101,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
         FName TabNameID = FName(*Tab.TabID.ToString());
         FText DisplayName = Tab.GetDisplayName();
 
-        // Create screen widget for this tab
+        /** Create screen widget for this tab */
         UCommonActivatableWidget* ScreenWidget = CreateWidget<UCommonActivatableWidget>(
             GetOwningPlayer(), Tab.ScreenWidgetClass);
 
@@ -114,19 +114,19 @@ void UMCore_GameMenuHub::RebuildTabBar()
         }
 
         PageSwitcher->AddChild(ScreenWidget);
-        
-        // RegisteredScreens already sorted by priority in UISubsystem
+
+        /** RegisteredScreens already sorted by priority in UISubsystem */
         TabList->RegisterTab(TabNameID, ButtonClass, ScreenWidget, Index);
-        
-        // Cache widget reference for future queries
+
+        /** Cache widget reference for future queries */
         ScreenWidgets.Add(TabNameID, ScreenWidget);
     }
-    
-    // Bind tab selection delegate
+
+    /** Bind tab selection delegate */
     TabList->OnTabSelected.Clear();
     TabList->OnTabSelected.AddUniqueDynamic(this, &ThisClass::HandleTabSelected);
-    
-    // Select first tab to show initial content
+
+    /** Select first tab to show initial content */
     if (!RegisteredScreens.IsEmpty())
     {
         FName FirstTabID = FName(*RegisteredScreens[0].TabID.ToString());
@@ -137,6 +137,90 @@ void UMCore_GameMenuHub::RebuildTabBar()
             RegisteredScreens.Num(),
             PageSwitcher->GetChildrenCount());
     }
+}
+
+bool UMCore_GameMenuHub::SetTabEnabled(FGameplayTag TabID, bool bEnabled)
+{
+    if (!TabList)
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("SetTabEnabled: Tablist not initialized. Cannot enable tab."))
+        return false;
+    }
+    
+    if (!TabID.IsValid())
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("SetTabEnabled: Invalid TabID provided"))
+        return false;
+    }
+    
+    FName TabNameID = FName(*TabID.ToString());
+    if (!ScreenWidgets.Contains(TabNameID))
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("SetTabEnabled: Tab '%s' not found. Screen may not be registered"),
+            *TabID.ToString());
+        return false;
+    }
+    
+    // Call native SetTabEnabled in TabListWidgetBase post checks
+    TabList->SetTabEnabled(TabNameID, bEnabled);
+    
+    UE_LOG(LogModulusUI, Log, TEXT("SetTabEnabled: Tab '%s' is %s"),
+        *TabID.ToString(),
+        bEnabled ? TEXT("ENABLED") : TEXT("DISABLED"));
+    
+    return true;
+}
+
+bool UMCore_GameMenuHub::SetTabHidden(FGameplayTag TabID, bool bIsHidden)
+{
+    if (!TabList)
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("SetTabHidden: Tablist not initialized. Cannot hide tab."))
+        return false;
+    }
+    
+    if (!TabID.IsValid())
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("SetTabHidden: Invalid TabID provided"))
+        return false;
+    }
+    
+    FName TabNameID = FName(*TabID.ToString());
+    if (!ScreenWidgets.Contains(TabNameID))
+    {
+        UE_LOG(LogModulusUI, Warning, TEXT("SetTabHidden: Tab '%s' not found. Screen may not be registered"),
+            *TabID.ToString());
+        return false;
+    }
+    
+    // Call native SetTabVisibility in TabListWidgetBase post checks
+    TabList->SetTabVisibility(TabNameID, bIsHidden ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    
+    UE_LOG(LogModulusUI, Log, TEXT("SetTabHidden: Tab '%s' is %s"),
+        *TabID.ToString(),
+        bIsHidden ? TEXT("HIDDEN") : TEXT("VISIBLE"));
+    
+    return true;
+}
+
+bool UMCore_GameMenuHub::IsTabEnabled(FGameplayTag TabID) const
+{
+    if (!TabList || !TabID.IsValid()) return false;
+    
+    FName TabNameID = FName(*TabID.ToString());
+    if (!ScreenWidgets.Contains(TabNameID)) return false;
+    
+    return TabList->GetIsEnabled();
+}
+
+bool UMCore_GameMenuHub::IsTabHidden(FGameplayTag TabID) const
+{
+    if (!TabList || !TabID.IsValid()) return false;
+    
+    FName TabNameID = FName(*TabID.ToString());
+    if (!ScreenWidgets.Contains(TabNameID)) return false;
+    
+    return TabList->IsInViewport();
 }
 
 void UMCore_GameMenuHub::HandleTabSelected(FName TabNameID)
@@ -162,12 +246,12 @@ void UMCore_GameMenuHub::HandleTabSelected(FName TabNameID)
             TEXT("HandleTabSelected: Widget for tab '%s' is not child of PageSwitcher, rebuilding tab bar"),
             *TabNameID.ToString());
 
-        // Try to recover by rebuilding
+        /** Try to recover by rebuilding */
         RebuildTabBar();
         return;
     }
 
-    // Deactivate current widgets in target stack
+    /** Deactivate current widgets in target stack */
     PageSwitcher->SetActiveWidget(*NamedWidget);
 
     UE_LOG(LogModulusUI, Log, TEXT("HandleTabSelected: Successfully switched to tab '%s'"), 

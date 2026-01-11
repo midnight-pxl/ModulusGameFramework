@@ -97,6 +97,6 @@ bool UMCore_NetworkingLibrary::Subsystem_IsServer(const USubsystem* Subsystem)
 
 bool UMCore_NetworkingLibrary::Subsystem_CanExecuteServerOperation(const USubsystem* Subsystem)
 {
-	// Just check if running on server
+	/** Just check if running on server */
 	return Subsystem_IsServer(Subsystem);
 }

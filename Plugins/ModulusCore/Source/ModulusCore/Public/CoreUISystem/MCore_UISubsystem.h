@@ -44,10 +44,10 @@ class MODULUSCORE_API UMCore_UISubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 
 public:
-	//~USubsystem Interface
+	/**~ USubsystem Interface */
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-	//~End USubsystem Interface
+	/**~ End USubsystem Interface */
 
 	/** Get the primary game layout widget for this local player */
 	UFUNCTION(BlueprintPure, Category = "ModulusUI|Layout")

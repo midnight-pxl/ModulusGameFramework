@@ -16,8 +16,8 @@ void UMCore_PrimaryGameLayout::NativeOnInitialized()
 	Super::NativeOnInitialized();
 	
 	UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout initialized successfully with all 4 layers"));
-    
-	// Register with UISubsystem for cross-plugin access
+
+	/** Register with UISubsystem for cross-plugin access */
 	if (APlayerController* ControllerRef = GetOwningPlayer())
 	{
 		if (ULocalPlayer* LocalPlayer = ControllerRef->GetLocalPlayer())

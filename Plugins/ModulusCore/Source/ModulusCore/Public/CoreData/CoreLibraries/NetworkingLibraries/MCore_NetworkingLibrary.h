@@ -108,8 +108,8 @@ public:
     static bool IsListenServer(const UObject* WorldContextObject);
 
 
-    //~ Start of Widget Authority Helpers
-    
+    /**~ Start of Widget Authority Helpers */
+
     /**
      * Check if widget's owning player has network authority.
      * Use before triggering server RPCs from UI.
@@ -151,10 +151,10 @@ public:
         meta = (DefaultToSelf = "Widget", DisplayName = "Can Execute Client Operation (Widget)"))
     static bool Widget_CanExecuteClientOperation(const UUserWidget* Widget);
 
-    //~ End of Widget Authority Helpers
-    
-    //~ Start of Widget Context Access
-    
+    /**~ End of Widget Authority Helpers */
+
+    /**~ Start of Widget Context Access */
+
     /**
      * Get the widget's owning player controller.
      * 
@@ -175,10 +175,10 @@ public:
         meta = (DefaultToSelf = "Widget", DisplayName = "Get Owning Pawn (Widget)"))
     static APawn* Widget_GetOwningPawn(const UUserWidget* Widget);
 
-    //~ End of Widget Context Access
-    
-    //~ Start of Subsystem Helpers
-    
+    /**~ End of Widget Context Access */
+
+    /**~ Start of Subsystem Helpers */
+
     /**
      * Check if subsystem is running on server.
      * Common pattern for GameInstanceSubsystem or WorldSubsystem.

@@ -82,7 +82,7 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
     UFUNCTION(BlueprintCallable, Category="Player Settings")
     static void LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded OnLoaded);
 
-    // Convenience Functions
+    /** Convenience Functions */
     UFUNCTION(BlueprintCallable, Category="Player Settings")
     void SetUIScale(float NewScale);
     
@@ -104,8 +104,8 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 private:
     static FString GetSaveSlotName() { return TEXT("ModulusPlayerSettings"); }
     static int32 GetUserIndex() { return 0; }
-    
-    // Cached instance for performance
+
+    /** Cached instance for performance */
     static TWeakObjectPtr<UMCore_PlayerSettingsSave> CachedSettings;
     
     void ApplyUIScale();

@@ -20,7 +20,7 @@ enum class EMCore_SettingsTab : uint8
     Advanced      UMETA(DisplayName="Advanced")
 };
 
-// Graphics preset options
+/** Graphics preset options */
 UENUM(BlueprintType)
 enum class EMCore_GraphicsPreset : uint8
 {
@@ -31,7 +31,7 @@ enum class EMCore_GraphicsPreset : uint8
 	Custom      UMETA(DisplayName = "Custom")
 };
 
-// Frame rate limit
+/** Frame rate limit */
 UENUM(BlueprintType)
 enum class EMCore_FrameRate : uint8
 {
@@ -45,7 +45,7 @@ enum class EMCore_FrameRate : uint8
     Unlimited     UMETA(DisplayName = "Uncapped Frame Rate"),
 };
 
-// Audio quality levels
+/** Audio quality levels */
 UENUM(BlueprintType)
 enum class EMCore_AudioQuality : uint8
 {
@@ -54,7 +54,7 @@ enum class EMCore_AudioQuality : uint8
     High_48kHz      UMETA(DisplayName = "High (48kHz)")
 };
 
-// Anti-aliasing types
+/** Anti-aliasing types */
 UENUM(BlueprintType)
 enum class EMCore_AntiAliasingType : uint8
 {
@@ -66,7 +66,7 @@ enum class EMCore_AntiAliasingType : uint8
     MSAA_8x     UMETA(DisplayName = "MSAA 8x")
 };
 
-// Spatial audio modes
+/** Spatial audio modes */
 UENUM(BlueprintType)
 enum class EMCore_SpatialAudioMode : uint8
 {
@@ -77,7 +77,7 @@ enum class EMCore_SpatialAudioMode : uint8
     Atmos        UMETA(DisplayName = "Dolby Atmos")
 };
 
-// Input device types
+/** Input device types */
 UENUM(BlueprintType)
 enum class EMCore_InputDeviceType : uint8
 {
@@ -87,7 +87,7 @@ enum class EMCore_InputDeviceType : uint8
     Unknown         UMETA(DisplayName = "Unknown")
 };
 
-// Platform types for optimization
+/** Platform types for optimization */
 UENUM(BlueprintType)
 enum class EMCore_PlatformType : uint8
 {
@@ -98,7 +98,7 @@ enum class EMCore_PlatformType : uint8
     Unknown     UMETA(DisplayName = "Unknown")
 };
 
-// Colorblind support types
+/** Colorblind support types */
 UENUM(BlueprintType)
 enum class EMCore_ColorBlindType : uint8
 {
@@ -108,7 +108,7 @@ enum class EMCore_ColorBlindType : uint8
     Tritanopia      UMETA(DisplayName = "Tritanopia")
 };
 
-// Upscaling methods
+/** Upscaling methods */
 UENUM(BlueprintType)
 enum class EMCore_UpscalingMethod : uint8
 {
@@ -119,7 +119,7 @@ enum class EMCore_UpscalingMethod : uint8
     TSR         UMETA(DisplayName = "Temporal Super Resolution")
 };
 
-// Simple inline conversion functions (no utility class needed)
+/** Simple inline conversion functions (no utility class needed) */
 inline FString EnumToString(EMCore_SettingsTab Tab)
 {
     return StaticEnum<EMCore_SettingsTab>()->GetNameStringByValue(static_cast<uint8>(Tab));

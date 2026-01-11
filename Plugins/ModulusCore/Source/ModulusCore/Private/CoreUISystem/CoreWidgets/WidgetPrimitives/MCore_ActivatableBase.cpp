@@ -71,31 +71,31 @@ void UMCore_ActivatableBase::UnregisterAllBindings()
 	UE_LOG(LogModulusUI, Log, TEXT("UnregisterAllBindings: Unregistering input binding(s) for %s"),
 		*GetName());
 	
-	// Unregister all tracked input bindings
+	/** Unregister all tracked input bindings */
 	for (FUIActionBindingHandle& Handle : IABindingHandles)
 	{
 		if (Handle.IsValid()){ Handle.Unregister(); }
 	}
-	
-	// Clear IABindingHandles array
+
+	/** Clear IABindingHandles array */
 	IABindingHandles.Empty();
 }
 
 void UMCore_ActivatableBase::NativeOnActivated()
 {
-	// Check OwningPlayer for BlockTags prior to allowing activation
+	/** Check OwningPlayer for BlockTags prior to allowing activation */
 	if (bShouldBlockActivation())
 	{
 		UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Activation blocked by BlockTags, deactivating..."));
-		
+
 		DeactivateWidget();
 		return;
 	}
-	
-	// No BlockTags, activate normally
+
+	/** No BlockTags, activate normally */
 	Super::NativeOnActivated();
-	
-	// Autofocus target widget
+
+	/** Autofocus target widget */
 	if (bShouldFocusOnActivation)
 	{
 		if (UWidget* WidgetToFocus = NativeGetDesiredFocusTarget())
@@ -114,7 +114,7 @@ void UMCore_ActivatableBase::NativeOnActivated()
 
 void UMCore_ActivatableBase::NativeOnDeactivated()
 {
-	// Cleanup own input bindings BEFORE calling Super (memory leaks)
+	/** Cleanup own input bindings BEFORE calling Super (memory leaks) */
 	UnregisterAllBindings();
 	
 	Super::NativeOnDeactivated();
@@ -126,29 +126,29 @@ void UMCore_ActivatableBase::NativeOnDeactivated()
 bool UMCore_ActivatableBase::bShouldBlockActivation() const
 {
 	if (BlockTags.IsEmpty()) { return false; }
-	
-	// Get OwningPlayerController
+
+	/** Get OwningPlayerController */
 	const APlayerController* OwningPlayer = GetOwningPlayer();
 	if (!OwningPlayer)
 	{
-		// No PlayerController found (Shouldn't Occur) - allow activation
+		/** No PlayerController found (Shouldn't Occur) - allow activation */
 		UE_LOG(LogModulusUI, Warning, TEXT("bShouldBlockActivation: No PlayerController detected...?"));
 		return false;
 	}
-	
+
 	const IGameplayTagAssetInterface* BlockTagInterface = Cast<IGameplayTagAssetInterface>(OwningPlayer);
 	if (!BlockTagInterface)
 	{
-		// IMCore_BlockingTagInterface not implemented - allow activation
+		/** IMCore_BlockingTagInterface not implemented - allow activation */
 		UE_LOG(LogModulusUI, Verbose, TEXT("bShouldBlockActivation: OwningPlayer doesn't implement the Modulus BlockTag Interface, allow"));
 		return false;
 	}
-	
-	// Get OwningPlayer's BlockTags
+
+	/** Get OwningPlayer's BlockTags */
 	FGameplayTagContainer OwnedTags;
 	BlockTagInterface->GetOwnedGameplayTags(OwnedTags);
-	
-	// Block activation if OwningPlayer has any matching BlockTags
+
+	/** Block activation if OwningPlayer has any matching BlockTags */
 	if (OwnedTags.HasAny(BlockTags))
 	{
 		UE_LOG(LogModulusUI, Log, TEXT("bShouldBlockActivation: Activation blocked by BlockTag: %s, PlayerTags: %s"),
@@ -156,8 +156,8 @@ bool UMCore_ActivatableBase::bShouldBlockActivation() const
 			*OwnedTags.ToStringSimple());
 		return true;
 	}
-	
-	// No blocking tags found - allow activation
+
+	/** No blocking tags found - allow activation */
 	return false;
 }
 

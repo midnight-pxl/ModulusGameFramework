@@ -28,7 +28,7 @@ class MODULUSCORE_API UMCore_PrimaryGameLayout : public UCommonUserWidget
 public:
     UMCore_PrimaryGameLayout(const FObjectInitializer& ObjectInitializer);
 
-    // Widget Stack References
+    /** Widget Stack References */
     UPROPERTY(BlueprintReadOnly, meta=(BindWidget), Category = "UI|Layers")
     TObjectPtr<UCommonActivatableWidgetStack> MCore_GameLayer;
 

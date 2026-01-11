@@ -9,6 +9,7 @@
 class UCommonButtonBase;
 class UCommonAnimatedSwitcher;
 class UCommonTabListWidgetBase;
+struct FGameplayTag;
 
 /**
  * In-Game Menu Hub - Tabbed interface for plugin menu pages
@@ -35,10 +36,21 @@ public:
     /** 
      * Rebuild tab bar from currently registered screens
      * Called by: GetOrCreateMenuHub() on creation, RegisterMenuScreen() on dynamic registration
-     * Performance: ~3ms for 10 tabs
      */
     UFUNCTION(BlueprintCallable, Category = "Menu Hub")
     void RebuildTabBar();
+    
+    UFUNCTION(BlueprintCallable, Category = "Menu Hub", meta = (Keywords = "Toggle Lock Tab Button"))
+    bool SetTabEnabled(FGameplayTag TabID, bool bEnabled);
+    
+    UFUNCTION(BlueprintCallable, Category = "Menu Hub", meta = (Keywords = "Toggle Tab Visibility"))
+    bool SetTabHidden(FGameplayTag TabID, bool bIsHidden);
+    
+    UFUNCTION(BlueprintPure, Category = "Menu Hub", meta = (Keywords = "Is Tab Enabled"))
+    bool IsTabEnabled(FGameplayTag TabID) const;
+    
+    UFUNCTION(BlueprintPure, Category = "Menu Hub", meta = (Keywords = "Is Tab Hidden"))
+    bool IsTabHidden(FGameplayTag TabID) const;
 
     UFUNCTION(BlueprintNativeEvent, Category = "Menu Hub")
     void OnTabCreated(FName TabID, UCommonButtonBase* TabButton);

@@ -41,7 +41,7 @@ struct MODULUSCORE_API FMCore_SettingDefinition
 {
     GENERATED_BODY()
 
-    // Basic Properties
+    /** Basic Properties */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
     FText DisplayName;
 
@@ -51,8 +51,8 @@ struct MODULUSCORE_API FMCore_SettingDefinition
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic")
     EMCore_SettingType SettingType = EMCore_SettingType::Toggle;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic", 
-    meta = (Categories = "Settings"))  // Filters to Settings.* tags only
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic",
+    meta = (Categories = "Settings"))  /** Filters to Settings.* tags only */
     FGameplayTag SettingTag;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KeyBinding",
@@ -63,9 +63,9 @@ struct MODULUSCORE_API FMCore_SettingDefinition
         meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding", EditConditionHides))
     TObjectPtr<const UInputMappingContext> InputMappingContext;
 
-    // Type-Specific Properties (using EditCondition for clean UI)
-    
-    // For Sliders
+    /** Type-Specific Properties (using EditCondition for clean UI) */
+
+    /** For Sliders */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slider", 
         meta = (EditCondition = "SettingType == EMCore_SettingType::Slider", ClampMin = "0.0"))
     float MinValue{0.0f};
@@ -82,12 +82,12 @@ struct MODULUSCORE_API FMCore_SettingDefinition
         meta = (EditCondition = "SettingType == EMCore_SettingType::Slider"))
     float StepSize{0.02f};
 
-    // For Toggles
+    /** For Toggles */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Toggle",
         meta = (EditCondition = "SettingType == EMCore_SettingType::Toggle"))
     bool DefaultToggleValue{false};
 
-    // For Dropdowns
+    /** For Dropdowns */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dropdown",
         meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown"))
     TArray<FText> DropdownOptions;
@@ -96,7 +96,7 @@ struct MODULUSCORE_API FMCore_SettingDefinition
         meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown", ClampMin = "0"))
     int32 DefaultDropdownIndex{0};
 
-    // For Text Input
+    /** For Text Input */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Text",
         meta = (EditCondition = "SettingType == EMCore_SettingType::TextInput"))
     FString DefaultTextValue;
@@ -105,17 +105,17 @@ struct MODULUSCORE_API FMCore_SettingDefinition
         meta = (EditCondition = "SettingType == EMCore_SettingType::TextInput", ClampMin = "1"))
     int32 MaxTextLength{100};
 
-    // For Key Bindings  
+    /** For Key Bindings */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Binding",
         meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding"))
     FKey DefaultKey;
 
-    // For Actions (buttons that trigger functions)
+    /** For Actions (buttons that trigger functions) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action",
         meta = (EditCondition = "SettingType == EMCore_SettingType::Action"))
     FText ActionButtonText = FText::FromString("Execute");
 
-    // Helper function to validate a setting
+    /** Helper function to validate a setting */
     bool IsValid() const
     {
         if (DisplayName.IsEmpty() || !SettingTag.IsValid()) { return false; }
@@ -164,7 +164,7 @@ struct MODULUSCORE_API FMCore_SettingCategory
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Category")
     TArray<FMCore_SettingDefinition> Settings;
 
-    // Validation
+    /** Validation */
     bool IsValid() const
     {
         if (CategoryName.IsEmpty() || Settings.IsEmpty())
@@ -172,7 +172,7 @@ struct MODULUSCORE_API FMCore_SettingCategory
             return false;
         }
 
-        // Check all settings are valid
+        /** Check all settings are valid */
         for (const FMCore_SettingDefinition& Setting : Settings)
         {
             if (!Setting.IsValid())
@@ -184,7 +184,7 @@ struct MODULUSCORE_API FMCore_SettingCategory
         return true;
     }
 
-    // Helper to find setting by save key
+    /** Helper to find setting by save key */
     const FMCore_SettingDefinition* FindSetting(const FGameplayTag& SettingTag) const
     {
         return Settings.FindByPredicate([&SettingTag](const FMCore_SettingDefinition& Setting)
@@ -218,7 +218,7 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
 
     FMCore_SettingsConfiguration() { ConfigurationID = FGuid::NewGuid(); }
 
-    // Validation
+    /** Validation */
     bool IsValid() const
     {
         if (Categories.IsEmpty())
@@ -237,7 +237,7 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
         return true;
     }
 
-    // Helper to find category by name
+    /** Helper to find category by name */
     const FMCore_SettingCategory* FindCategory(const FGameplayTag& CategoryTag) const
     {
         return Categories.FindByPredicate([&CategoryTag](const FMCore_SettingCategory& Category)
@@ -246,7 +246,7 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
         });
     }
 
-    // Helper to find setting across all categories
+    /** Helper to find setting across all categories */
     const FMCore_SettingDefinition* FindSetting(const FGameplayTag& SettingTag) const
     {
         for (const FMCore_SettingCategory& Category : Categories)
@@ -259,7 +259,7 @@ struct MODULUSCORE_API FMCore_SettingsConfiguration
         return nullptr;
     }
 
-    // Get all settings as a flat array with their tags
+    /** Get all settings as a flat array with their tags */
     TMap<FGameplayTag, FMCore_SettingDefinition> GetAllSettings() const
     {
         TMap<FGameplayTag, FMCore_SettingDefinition> AllSettings;

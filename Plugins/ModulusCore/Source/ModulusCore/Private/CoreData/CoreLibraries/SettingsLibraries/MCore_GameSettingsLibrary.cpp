@@ -63,8 +63,8 @@ EMCore_GraphicsPreset UMCore_GameSettingsLibrary::GetCurrentGraphicsPreset()
 	}
 
 	const int32 CurrentScalabilityLevel = Settings->GetOverallScalabilityLevel();
-	
-	// Check for custom setting if other settings don't match
+
+	/** Check for custom setting if other settings don't match */
 	const int32 AntiAliasing = Settings->GetAntiAliasingQuality();
 	const int32 Shadows = Settings->GetShadowQuality();
 	const int32 Textures = Settings->GetTextureQuality();
@@ -160,7 +160,7 @@ EMCore_GraphicsPreset UMCore_GameSettingsLibrary::ConvertScalabilityLevelToPrese
 	case 1:  return EMCore_GraphicsPreset::Medium;
 	case 2:  return EMCore_GraphicsPreset::High;
 	case 3:
-	case 4:  return EMCore_GraphicsPreset::Ultra; // Cinematic maps to Ultra
+	case 4:  return EMCore_GraphicsPreset::Ultra; /** Cinematic maps to Ultra */
 	default:
 		UE_LOG(LogModulusSettings, Warning, TEXT("Invalid scalability level %d, defaulting to Medium"), Level);
 		return EMCore_GraphicsPreset::Medium;

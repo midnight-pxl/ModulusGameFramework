@@ -18,11 +18,11 @@ USTRUCT(BlueprintType)
 struct MODULUSCORE_API FInputActionBindingHandle
 {
 	GENERATED_BODY()
-	
-	// Internal handle to CommonUI's input binding system
+
+	/** Internal handle to CommonUI's input binding system */
 	FUIActionBindingHandle CommonHandle;
-	
-	// Confirm handle is valid/registered
+
+	/** Confirm handle is valid/registered */
 	bool IsValid() const { return CommonHandle.IsValid(); }
 };
 
@@ -58,16 +58,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category="UI|Input")
 	void UnregisterAllBindings();
-	
+
 #if WITH_EDITOR
-	//~ Begin UWidget Interface
+	/**~ Begin UWidget Interface */
 	/**
 	 * Validates GetDesiredFocusTarget implementation at compile time.
 	 * Prevents common mistake of missing focus target.
 	 */
-	virtual void ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree, 
+	virtual void ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree,
 		class IWidgetCompilerLog& CompileLog) const override;
-	//~ End UWidget Interface
+	/**~ End UWidget Interface */
 #endif
 
 protected:
@@ -81,9 +81,9 @@ protected:
 
 	UPROPERTY(Transient)
 	mutable TWeakObjectPtr<UMCore_DA_UITheme_Base> CachedTheme;
-	
+
 private:
-	// Array of registered input bindings for auto cleanup
+	/** Array of registered input bindings for auto cleanup */
 	UPROPERTY(Transient)
 	TArray<FUIActionBindingHandle> IABindingHandles;
 };

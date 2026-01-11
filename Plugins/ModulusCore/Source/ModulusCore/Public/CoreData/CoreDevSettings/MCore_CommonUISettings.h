@@ -21,8 +21,8 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = "Save System")
 	FString DefaultSaveSlotName = TEXT("GameSettings");
-	
-	// Tag-based settings caching
+
+	/** Tag-based settings caching */
 	UPROPERTY(config, EditAnywhere, Category = "Performance")
 	bool bEnableTagCaching{true};
 
@@ -33,7 +33,7 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "WidgetClasses")
 	TMap<EMCore_SettingType, TSoftClassPtr<UUserWidget>> WidgetClassOverrides;
 
-	// Current DataAsset for Default Settings values
+	/** Current DataAsset for Default Settings values */
 	UPROPERTY(Config, EditAnywhere, Category = "Configuration",
 		meta=(DisplayName = "Default Settings Config"))
 	TSoftObjectPtr<class UMCore_DA_GameSettings_Organization> CurrentDefaultSettings;
