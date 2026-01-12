@@ -18,19 +18,15 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	LoadWidgetClasses();
 
-	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized"));
+	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized (awaiting PrimaryGameLayout registration from HUD)"));
 }
 
 void UMCore_UISubsystem::Deinitialize()
 {
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize - Cleaning up"));
 
-	/** Clean up cached widgets */
-	if (CachedPrimaryGameLayout.IsValid())
-	{
-		CachedPrimaryGameLayout->RemoveFromParent();
-		CachedPrimaryGameLayout.Reset();
-	}
+	/** Clear PrimaryGameLayout reference (HUD owns) */
+	CachedPrimaryGameLayout.Reset();
 	
 	if (CachedMenuHub.IsValid())
 	{
@@ -56,15 +52,48 @@ UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
 
 bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout)
 {
-	if (!InLayout)
+	if (!IsValid(InLayout))
 	{
 		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Attempted to register null PrimaryGameLayout"));
 		return false;
 	}
 
+	if (CachedPrimaryGameLayout.IsValid())
+	{
+		if (CachedPrimaryGameLayout.Get() == InLayout)
+		{
+			UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout '%s' already registered"), 
+				*GetNameSafe(InLayout));
+			return true;
+		}
+	
+	// Different layout - warn but allow replacement (may happen during level transitions)
+	UE_LOG(LogModulusUI, Warning, 
+		TEXT("UISubsystem: Replacing existing PrimaryGameLayout '%s' with '%s'"),
+		*GetNameSafe(CachedPrimaryGameLayout.Get()), *GetNameSafe(InLayout));
+	}
+
 	CachedPrimaryGameLayout = InLayout;
-	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Registered PrimaryGameLayout"));
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Registered PrimaryGameLayout '%s'"), *GetNameSafe(InLayout));
+
+	// If MenuHub was created before layout, it may need to rebuild
+	if (CachedMenuHub.IsValid())
+	{
+		CachedMenuHub->RebuildTabBar();
+	}
+	
 	return true;
+}
+
+void UMCore_UISubsystem::UnregisterPrimaryGameLayout()
+{
+	if (CachedPrimaryGameLayout.IsValid())
+	{
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Unregistered PrimaryGameLayout '%s'"), 
+			*GetNameSafe(CachedPrimaryGameLayout.Get()));
+	}
+	
+	CachedPrimaryGameLayout.Reset();
 }
 
 UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
@@ -142,6 +171,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 		return;
 	}
 	
+	/** Check for duplicate registration */
 	if (RegisteredMenuScreens.ContainsByPredicate([TabID](const FMCore_MenuTab& Tab)
 	 {
 		 return Tab.TabID == TabID;
@@ -160,6 +190,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	NewTab.Priority = Priority;
 	NewTab.TabIcon = TabIcon;
     
+	/** Insert sorted by priority (lower priority = earlier in tab list) */
 	int32 InsertIndex = 0;
 	for (; InsertIndex < RegisteredMenuScreens.Num(); ++InsertIndex)
 	{
@@ -181,8 +212,46 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	}
 }
 
-void UMCore_UISubsystem::RebuildTabBar()
+bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 {
+	if (!TabID.IsValid())
+	{
+		UE_LOG(LogModulusUI, Warning, 
+			TEXT("UISubsystem::UnregisterMenuScreen: Invalid TabID"));
+		return false;
+	}
+
+	const int32 RemovedCount = RegisteredMenuScreens.RemoveAll([TabID](const FMCore_MenuTab& Tab)
+	{
+		return Tab.TabID == TabID;
+	});
+
+	if (RemovedCount > 0)
+	{
+		UE_LOG(LogModulusUI, Log,
+			TEXT("UISubsystem::UnregisterMenuScreen: '%s' unregistered (Remaining: %d)"),
+			*TabID.ToString(), RegisteredMenuScreens.Num());
+
+		// Rebuild MenuHub if it exists
+		if (CachedMenuHub.IsValid())
+		{
+			CachedMenuHub->RebuildTabBar();
+		}
+		return true;
+	}
+
+	UE_LOG(LogModulusUI, Warning,
+		TEXT("UISubsystem::UnregisterMenuScreen: Tab '%s' not found"),
+		*TabID.ToString());
+	return false;
+}
+
+void UMCore_UISubsystem::RebuildMenuHubTabBar()
+{
+	if (CachedMenuHub.IsValid())
+	{
+		CachedMenuHub->RebuildTabBar();
+	}
 }
 
 UMCore_DA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
@@ -197,17 +266,9 @@ UMCore_DA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
 
 void UMCore_UISubsystem::LoadWidgetClasses()
 {
-	/** Hard-coded defaults - no project settings complexity for v1.0 */
-	PrimaryGameLayoutClass = UMCore_PrimaryGameLayout::StaticClass();
+	// Hard-coded defaults for v1.0 - no project settings complexity yet
 	MenuHubClass = UMCore_GameMenuHub::StaticClass();
 
-	/** Validation with actionable error messages */
-	if (!PrimaryGameLayoutClass)
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: PrimaryGameLayoutClass is nullptr - check class exists"));
-	}
-    
 	if (!MenuHubClass)
 	{
 		UE_LOG(LogModulusUI, Error, 
@@ -215,71 +276,6 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 	}
     
 	UE_LOG(LogModulusUI, Verbose, 
-		TEXT("UISubsystem: Classes loaded - Layout:%s MenuHub:%s"),
-		PrimaryGameLayoutClass ? TEXT("OK") : TEXT("FAIL"),
+		TEXT("UISubsystem: Widget classes loaded - MenuHub: %s"),
 		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
 }
-
-void UMCore_UISubsystem::CreatePrimaryGameLayout()
-{
-	if (!PrimaryGameLayoutClass)
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: Cannot create layout - class not loaded"));
-		return;
-	}
-    
-	ULocalPlayer* LP = GetLocalPlayer();
-	if (!LP)
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: Cannot create layout - no LocalPlayer"));
-		return;
-	}
-    
-	APlayerController* PC = LP->GetPlayerController(GetWorld());
-	if (!PC)
-	{
-		UE_LOG(LogModulusUI, Warning,
-			TEXT("UISubsystem: PlayerController not ready, delaying layout creation"));
-
-		/** Retry on next tick - PlayerController may not exist yet during Initialize() */
-		FTSTicker::GetCoreTicker().AddTicker(
-			FTickerDelegate::CreateUObject(this, &UMCore_UISubsystem::RetryLayoutCreation),
-			0.1f
-		);
-		return;
-	}
-
-	/** Create layout widget */
-	CachedPrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(PC, PrimaryGameLayoutClass);
-	if (!CachedPrimaryGameLayout.IsValid())
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: CreateWidget failed for PrimaryGameLayout"));
-		return;
-	}
-
-	/** Add to viewport at Z-order 0 (base UI layer) */
-	CachedPrimaryGameLayout->AddToViewport(0);
-    
-	UE_LOG(LogModulusUI, Log, 
-		TEXT("UISubsystem: PrimaryGameLayout created and added to viewport"));
-}
-
-void UMCore_UISubsystem::RebuildMenuHub()
-{
-	if (CachedMenuHub.IsValid()) { CachedMenuHub->RebuildTabBar(); }
-}
-
-bool UMCore_UISubsystem::RetryLayoutCreation(float DeltaTime)
-{
-	if (!CachedPrimaryGameLayout.IsValid())
-	{
-		CreatePrimaryGameLayout();
-	}
-
-	/** Return false to stop ticker once created */
-	return CachedPrimaryGameLayout == nullptr;
-}
-

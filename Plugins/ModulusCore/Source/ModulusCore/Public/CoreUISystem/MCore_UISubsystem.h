@@ -50,9 +50,15 @@ public:
 	/**~ End USubsystem Interface */
 
 	/** Get the primary game layout widget for this local player */
-	UFUNCTION(BlueprintPure, Category = "ModulusUI|Layout")
+	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
+	/**
+	 * Returns whether a valid PrimaryGameLayout is registered.
+	 */
+	UFUNCTION(BlueprintPure, Category = "UI|Layout")
+	bool HasPrimaryGameLayout() const { return CachedPrimaryGameLayout.IsValid(); }
+	
 	/**
 	 * Register primary game layout (called automatically during layout construction)
 	 *
@@ -60,45 +66,64 @@ public:
 	 *
 	 * @return True if registration succeeded
 	 */
-	UFUNCTION(BlueprintCallable, Category = "ModulusUI|Layout")
+	UFUNCTION(BlueprintCallable, Category = "UI|Layout")
 	bool RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
 
+	/**
+	 * Unregister primary game layout (called by AMCore_HUD_Base during EndPlay).
+	 * 
+	 * Clears the cached reference. Does NOT destroy the widget (HUD owns it).
+	 */
+	UFUNCTION(BlueprintCallable, Category = "UI|Layout")
+	void UnregisterPrimaryGameLayout();
+	
 	/** 
 	 * Get or create the menu hub widget
 	 * Caller is responsible for pushing to appropriate stack
 	 * 
 	 * @return MenuHub widget (created on first call, cached for reuse)
 	 */
-	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
+	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	UMCore_GameMenuHub* GetOrCreateMenuHub();
 
 	/** Menu screen registration */
-	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
+	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	void RegisterMenuScreen(
 		FGameplayTag TabID,
 		TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass,
 		int32 Priority = 100,
 		UTexture2D* TabIcon = nullptr);
 
-	UFUNCTION(BlueprintPure, Category = "ModulusUI|MenuHub")
+	/**
+	 * Unregister a menu screen tab.
+	 * 
+	 * @param TabID Gameplay tag of the tab to remove
+	 * @return True if tab was found and removed
+	 */
+	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
+	bool UnregisterMenuScreen(FGameplayTag TabID);
+	
+	UFUNCTION(BlueprintPure, Category = "UI|MenuHub")
 	const TArray<FMCore_MenuTab>& GetRegisteredMenuScreens() const
 	{
 		return RegisteredMenuScreens;
 	}
 
-	void RebuildTabBar();
+	/**
+	 * Force rebuild of MenuHub tab bar.
+	 * Called automatically when screens registered/unregistered while hub is active.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
+	void RebuildMenuHubTabBar();
 	
 	/**
 	 * Get active UI theme from Dev Settings
 	 */
-	 UFUNCTION(BlueprintCallable, Category = "ModulusUI|Theme")
+	 UFUNCTION(BlueprintCallable, Category = "UI|Theme")
 	virtual UMCore_DA_UITheme_Base* GetActiveTheme() const;
 
 protected:
-
-	UPROPERTY()
-	TSubclassOf<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
-	
+	/** Widget class for MenuHub (loaded from settings or defaults) */
 	UPROPERTY()
 	TSubclassOf<UMCore_GameMenuHub> MenuHubClass;
 
@@ -124,20 +149,4 @@ private:
 	 * Called during Initialize() before CreatePrimaryGameLayout()
 	 */
 	void LoadWidgetClasses();
-	
-	/**
-	 * Create and cache PrimaryGameLayout widget
-	 * 
-	 * - Creates widget instance
-	 * - Adds to viewport at Z-Order 0
-	 * - Validates widget stack bindings
-	 * - Caches for future access
-	 * 
-	 * Called during Initialize() after LoadWidgetClasses()
-	 */
-	void CreatePrimaryGameLayout();
-	
-	void RebuildMenuHub();
-
-	bool RetryLayoutCreation(float DeltaTime);
 };
