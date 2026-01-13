@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "MCore_ThemeableInterface.generated.h"
 
-class UMCore_DA_UITheme_Base;
+class UMCore_PDA_UITheme_Base;
 
 UINTERFACE(MinimalAPI, Blueprintable)
 class UMCore_ThemeableInterface : public UInterface
@@ -29,8 +29,8 @@ public:
 	 * @param NewTheme The newly active theme data asset
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|Theme")
-	void OnThemeChanged(const UMCore_DA_UITheme_Base* NewTheme);
-	virtual void OnThemeChanged_Implementation(const UMCore_DA_UITheme_Base* NewTheme) {}
+	void OnThemeChanged(const UMCore_PDA_UITheme_Base* NewTheme);
+	virtual void OnThemeChanged_Implementation(const UMCore_PDA_UITheme_Base* NewTheme) {}
     
 	/**
 	 * Request theme refresh from Developer Settings.

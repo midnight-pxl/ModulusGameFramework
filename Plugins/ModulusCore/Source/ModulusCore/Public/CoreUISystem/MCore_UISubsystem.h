@@ -8,7 +8,7 @@
 #include "MCore_UISubsystem.generated.h"
 
 class UCommonActivatableWidgetStack;
-class UMCore_DA_UITheme_Base;
+class UMCore_PDA_UITheme_Base;
 class UTexture2D;
 class UCommonTabListWidgetBase;
 class UMCore_GameMenuHub;
@@ -120,7 +120,7 @@ public:
 	 * Get active UI theme from Dev Settings
 	 */
 	 UFUNCTION(BlueprintCallable, Category = "UI|Theme")
-	virtual UMCore_DA_UITheme_Base* GetActiveTheme() const;
+	virtual UMCore_PDA_UITheme_Base* GetActiveTheme() const;
 
 protected:
 	/** Widget class for MenuHub (loaded from settings or defaults) */

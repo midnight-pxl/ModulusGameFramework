@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CoreData/CoreStructEnums/SettingsStructsEnums/CoreGameSettings/MCore_GameSettingType.h"
-#include "CoreData/CoreDataAssets/UIDAs/MCore_DA_UITheme_Base.h"
+#include "CoreData/CoreDataAssets/UIDAs/MasterThemes/MCore_PDA_UITheme_Base.h"
 #include "Engine/DeveloperSettings.h"
 #include "MCore_CommonUISettings.generated.h"
 
@@ -28,7 +28,7 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Configuration",
 		meta=(AllowedClasses = "MCore_UIThemeDataAsset_Base"))
-	TSoftObjectPtr<UMCore_DA_UITheme_Base> CurrentThemeAsset;
+	TSoftObjectPtr<UMCore_PDA_UITheme_Base> CurrentThemeAsset;
 
 	UPROPERTY(Config, EditAnywhere, Category = "WidgetClasses")
 	TMap<EMCore_SettingType, TSoftClassPtr<UUserWidget>> WidgetClassOverrides;
@@ -40,5 +40,5 @@ public:
 
 	static const UMCore_CommonUISettings* Get();
 
-	const UMCore_DA_UITheme_Base* GetCurrentTheme() const { return CurrentThemeAsset.Get(); }
+	const UMCore_PDA_UITheme_Base* GetCurrentTheme() const { return CurrentThemeAsset.Get(); }
 };

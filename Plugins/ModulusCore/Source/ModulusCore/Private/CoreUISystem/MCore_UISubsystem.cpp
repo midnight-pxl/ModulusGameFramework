@@ -9,7 +9,7 @@
 #include "CoreUISystem/CoreWidgets/MCore_GameMenuHub.h"
 #include "CoreData/CoreDevSettings/MCore_CommonUISettings.h"
 #include "CoreUISystem/CoreWidgets/MCore_PrimaryGameLayout.h"
-#include "CoreData/CoreDataAssets/UIDAs/MCore_DA_UITheme_Base.h"
+#include "CoreData/CoreDataAssets/UIDAs/MasterThemes/MCore_PDA_UITheme_Base.h"
 
 
 void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -254,7 +254,7 @@ void UMCore_UISubsystem::RebuildMenuHubTabBar()
 	}
 }
 
-UMCore_DA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
+UMCore_PDA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
 {
 	const UMCore_CommonUISettings* UISettings = UMCore_CommonUISettings::Get();
 	if (UISettings && !UISettings->CurrentThemeAsset.IsNull())

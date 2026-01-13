@@ -8,7 +8,7 @@
 #include "Input/UIActionBindingHandle.h"
 #include "MCore_ActivatableBase.generated.h"
 
-class UMCore_DA_UITheme_Base;
+class UMCore_PDA_UITheme_Base;
 
 /**
  * Blueprint-friendly wrapper for CommonUI's FUIActionBindingHandle.
@@ -80,7 +80,7 @@ protected:
 	friend class IMCore_ThemeableInterface;
 
 	UPROPERTY(Transient)
-	mutable TWeakObjectPtr<UMCore_DA_UITheme_Base> CachedTheme;
+	mutable TWeakObjectPtr<UMCore_PDA_UITheme_Base> CachedTheme;
 
 private:
 	/** Array of registered input bindings for auto cleanup */
