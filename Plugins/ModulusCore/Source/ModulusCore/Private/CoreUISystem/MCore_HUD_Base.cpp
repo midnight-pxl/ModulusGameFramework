@@ -19,20 +19,20 @@ void AMCore_HUD_Base::BeginPlay()
 	
 	if (GetNetMode() == NM_DedicatedServer)
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("BeginPlay: Skipping UI creation on dedicated server"));
+		UE_LOG(LogModulusUI, Log, TEXT("HUD: Skipping UI creation on dedicated server"));
 		return;
 	}
 	
 	APlayerController* OwningPlayer = GetOwningPlayerController();
 	if (!OwningPlayer)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("BeginPlay: No valid owning PlayerController, cannot create PrimaryGameLayout"));
+		UE_LOG(LogModulusUI, Warning, TEXT("HUD: No valid owning PlayerController, cannot create PrimaryGameLayout"));
 		return;
 	}
 	
 	if (!OwningPlayer->IsLocalController())
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("BeginPlay: Skipping UI for non-local Player"));
+		UE_LOG(LogModulusUI, Log, TEXT("HUD: Skipping UI for non-local Player"));
 		return;
 	}
 	
@@ -44,7 +44,7 @@ void AMCore_HUD_Base::BeginPlay()
 		{
 			/** Reuse the already existing layout */
 			PrimaryGameLayout = ExistingLayout;
-			UE_LOG(LogModulusUI, Log, TEXT("BeginPlay: Reusing existing PrimaryGameLayout"));
+			UE_LOG(LogModulusUI, Verbose, TEXT("HUD: Reusing existing PrimaryGameLayout"));
 			
 			/** Fire notify in case any updates need to occur */
 			OnPrimaryGameLayoutCreated(PrimaryGameLayout);
@@ -65,7 +65,7 @@ void AMCore_HUD_Base::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	PrimaryGameLayout = nullptr;
 	CachedUISubsystem = nullptr;
 	
-	UE_LOG(LogModulusUI, Log, TEXT("EndPlay: Reason == %d - Cleared references, widget preserved for seamless travel"),
+	UE_LOG(LogModulusUI, Log, TEXT("HUD: Reason == %d - Cleared references, widget preserved for seamless travel"),
 		static_cast<int32>(EndPlayReason));
 	
 	Super::EndPlay(EndPlayReason);
@@ -75,21 +75,21 @@ void AMCore_HUD_Base::CreatePrimaryGameLayout()
 {
 	if (!PrimaryGameLayoutClass)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("CreatePrimaryGameLayout: Cannot create, PrimaryGameLayoutClass unset"));
+		UE_LOG(LogModulusUI, Error, TEXT("HUD: Cannot create, PrimaryGameLayoutClass unset"));
 		return;
 	}
 	
 	APlayerController* OwningPlayer = GetOwningPlayerController();
 	if (!OwningPlayer)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("CreatePrimaryGameLayout: PlayerController reference currently invalid"));
+		UE_LOG(LogModulusUI, Error, TEXT("HUD: PlayerController reference currently invalid"));
 		return;
 	}
 	
 	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(OwningPlayer, PrimaryGameLayoutClass);
 	if (!PrimaryGameLayout)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("CreatePrimaryGameLayout: Failed to create PrimaryGameLayout widget"));
+		UE_LOG(LogModulusUI, Error, TEXT("HUD: Failed to create PrimaryGameLayout widget"));
 		return;
 	}
 	
@@ -97,31 +97,9 @@ void AMCore_HUD_Base::CreatePrimaryGameLayout()
 	PrimaryGameLayout->AddToPlayerScreen(PrimaryGameLayoutZOrder);
 	
 	UE_LOG(LogModulusUI, Log, TEXT("Created PrimaryGameLayout widget"));
-	/** Register w/ UISubsystem */
-	RegisterLayoutWithSubsystem();
 	
 	/** Notify BP and/or derived classes */
 	OnPrimaryGameLayoutCreated(PrimaryGameLayout);
-}
-
-void AMCore_HUD_Base::RegisterLayoutWithSubsystem()
-{
-	if (!PrimaryGameLayout)
-	{
-		UE_LOG(LogModulusUI, Warning, TEXT("RegisterLayoutWithSubsystem: UISubsystem not available, registration deferred"));
-		/** PrimaryGameLayout will self-register in NativeOnInitialized */
-		return;
-	}
-	
-	/** Register w/ UISubsystem */
-	const bool bIsRegistered = CachedUISubsystem->RegisterPrimaryGameLayout(PrimaryGameLayout);
-	if (!bIsRegistered)
-	{
-		UE_LOG(LogModulusUI, Warning, TEXT("RegisterLayoutWithSubsystem: Failed to register PrimaryGameLayout, may already exist"));
-		return;
-	}
-	
-	UE_LOG(LogModulusUI, Log, TEXT("RegisterLayoutWithSubsystem: Registered PrimaryGameLayout with UISubsystem"))
 }
 
 void AMCore_HUD_Base::CleanupPrimaryGameLayout()
@@ -135,7 +113,7 @@ void AMCore_HUD_Base::CleanupPrimaryGameLayout()
 	
 	if (IsValid(PrimaryGameLayoutClass))
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("CleanupPrimaryGameLayout: Cleaning up PrimaryGameLayout '%s'"),
+		UE_LOG(LogModulusUI, Log, TEXT("HUD: Cleaning up PrimaryGameLayout '%s'"),
 			*GetNameSafe(PrimaryGameLayout));
 		
 		/** Remove from Player Screen (viewport) */

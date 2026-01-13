@@ -62,7 +62,7 @@ bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InL
 	{
 		if (CachedPrimaryGameLayout.Get() == InLayout)
 		{
-			UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout '%s' already registered"), 
+			UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: PrimaryGameLayout '%s' already registered"), 
 				*GetNameSafe(InLayout));
 			return true;
 		}

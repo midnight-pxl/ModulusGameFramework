@@ -91,12 +91,6 @@ private:
 	void CreatePrimaryGameLayout();
 
 	/**
-	 * Registers the PrimaryGameLayout with the UISubsystem.
-	 * Called after successful layout creation.
-	 */
-	void RegisterLayoutWithSubsystem();
-
-	/**
 	 * Returns the UISubsystem for the owning player.
 	 * Caches the result for subsequent calls.
 	 */
