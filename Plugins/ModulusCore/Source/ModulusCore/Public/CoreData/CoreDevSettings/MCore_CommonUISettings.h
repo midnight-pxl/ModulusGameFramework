@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "CoreData/CoreStructEnums/SettingsStructsEnums/CoreGameSettings/MCore_GameSettingType.h"
 #include "CoreData/CoreDataAssets/UIDAs/MasterThemes/MCore_PDA_UITheme_Base.h"
+#include "CoreData/CoreStructEnums/UIStructsEnums/MCore_ThemeTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "MCore_CommonUISettings.generated.h"
 
@@ -27,8 +28,14 @@ public:
 	bool bEnableTagCaching{true};
 
 	UPROPERTY(Config, EditAnywhere, Category = "Configuration",
-		meta=(AllowedClasses = "MCore_UIThemeDataAsset_Base"))
+		meta=(AllowedClasses = "MCore_PDA_UITheme_Base"))
 	TSoftObjectPtr<UMCore_PDA_UITheme_Base> CurrentThemeAsset;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Theme", meta=(AllowedClasses = "MCore_PDA_UITheme_Base"))
+	TArray<FMCore_ThemeEntry> AvailableThemes;
+	
+	UPROPERTY(Config, EditAnywhere, Category = "Theme", meta=(ClampMin="0"))
+	int32 DefaultThemeIndex{0};
 
 	UPROPERTY(Config, EditAnywhere, Category = "WidgetClasses")
 	TMap<EMCore_SettingType, TSoftClassPtr<UUserWidget>> WidgetClassOverrides;

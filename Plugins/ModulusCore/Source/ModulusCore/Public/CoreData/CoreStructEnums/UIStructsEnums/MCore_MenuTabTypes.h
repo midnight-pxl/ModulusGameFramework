@@ -39,7 +39,7 @@ public:
 
   	/** Sort order (lower = left, higher = right) */
   	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")
-  	int32 Priority = 0;
+  	int32 Priority{0};
 
 	/** Icon displayed on tab button (optional) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")

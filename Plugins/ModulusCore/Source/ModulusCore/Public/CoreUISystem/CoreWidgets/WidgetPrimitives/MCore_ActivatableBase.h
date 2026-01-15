@@ -71,13 +71,19 @@ public:
 #endif
 
 protected:
+	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
 	
+	UFUNCTION(BlueprintNativeEvent, Category = "Theme")
+	void ApplyTheme(UMCore_PDA_UITheme_Base* NewTheme);
+	virtual void ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* NewTheme);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Theme", meta = (DisplayName = "On Theme Applied"))
+	void K2_OnThemeApplied(UMCore_PDA_UITheme_Base* Theme);
+	
 	bool bShouldBlockActivation() const;
 	bool bShouldFocusOnActivation{false};
-	
-	friend class IMCore_ThemeableInterface;
 
 	UPROPERTY(Transient)
 	mutable TWeakObjectPtr<UMCore_PDA_UITheme_Base> CachedTheme;
@@ -86,4 +92,11 @@ private:
 	/** Array of registered input bindings for auto cleanup */
 	UPROPERTY(Transient)
 	TArray<FUIActionBindingHandle> IABindingHandles;
+	
+	UFUNCTION()
+	void HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme);
+	
+	void BindThemeDelegate();
+	void UnbindThemeDelegate();
+	bool bThemeDelegateBound{false};
 };

@@ -3,6 +3,7 @@
 #include "CoreUISystem/CoreWidgets/WidgetPrimitives/MCore_ActivatableBase.h"
 #include "GameplayTagAssetInterface.h"
 #include "CoreData/CoreLogging/LogModulusUI.h"
+#include "CoreUISystem/MCore_UISubsystem.h"
 #include "Input/CommonUIInputTypes.h"
 
 
@@ -79,6 +80,11 @@ void UMCore_ActivatableBase::UnregisterAllBindings()
 
 	/** Clear IABindingHandles array */
 	IABindingHandles.Empty();
+}
+
+void UMCore_ActivatableBase::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
 }
 
 void UMCore_ActivatableBase::NativeOnActivated()
@@ -159,6 +165,33 @@ bool UMCore_ActivatableBase::bShouldBlockActivation() const
 
 	/** No blocking tags found - allow activation */
 	return false;
+}
+
+void UMCore_ActivatableBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
+{
+	K2_OnThemeApplied(Theme);
+}
+
+void UMCore_ActivatableBase::HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme)
+{
+}
+
+void UMCore_ActivatableBase::BindThemeDelegate()
+{
+	if (bThemeDelegateBound) { return; }
+
+	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	if (!LocalPlayer) { return; }
+
+	UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+	if (!UI) { return; }
+
+	UI->OnThemeChanged.AddDynamic(this, &UMCore_ActivatableBase::HandleThemeChanged);
+	bThemeDelegateBound = true;
+}
+
+void UMCore_ActivatableBase::UnbindThemeDelegate()
+{
 }
 
 #if WITH_EDITOR

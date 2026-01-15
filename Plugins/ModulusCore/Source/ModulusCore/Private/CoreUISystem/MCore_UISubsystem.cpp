@@ -254,14 +254,33 @@ void UMCore_UISubsystem::RebuildMenuHubTabBar()
 	}
 }
 
-UMCore_PDA_UITheme_Base* UMCore_UISubsystem::GetActiveTheme() const
+const TArray<FMCore_ThemeEntry>& UMCore_UISubsystem::GetAvailableThemes() const
 {
-	const UMCore_CommonUISettings* UISettings = UMCore_CommonUISettings::Get();
-	if (UISettings && !UISettings->CurrentThemeAsset.IsNull())
+	const UMCore_CommonUISettings* UISettings = GetDefault<UMCore_CommonUISettings>();
+	if (UISettings) { return UISettings->AvailableThemes; }
+	
+	static TArray<FMCore_ThemeEntry> EmptyArray;
+	return EmptyArray;
+}
+
+bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
+{
+	const UMCore_CommonUISettings* UISettings = GetDefault<UMCore_CommonUISettings>();
+	if (!UISettings || !UISettings->AvailableThemes.IsValidIndex(ThemeIndex))
 	{
-		return UISettings->CurrentThemeAsset.LoadSynchronous();
+		return false;
 	}
-	return nullptr;	
+	
+	if (ThemeIndex == ActiveThemeIndex) { return true; }
+	
+	const FMCore_ThemeEntry& TargetTheme = UISettings->AvailableThemes[ThemeIndex];
+	if (TargetTheme.ThemeAsset.IsNull()) { return false; }
+	
+	CachedActiveTheme = TargetTheme.ThemeAsset.LoadSynchronous();
+	ActiveThemeIndex = ThemeIndex;
+	OnThemeChanged.Broadcast(CachedActiveTheme);
+	
+	return true;
 }
 
 void UMCore_UISubsystem::LoadWidgetClasses()

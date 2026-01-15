@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "CoreData/CoreStructEnums/UIStructsEnums/MCore_MenuTabTypes.h"
+#include "CoreData/CoreStructEnums/UIStructsEnums/MCore_ThemeTypes.h"
 #include "MCore_UISubsystem.generated.h"
 
 class UCommonActivatableWidgetStack;
@@ -15,6 +16,8 @@ class UMCore_GameMenuHub;
 class UMCore_PrimaryGameLayout;
 class UCommonActivatableWidget;
 struct FGameplayTag;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnThemeChanged, UMCore_PDA_UITheme_Base*, NewTheme);
 
 /**
  * For accessing the primary game layout (CommonUI Widget Stacks)
@@ -120,7 +123,23 @@ public:
 	 * Get active UI theme from Dev Settings
 	 */
 	 UFUNCTION(BlueprintCallable, Category = "UI|Theme")
-	virtual UMCore_PDA_UITheme_Base* GetActiveTheme() const;
+	UMCore_PDA_UITheme_Base* GetActiveTheme() const { return CachedActiveTheme; }
+	
+	//--------------------------------------------------------------
+	// Theme System
+	//--------------------------------------------------------------
+	
+	UPROPERTY(BlueprintAssignable, Category = "UI|Theme")
+	FOnThemeChanged OnThemeChanged;
+
+	UFUNCTION(BlueprintPure, Category = "UI|Theme")
+	const TArray<FMCore_ThemeEntry>& GetAvailableThemes() const;
+
+	UFUNCTION(BlueprintPure, Category = "UI|Theme")
+	int32 GetActiveThemeIndex() const { return ActiveThemeIndex; }
+
+	UFUNCTION(BlueprintCallable, Category = "UI|Theme")
+	bool SetActiveThemeByIndex(int32 ThemeIndex);
 
 protected:
 	/** Widget class for MenuHub (loaded from settings or defaults) */
@@ -135,6 +154,11 @@ private:
 	/** Cached reference to menu hub tab list (if created) */
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_GameMenuHub> CachedMenuHub;
+	
+	UPROPERTY(Transient)
+	TObjectPtr<UMCore_PDA_UITheme_Base> CachedActiveTheme;
+
+	int32 ActiveThemeIndex = INDEX_NONE;
 	
 	/** Registered menu screens for this local player */
 	UPROPERTY(Transient)

@@ -13,7 +13,6 @@ class UMCore_PDA_MenuStyle;
 class UMCore_PDA_SliderStyle;
 class UMCore_PDA_ScrollbarStyle;
 class UMCore_PDA_SoundStyle;
-class UMCore_PDA_AnimationStyle;
 
 /**
  * Master UI Theme DataAsset - references modular style DataAssets.
