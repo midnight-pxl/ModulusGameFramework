@@ -8,7 +8,16 @@
 
 class UMCore_PDA_UITheme_Base;
 class UCommonTextBlock;
+class UWidgetSwitcher;
 class UImage;
+
+UENUM(BlueprintType)
+enum class EMCore_ButtonDisplayMode : uint8
+{
+	TextOnly,
+	IconOnly,
+	TextAndIcon
+};
 
 /**
  * Base button class with theme system integration.
@@ -48,6 +57,12 @@ public:
 	/** Set button icon from soft reference (async-friendly) */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon);
+	
+	UFUNCTION(BlueprintCallable, Category = "Button")
+	void SetDisplayMode(EMCore_ButtonDisplayMode InMode);
+
+	UFUNCTION(BlueprintPure, Category = "Button")
+	EMCore_ButtonDisplayMode GetDisplayMode() const { return DisplayMode; }
 
 protected:
 	//~ UUserWidget Interface
@@ -75,6 +90,12 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
 	TObjectPtr<UImage> Img_BtnIcon;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
+	TObjectPtr<UWidgetSwitcher> Switcher_Content;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Button")
+	EMCore_ButtonDisplayMode DisplayMode = EMCore_ButtonDisplayMode::TextOnly;
 
 private:
 	UFUNCTION()

@@ -5,6 +5,7 @@
 #include "CoreUISystem/MCore_UISubsystem.h"
 #include "CommonTextBlock.h"
 #include "Components/Image.h"
+#include "Components/WidgetSwitcher.h"
 #include "Engine/Texture2D.h"
 
 UMCore_ButtonBase::UMCore_ButtonBase()
@@ -24,6 +25,7 @@ void UMCore_ButtonBase::NativeOnInitialized()
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
 		{
 			ApplyTheme(UI->GetActiveTheme());
+			SetDisplayMode(DisplayMode);
 		}
 	}
 }
@@ -78,6 +80,16 @@ void UMCore_ButtonBase::SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon)
 
 	// Synchronous load - for async, use StreamableManager pattern
 	SetButtonIcon(InIcon.LoadSynchronous());
+}
+
+void UMCore_ButtonBase::SetDisplayMode(EMCore_ButtonDisplayMode InMode)
+{
+	DisplayMode = InMode;
+	
+	if (Switcher_Content)
+	{
+		Switcher_Content->SetActiveWidgetIndex(static_cast<int32>(DisplayMode));
+	}
 }
 
 void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
