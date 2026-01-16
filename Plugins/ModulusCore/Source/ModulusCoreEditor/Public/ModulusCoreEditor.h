@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+class SDockTab;
+class FSpawnTabArgs;
+
 class FModulusCoreEditorModule : public IModuleInterface
 {
 public:
@@ -14,6 +17,7 @@ public:
     static void OpenModulusHub();
 
 private:
-    void RegisterHubMenus();
-    void UnregisterHubMenus();
+    TSharedRef<SDockTab> SpawnModulusHubTab(const FSpawnTabArgs& SpawnTabArgs);
+    void RegisterToolbarButton();
+    void UnregisterToolbarButton();
 };
