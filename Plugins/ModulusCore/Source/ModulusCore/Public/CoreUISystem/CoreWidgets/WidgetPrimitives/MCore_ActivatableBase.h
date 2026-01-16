@@ -37,7 +37,7 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FInputActionExecutedDelegate, FName, ActionNam
 /**
  * 
  */
-UCLASS(Abstract, Blueprintable, ClassGroup="ModulusUI")
+UCLASS(Abstract, Blueprintable, ClassGroup="ModulusUI", meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ActivatableBase : public UCommonActivatableWidget
 {
 	GENERATED_BODY()

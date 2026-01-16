@@ -22,7 +22,7 @@ public class ModulusCoreEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                "EditorWidgets", 
+                "EditorWidgets",
                 "UnrealEd",
                 "ToolMenus",
                 "ToolWidgets",
@@ -32,7 +32,11 @@ public class ModulusCoreEditor : ModuleRules
                 "UMG",
                 "UMGEditor",
                 "EditorScriptingUtilities",
-                "Blutility"
+                "Blutility",
+                "Json",
+                "JsonUtilities",
+                "DesktopPlatform",
+                "Projects"
             }
         );
     }

@@ -2,6 +2,7 @@
 
 #include "ModulusCoreEditor.h"
 #include "Editor/Blutility/Public/EditorUtilitySubsystem.h"
+#include "Editor/Blutility/Classes/EditorUtilityWidgetBlueprint.h"
 #include "CoreEditorLogging/LogModulusEditor.h"
 #include "ModulusEditorCommands.h"
 
@@ -50,23 +51,25 @@ void FModulusCoreEditorModule::UnregisterHubMenus()
 
 void FModulusCoreEditorModule::OpenModulusHub()
 {
-	/**
-	UEditorUtilitySubsystem* EditorUtilitySubsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
-	if (EditorUtilitySubsystem)
+	UEditorUtilitySubsystem* Subsystem = GEditor->GetEditorSubsystem<UEditorUtilitySubsystem>();
+	if (!Subsystem)
 	{
-		UEditorUtilityWidgetBlueprint* WidgetBlueprint = LoadObject<UEditorUtilityWidgetBlueprint>(
-			nullptr, TEXT("/ModulusCore/Editor/EUW_ModulusHub.EUW_ModulusHub"));
-
-		if (WidgetBlueprint)
-		{
-			EditorUtilitySubsystem->SpawnAndRegisterTab(WidgetBlueprint);
-		}
-		else
-		{
-			UE_LOG(LogModulusEditor, Warning, TEXT("Could not find Modulus Hub widget blueprint"))
-		}
+		UE_LOG(LogModulusEditor, Error, TEXT("EditorUtilitySubsystem unavailable"));
+		return;
 	}
-	*/
+
+	UEditorUtilityWidgetBlueprint* Widget = LoadObject<UEditorUtilityWidgetBlueprint>(
+		nullptr, TEXT("/ModulusCore/Editor/EUW_ModulusHub.EUW_ModulusHub"));
+
+	if (Widget)
+	{
+		Subsystem->SpawnAndRegisterTab(Widget);
+		UE_LOG(LogModulusEditor, Log, TEXT("Modulus Hub opened successfully"));
+	}
+	else
+	{
+		UE_LOG(LogModulusEditor, Warning, TEXT("EUW_ModulusHub not found at /ModulusCore/Editor/"));
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

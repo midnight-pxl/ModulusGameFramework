@@ -28,7 +28,7 @@ class UNamedSlot;
  * 3. Add Slot_Content as NamedSlot for child widgets
  * 4. Override ApplyTheme or handle via OnThemeApplied
  */
-UCLASS(Abstract, Blueprintable)
+UCLASS(Abstract, Blueprintable, meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ContainerBase : public UCommonUserWidget
 {
 	GENERATED_BODY()

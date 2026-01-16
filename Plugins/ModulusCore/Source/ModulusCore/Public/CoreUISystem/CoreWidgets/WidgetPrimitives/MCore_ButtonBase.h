@@ -34,7 +34,7 @@ enum class EMCore_ButtonDisplayMode : uint8
  * 2. Add child widgets matching bind names (optional)
  * 3. Override ApplyTheme in C++ or handle in Blueprint via OnThemeApplied
  */
-UCLASS(Abstract, Blueprintable)
+UCLASS(Abstract, Blueprintable, meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ButtonBase : public UCommonButtonBase
 {
 	GENERATED_BODY()
