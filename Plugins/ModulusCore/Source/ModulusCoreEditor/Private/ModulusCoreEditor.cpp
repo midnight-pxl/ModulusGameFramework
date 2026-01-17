@@ -22,7 +22,7 @@ void FModulusCoreEditorModule::StartupModule()
 		SModulusHubTab::TabId,
 		FOnSpawnTab::CreateRaw(this, &FModulusCoreEditorModule::SpawnModulusHubTab))
 		.SetDisplayName(LOCTEXT("ModulusHubTabTitle", "Modulus Hub"))
-		.SetTooltipText(LOCTEXT("ModulusHubTabTooltip", "Open the Modulus Game Framework Hub"))
+		.SetTooltipText(LOCTEXT("ModulusHubTabTooltip", "Open Modulus Game Framework Hub"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetToolsCategory())
 		.SetIcon(FSlateIcon(FModulusEditorStyle::GetStyleSetName(), FModulusEditorStyle::ModulusIconName));
 

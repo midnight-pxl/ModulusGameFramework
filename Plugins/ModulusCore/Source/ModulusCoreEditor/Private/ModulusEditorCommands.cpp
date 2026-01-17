@@ -6,7 +6,7 @@
 
 void FModulusEditorCommands::RegisterCommands()
 {
-	UI_COMMAND(OpenModulusHub, "Modulus Hub", "Open the Modulus Game Framework Hub", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(OpenModulusHub, "Modulus Hub", "Open Modulus Game Framework Hub", EUserInterfaceActionType::Button, FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE
