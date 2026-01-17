@@ -37,7 +37,8 @@ public class ModulusCoreEditor : ModuleRules
                 "JsonUtilities",
                 "DesktopPlatform",
                 "Projects",
-                "WorkspaceMenuStructure"
+                "WorkspaceMenuStructure",
+                "Settings"
             }
         );
     }

@@ -2,8 +2,21 @@
 
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreData/Logging/LogModulusEvent.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_EventListenerComp.h"
+
+// Conditional verbose logging macro - only logs when Event System Logging is enabled in Project Settings
+#define MCORE_EVENT_LOG(Format, ...) \
+	do { \
+		if (const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get()) \
+		{ \
+			if (Settings->IsEventLoggingEnabled()) \
+			{ \
+				UE_LOG(LogModulusEvent, Log, Format, ##__VA_ARGS__); \
+			} \
+		} \
+	} while(0)
 
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -31,7 +44,7 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		return;
 	}
 
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
+	MCORE_EVENT_LOG(TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
 
 	// Deliver to current listeners
 	DeliverGlobalEventToLocalListeners(EventData);
@@ -45,7 +58,7 @@ void UMCore_GlobalEventSubsystem::RegisterGlobalListener(UMCore_EventListenerCom
 	if (IsValid(ListenerComponent))
 	{
 		GlobalListeners.AddUnique(ListenerComponent);
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Registered global event listener: %s"), 
+		MCORE_EVENT_LOG(TEXT("Registered global event listener: %s"),
 			   *ListenerComponent->GetName());
 	}
 }
@@ -59,7 +72,7 @@ void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerC
 
 	if (RemoveCount > 0)
 	{
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Unregistered global event listener: %s"),
+		MCORE_EVENT_LOG(TEXT("Unregistered global event listener: %s"),
 			ListenerComponent ? *ListenerComponent->GetName() : TEXT("Unknown"));
 	}
 }
@@ -111,7 +124,7 @@ void UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Implementation(cons
 	// Server receives RPC, validates, and broadcasts to all clients
 	if (HasGlobalEventAuthority())
 	{
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Server received client event request: %s"),
+		MCORE_EVENT_LOG(TEXT("Server received client event request: %s"),
 			*EventData.EventTag.ToString());
 		BroadcastGlobalEvent(EventData);
 	}

@@ -6,6 +6,8 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 
+class SCheckBox;
+
 class SModulusHubTab : public SCompoundWidget
 {
 public:
@@ -17,27 +19,23 @@ public:
 	static const FName TabId;
 
 private:
-	// Settings Tab
-	FReply OnResetSettingsClicked();
-	FReply OnExportSettingsClicked();
-	FReply OnImportSettingsClicked();
-	FReply OnValidateSettingsClicked();
+	// Settings Section
+	FReply OnOpenProjectSettingsClicked();
+	void OnEventLoggingCheckStateChanged(ECheckBoxState NewState);
+	void OnUIDebugOverlayCheckStateChanged(ECheckBoxState NewState);
+	ECheckBoxState GetEventLoggingCheckState() const;
+	ECheckBoxState GetUIDebugOverlayCheckState() const;
 
-	// Ecosystem Tab
+	// Ecosystem Section
 	void RefreshInstalledPlugins();
 
-	// Documentation Tab
+	// Documentation Section
 	FReply OnQuickStartClicked();
 	FReply OnAPIReferenceClicked();
 
 	// UI Update Helpers
 	void UpdatePluginListUI();
-	void UpdateValidationResultsUI();
 	void OpenURL(const FString& URL);
-
-	// Validation state
-	TArray<FString> ValidationMessages;
-	bool bLastValidationPassed = false;
 
 	// Plugin data
 	TArray<FString> InstalledPluginNames;
@@ -45,5 +43,6 @@ private:
 
 	// UI References
 	TSharedPtr<SVerticalBox> PluginListBox;
-	TSharedPtr<SVerticalBox> ValidationResultsBox;
+	TSharedPtr<SCheckBox> EventLoggingCheckbox;
+	TSharedPtr<SCheckBox> UIDebugOverlayCheckbox;
 };

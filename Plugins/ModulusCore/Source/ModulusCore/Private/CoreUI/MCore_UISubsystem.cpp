@@ -6,8 +6,8 @@
 #include "Engine/LocalPlayer.h"
 
 #include "CoreData/Logging/LogModulusUI.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
-#include "CoreData/Settings/MCore_CommonUISettings.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 
@@ -256,30 +256,44 @@ void UMCore_UISubsystem::RebuildMenuHubTabBar()
 
 const TArray<FMCore_ThemeEntry>& UMCore_UISubsystem::GetAvailableThemes() const
 {
-	const UMCore_CommonUISettings* UISettings = GetDefault<UMCore_CommonUISettings>();
-	if (UISettings) { return UISettings->AvailableThemes; }
-	
+	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
+	if (Settings)
+	{
+		return Settings->AvailableThemes;
+	}
+
 	static TArray<FMCore_ThemeEntry> EmptyArray;
 	return EmptyArray;
 }
 
 bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 {
-	const UMCore_CommonUISettings* UISettings = GetDefault<UMCore_CommonUISettings>();
-	if (!UISettings || !UISettings->AvailableThemes.IsValidIndex(ThemeIndex))
+	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
+	if (!Settings || !Settings->IsValidThemeIndex(ThemeIndex))
 	{
+		UE_LOG(LogModulusUI, Warning, TEXT("SetActiveThemeByIndex: Invalid theme index %d"), ThemeIndex);
 		return false;
 	}
-	
-	if (ThemeIndex == ActiveThemeIndex) { return true; }
-	
-	const FMCore_ThemeEntry& TargetTheme = UISettings->AvailableThemes[ThemeIndex];
-	if (TargetTheme.ThemeAsset.IsNull()) { return false; }
-	
-	CachedActiveTheme = TargetTheme.ThemeAsset.LoadSynchronous();
+
+	if (ThemeIndex == ActiveThemeIndex)
+	{
+		return true;
+	}
+
+	const FMCore_ThemeEntry& ThemeEntry = Settings->AvailableThemes[ThemeIndex];
+	if (ThemeEntry.ThemeAsset.IsNull())
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("SetActiveThemeByIndex: Theme at index %d has no asset"), ThemeIndex);
+		return false;
+	}
+
+	CachedActiveTheme = ThemeEntry.ThemeAsset.LoadSynchronous();
 	ActiveThemeIndex = ThemeIndex;
 	OnThemeChanged.Broadcast(CachedActiveTheme);
-	
+
+	UE_LOG(LogModulusUI, Log, TEXT("Theme changed to: %s (index %d)"),
+		*ThemeEntry.DisplayName.ToString(), ThemeIndex);
+
 	return true;
 }
 
