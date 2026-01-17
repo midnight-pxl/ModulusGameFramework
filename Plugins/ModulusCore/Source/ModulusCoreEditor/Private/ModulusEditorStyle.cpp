@@ -13,11 +13,6 @@ const FName FModulusEditorStyle::ModulusIconName = TEXT("ModulusEditor.ModulusIc
 const FName FModulusEditorStyle::SettingsIconName = TEXT("ModulusEditor.SettingsIcon");
 const FName FModulusEditorStyle::EcosystemIconName = TEXT("ModulusEditor.EcosystemIcon");
 const FName FModulusEditorStyle::DocsIconName = TEXT("ModulusEditor.DocsIcon");
-const FName FModulusEditorStyle::RefreshIconName = TEXT("ModulusEditor.RefreshIcon");
-const FName FModulusEditorStyle::ValidateIconName = TEXT("ModulusEditor.ValidateIcon");
-const FName FModulusEditorStyle::ExportIconName = TEXT("ModulusEditor.ExportIcon");
-const FName FModulusEditorStyle::ImportIconName = TEXT("ModulusEditor.ImportIcon");
-const FName FModulusEditorStyle::ResetIconName = TEXT("ModulusEditor.ResetIcon");
 
 /** Brand Colors - Modulus Game Framework themed */
 namespace ModulusColors
@@ -188,13 +183,8 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 
 	/** Section icons - using colored boxes as placeholders */
 	Style->Set(SettingsIconName, new FSlateRoundedBoxBrush(ModulusColors::HeaderBackground, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(EcosystemIconName, new FSlateRoundedBoxBrush(ModulusColors::Accent, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(DocsIconName, new FSlateRoundedBoxBrush(ModulusColors::Error, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(RefreshIconName, new FSlateRoundedBoxBrush(ModulusColors::Secondary, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(ValidateIconName, new FSlateRoundedBoxBrush(ModulusColors::Success, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(ExportIconName, new FSlateRoundedBoxBrush(ModulusColors::Secondary, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(ImportIconName, new FSlateRoundedBoxBrush(ModulusColors::Success, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set(ResetIconName, new FSlateRoundedBoxBrush(ModulusColors::Warning, 2.0f, FVector2f(16.0f, 16.0f)));
+	Style->Set(EcosystemIconName, new FSlateRoundedBoxBrush(ModulusColors::TextPrimary, 2.0f, FVector2f(16.0f, 16.0f)));  // Monochrome logo
+	Style->Set(DocsIconName, new FSlateRoundedBoxBrush(ModulusColors::Secondary, 2.0f, FVector2f(16.0f, 16.0f)));
 
 	return Style;
 }

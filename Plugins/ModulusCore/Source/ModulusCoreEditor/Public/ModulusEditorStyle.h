@@ -24,11 +24,6 @@ public:
 	static const FName SettingsIconName;
 	static const FName EcosystemIconName;
 	static const FName DocsIconName;
-	static const FName RefreshIconName;
-	static const FName ValidateIconName;
-	static const FName ExportIconName;
-	static const FName ImportIconName;
-	static const FName ResetIconName;
 
 	// Color accessors
 	static FLinearColor GetAccentColor();
