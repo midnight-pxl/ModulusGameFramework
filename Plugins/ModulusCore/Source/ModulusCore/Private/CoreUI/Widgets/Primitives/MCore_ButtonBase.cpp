@@ -10,7 +10,16 @@
 
 UMCore_ButtonBase::UMCore_ButtonBase()
 {
-	// Set Defaults
+	// Default text is empty
+	ButtonText = FText::GetEmpty();
+}
+
+void UMCore_ButtonBase::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+
+	// Sync properties to widgets for design-time preview
+	SyncPropertiesToWidgets();
 }
 
 void UMCore_ButtonBase::NativeOnInitialized()
@@ -25,9 +34,11 @@ void UMCore_ButtonBase::NativeOnInitialized()
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
 		{
 			ApplyTheme(UI->GetActiveTheme());
-			SetDisplayMode(DisplayMode);
 		}
 	}
+
+	// Sync design-time properties to runtime widgets
+	SyncPropertiesToWidgets();
 }
 
 void UMCore_ButtonBase::NativeDestruct()
@@ -39,6 +50,8 @@ void UMCore_ButtonBase::NativeDestruct()
 
 void UMCore_ButtonBase::SetButtonText(const FText& InText)
 {
+	ButtonText = InText;
+
 	if (Txt_BtnLabel)
 	{
 		Txt_BtnLabel->SetText(InText);
@@ -47,11 +60,31 @@ void UMCore_ButtonBase::SetButtonText(const FText& InText)
 
 FText UMCore_ButtonBase::GetButtonText() const
 {
+	return ButtonText;
+}
+
+void UMCore_ButtonBase::SetTextJustification(EMCore_TextJustify InJustification)
+{
+	TextJustification = InJustification;
+
 	if (Txt_BtnLabel)
 	{
-		return Txt_BtnLabel->GetText();
+		ETextJustify::Type SlateJustify;
+		switch (InJustification)
+		{
+		case EMCore_TextJustify::Left:
+			SlateJustify = ETextJustify::Left;
+			break;
+		case EMCore_TextJustify::Right:
+			SlateJustify = ETextJustify::Right;
+			break;
+		case EMCore_TextJustify::Center:
+		default:
+			SlateJustify = ETextJustify::Center;
+			break;
+		}
+		Txt_BtnLabel->SetJustification(SlateJustify);
 	}
-	return FText::GetEmpty();
 }
 
 void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
@@ -136,4 +169,19 @@ void UMCore_ButtonBase::UnbindThemeDelegate()
 	}
 
 	bThemeDelegateBound = false;
+}
+
+void UMCore_ButtonBase::SyncPropertiesToWidgets()
+{
+	// Sync text
+	if (Txt_BtnLabel && !ButtonText.IsEmpty())
+	{
+		Txt_BtnLabel->SetText(ButtonText);
+	}
+
+	// Sync justification
+	SetTextJustification(TextJustification);
+
+	// Sync display mode
+	SetDisplayMode(DisplayMode);
 }

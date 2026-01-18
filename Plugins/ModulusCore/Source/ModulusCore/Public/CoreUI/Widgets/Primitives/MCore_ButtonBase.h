@@ -12,6 +12,14 @@ class UWidgetSwitcher;
 class UImage;
 
 UENUM(BlueprintType)
+enum class EMCore_TextJustify : uint8
+{
+	Left,
+	Center,
+	Right
+};
+
+UENUM(BlueprintType)
 enum class EMCore_ButtonDisplayMode : uint8
 {
 	TextOnly,
@@ -43,12 +51,24 @@ public:
 	UMCore_ButtonBase();
 
 	/** Set button label text */
-	UFUNCTION(BlueprintCallable, Category = "Button")
+	UFUNCTION(BlueprintCallable, Category = "Button|Text")
 	void SetButtonText(const FText& InText);
 
 	/** Get current button label text */
-	UFUNCTION(BlueprintPure, Category = "Button")
+	UFUNCTION(BlueprintPure, Category = "Button|Text")
 	FText GetButtonText() const;
+
+	/** Set text justification/alignment */
+	UFUNCTION(BlueprintCallable, Category = "Button|Text")
+	void SetTextJustification(EMCore_TextJustify InJustification);
+
+	/** Get current text justification */
+	UFUNCTION(BlueprintPure, Category = "Button|Text")
+	EMCore_TextJustify GetTextJustification() const { return TextJustification; }
+
+	/** Get the underlying text block for advanced customization. May return nullptr if not bound. */
+	UFUNCTION(BlueprintPure, Category = "Button|Text")
+	UCommonTextBlock* GetTextBlock() const { return Txt_BtnLabel; }
 
 	/** Set button icon */
 	UFUNCTION(BlueprintCallable, Category = "Button")
@@ -63,9 +83,20 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Button")
 	EMCore_ButtonDisplayMode GetDisplayMode() const { return DisplayMode; }
+	
+	//~ Optional child widget bindings
+	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
+	TObjectPtr<UCommonTextBlock> Txt_BtnLabel;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
+	TObjectPtr<UImage> Img_BtnIcon;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
+	TObjectPtr<UWidgetSwitcher> Switcher_Content;
 
 protected:
 	//~ UUserWidget Interface
+	virtual void NativePreConstruct() override;
 	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 	//~ End UUserWidget Interface
@@ -84,20 +115,21 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Theme", meta = (DisplayName = "On Theme Applied"))
 	void K2_OnThemeApplied(UMCore_PDA_UITheme_Base* Theme);
 
-	//~ Optional child widget bindings
-	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
-	TObjectPtr<UCommonTextBlock> Txt_BtnLabel;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
-	TObjectPtr<UImage> Img_BtnIcon;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
-	TObjectPtr<UWidgetSwitcher> Switcher_Content;
-
+	/** Button display mode (text, icon, or both) */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Button")
 	EMCore_ButtonDisplayMode DisplayMode = EMCore_ButtonDisplayMode::TextOnly;
 
+	/** Button label text - editable at design-time and runtime */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Text", meta = (MultiLine = false))
+	FText ButtonText;
+
+	/** Text alignment/justification */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Text")
+	EMCore_TextJustify TextJustification = EMCore_TextJustify::Center;
+
 private:
+	/** Syncs design-time properties to bound widgets */
+	void SyncPropertiesToWidgets();
 	UFUNCTION()
 	void HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme);
 

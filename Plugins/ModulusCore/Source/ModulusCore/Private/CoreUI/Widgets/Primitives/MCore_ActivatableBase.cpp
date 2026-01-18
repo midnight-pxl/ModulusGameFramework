@@ -202,11 +202,13 @@ void UMCore_ActivatableBase::ValidateCompiledWidgetTree(const UWidgetTree& Bluep
 
 	if (GetClass()->ClassGeneratedBy == nullptr) { return; }
 
-	static const FName GetDesiredFocusTargetName =
-		GET_FUNCTION_NAME_CHECKED(UMCore_ActivatableBase, GetDesiredFocusTarget);
+	// CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function
+	// (displayed as "Get Desired Focus Target" in Blueprint graphs)
+	static const FName BPGetDesiredFocusTargetName = TEXT("BP_GetDesiredFocusTarget");
 
-	if (!GetClass()->IsFunctionImplementedInScript(GetDesiredFocusTargetName))
+	if (!GetClass()->IsFunctionImplementedInScript(BPGetDesiredFocusTargetName))
 	{
+		// Only warn for direct children - intermediate C++ classes may implement it natively
 		const UClass* ParentClass = GetClass()->GetSuperClass();
 		if (ParentClass == UMCore_ActivatableBase::StaticClass())
 		{
