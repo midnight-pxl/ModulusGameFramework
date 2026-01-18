@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "CommonButtonBase.h"
+#include "CommonTextBlock.h"
 #include "MCore_ButtonBase.generated.h"
 
 class UMCore_PDA_UITheme_Base;
-class UCommonTextBlock;
+class UCommonButtonStyle;
+class UCommonTextStyle;
 class UWidgetSwitcher;
 class UImage;
 
@@ -70,6 +72,26 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Button|Text")
 	UCommonTextBlock* GetTextBlock() const { return Txt_BtnLabel; }
 
+	/** Set button style override (takes precedence over theme). Pass nullptr to use theme default. */
+	UFUNCTION(BlueprintCallable, Category = "Button|Style")
+	void SetButtonStyleOverride(TSubclassOf<UCommonButtonStyle> InStyle);
+
+	/** Get current button style override (nullptr if using theme default) */
+	UFUNCTION(BlueprintPure, Category = "Button|Style")
+	TSubclassOf<UCommonButtonStyle> GetButtonStyleOverride() const { return ButtonStyleOverride; }
+
+	/** Set text style override (takes precedence over theme). Pass nullptr to use theme default. */
+	UFUNCTION(BlueprintCallable, Category = "Button|Style")
+	void SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InStyle);
+
+	/** Get current text style override (nullptr if using theme default) */
+	UFUNCTION(BlueprintPure, Category = "Button|Style")
+	TSubclassOf<UCommonTextStyle> GetTextStyleOverride() const { return TextStyleOverride; }
+
+	/** Returns true if this button is using local style overrides instead of theme defaults */
+	UFUNCTION(BlueprintPure, Category = "Button|Style")
+	bool IsUsingStyleOverrides() const { return ButtonStyleOverride != nullptr || TextStyleOverride != nullptr; }
+
 	/** Set button icon */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIcon(UTexture2D* InIcon);
@@ -126,6 +148,20 @@ protected:
 	/** Text alignment/justification */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Text")
 	EMCore_TextJustify TextJustification = EMCore_TextJustify::Center;
+
+	/**
+	 * Optional button style override. When set, takes precedence over the active theme's button style.
+	 * Leave empty/None to use the theme's default ButtonTextStyle or PrimaryButtonStyle.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Style")
+	TSubclassOf<UCommonButtonStyle> ButtonStyleOverride;
+
+	/**
+	 * Optional text style override. When set, takes precedence over the active theme's text style.
+	 * Leave empty/None to use the theme's default ButtonTextStyle.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Style")
+	TSubclassOf<UCommonTextStyle> TextStyleOverride;
 
 private:
 	/** Syncs design-time properties to bound widgets */

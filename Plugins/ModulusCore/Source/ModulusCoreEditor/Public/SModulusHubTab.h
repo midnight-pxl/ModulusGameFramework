@@ -26,6 +26,10 @@ private:
 	ECheckBoxState GetEventLoggingCheckState() const;
 	ECheckBoxState GetUIDebugOverlayCheckState() const;
 
+	// UI Theme Section
+	FReply OnEditThemeAssetClicked();
+	FText GetActiveThemeName() const;
+
 	// Ecosystem Section
 	void RefreshInstalledPlugins();
 

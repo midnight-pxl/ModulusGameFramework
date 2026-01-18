@@ -3,7 +3,9 @@
 
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CommonTextBlock.h"
+#include "CommonButtonBase.h"
 #include "Components/Image.h"
 #include "Components/WidgetSwitcher.h"
 #include "Engine/Texture2D.h"
@@ -118,17 +120,66 @@ void UMCore_ButtonBase::SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon)
 void UMCore_ButtonBase::SetDisplayMode(EMCore_ButtonDisplayMode InMode)
 {
 	DisplayMode = InMode;
-	
+
 	if (Switcher_Content)
 	{
 		Switcher_Content->SetActiveWidgetIndex(static_cast<int32>(DisplayMode));
 	}
 }
 
+void UMCore_ButtonBase::SetButtonStyleOverride(TSubclassOf<UCommonButtonStyle> InStyle)
+{
+	ButtonStyleOverride = InStyle;
+
+	// Re-apply current theme to pick up the override
+	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	{
+		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
+		{
+			ApplyTheme(UI->GetActiveTheme());
+		}
+	}
+}
+
+void UMCore_ButtonBase::SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InStyle)
+{
+	TextStyleOverride = InStyle;
+
+	// Re-apply current theme to pick up the override
+	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	{
+		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
+		{
+			ApplyTheme(UI->GetActiveTheme());
+		}
+	}
+}
+
 void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
 {
-	// Base implementation - derived classes override for specific styling
-	// Blueprint can also handle via K2_OnThemeApplied
+	// Apply button style: override takes precedence, then theme default
+	TSubclassOf<UCommonButtonStyle> ButtonStyleToApply = ButtonStyleOverride;
+	if (!ButtonStyleToApply && Theme)
+	{
+		ButtonStyleToApply = Theme->PrimaryButtonStyle;
+	}
+	if (ButtonStyleToApply)
+	{
+		SetStyle(ButtonStyleToApply);
+	}
+
+	// Apply text style: override takes precedence, then theme default
+	TSubclassOf<UCommonTextStyle> TextStyleToApply = TextStyleOverride;
+	if (!TextStyleToApply && Theme)
+	{
+		TextStyleToApply = Theme->ButtonTextStyle;
+	}
+	if (TextStyleToApply && Txt_BtnLabel)
+	{
+		Txt_BtnLabel->SetStyle(TextStyleToApply);
+	}
+
+	// Allow Blueprint to do additional styling
 	K2_OnThemeApplied(Theme);
 }
 
@@ -184,4 +235,15 @@ void UMCore_ButtonBase::SyncPropertiesToWidgets()
 
 	// Sync display mode
 	SetDisplayMode(DisplayMode);
+
+	// Sync style overrides for design-time preview
+	// These will be overridden by ApplyTheme at runtime, but allow designers to see the effect
+	if (ButtonStyleOverride)
+	{
+		SetStyle(ButtonStyleOverride);
+	}
+	if (TextStyleOverride && Txt_BtnLabel)
+	{
+		Txt_BtnLabel->SetStyle(TextStyleOverride);
+	}
 }

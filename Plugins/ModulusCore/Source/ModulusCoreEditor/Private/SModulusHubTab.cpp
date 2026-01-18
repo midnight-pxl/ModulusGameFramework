@@ -4,6 +4,7 @@
 #include "ModulusEditorStyle.h"
 #include "CoreEditorLogging/LogModulusEditor.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
+#include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Input/SButton.h"
@@ -13,6 +14,8 @@
 #include "Interfaces/IPluginManager.h"
 #include "ISettingsModule.h"
 #include "HAL/PlatformProcess.h"
+#include "Editor.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 
 const FName SModulusHubTab::TabId = FName(TEXT("ModulusHubTab"));
 
@@ -315,6 +318,96 @@ void SModulusHubTab::Construct(const FArguments& InArgs)
 					]
 
 					// ============================================
+					// UI Theme Section
+					// ============================================
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(ModulusHubLayout::SectionPadding)
+					[
+						SNew(SBorder)
+						.BorderImage(Style.GetBrush("ModulusEditor.RoundedBox"))
+						.Padding(ModulusHubLayout::ContentPadding)
+						[
+							SNew(SVerticalBox)
+
+							// Section Header
+							+ SVerticalBox::Slot()
+							.AutoHeight()
+							.Padding(0.0f, 0.0f, 0.0f, 12.0f)
+							[
+								SNew(SHorizontalBox)
+
+								+ SHorizontalBox::Slot()
+								.AutoWidth()
+								.VAlign(VAlign_Center)
+								.Padding(0.0f, 0.0f, 8.0f, 0.0f)
+								[
+									SNew(SBox)
+									.WidthOverride(16.0f)
+									.HeightOverride(16.0f)
+									[
+										SNew(SImage)
+										.Image(Style.GetBrush(FModulusEditorStyle::SettingsIconName))
+									]
+								]
+
+								+ SHorizontalBox::Slot()
+								.FillWidth(1.0f)
+								.VAlign(VAlign_Center)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("UIThemeHeader", "UI Theme"))
+									.TextStyle(&Style, "ModulusEditor.Text.SectionHeader")
+								]
+							]
+
+							// Active Theme Row
+							+ SVerticalBox::Slot()
+							.AutoHeight()
+							.Padding(0.0f, 4.0f)
+							[
+								SNew(SHorizontalBox)
+
+								+ SHorizontalBox::Slot()
+								.FillWidth(1.0f)
+								.VAlign(VAlign_Center)
+								[
+									SNew(SVerticalBox)
+
+									+ SVerticalBox::Slot()
+									.AutoHeight()
+									[
+										SNew(STextBlock)
+										.Text(LOCTEXT("ActiveThemeLabel", "Active Theme"))
+										.TextStyle(&Style, "ModulusEditor.Text.Normal")
+									]
+
+									+ SVerticalBox::Slot()
+									.AutoHeight()
+									[
+										SNew(STextBlock)
+										.Text(this, &SModulusHubTab::GetActiveThemeName)
+										.TextStyle(&Style, "ModulusEditor.Text.Muted")
+									]
+								]
+
+								+ SHorizontalBox::Slot()
+								.AutoWidth()
+								.VAlign(VAlign_Center)
+								[
+									SNew(SButton)
+									.ButtonStyle(&Style, "ModulusEditor.Button")
+									.OnClicked(this, &SModulusHubTab::OnEditThemeAssetClicked)
+									[
+										SNew(STextBlock)
+										.Text(LOCTEXT("EditThemeBtn", "Edit Theme Asset"))
+									]
+								]
+							]
+						]
+					]
+
+					// ============================================
 					// Documentation Section
 					// ============================================
 					+ SVerticalBox::Slot()
@@ -544,6 +637,62 @@ ECheckBoxState SModulusHubTab::GetUIDebugOverlayCheckState() const
 	}
 #endif
 	return ECheckBoxState::Unchecked;
+}
+
+FText SModulusHubTab::GetActiveThemeName() const
+{
+	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
+	if (!Settings)
+	{
+		return LOCTEXT("NoSettingsError", "Settings unavailable");
+	}
+
+	if (!Settings->IsValidThemeIndex(Settings->DefaultThemeIndex))
+	{
+		return LOCTEXT("NoThemeConfigured", "No theme configured");
+	}
+
+	const FMCore_ThemeEntry& ThemeEntry = Settings->AvailableThemes[Settings->DefaultThemeIndex];
+	if (ThemeEntry.DisplayName.IsEmpty())
+	{
+		// Fall back to asset name if no display name set
+		if (!ThemeEntry.ThemeAsset.IsNull())
+		{
+			return FText::FromString(ThemeEntry.ThemeAsset.GetAssetName());
+		}
+		return LOCTEXT("UnnamedTheme", "Unnamed Theme");
+	}
+
+	return ThemeEntry.DisplayName;
+}
+
+FReply SModulusHubTab::OnEditThemeAssetClicked()
+{
+	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
+	if (!Settings || !Settings->IsValidThemeIndex(Settings->DefaultThemeIndex))
+	{
+		UE_LOG(LogModulusEditor, Warning, TEXT("No active theme configured. Configure a theme in Project Settings > Game > Modulus Core"));
+		return FReply::Handled();
+	}
+
+	const FMCore_ThemeEntry& ThemeEntry = Settings->AvailableThemes[Settings->DefaultThemeIndex];
+	if (ThemeEntry.ThemeAsset.IsNull())
+	{
+		UE_LOG(LogModulusEditor, Warning, TEXT("Active theme entry has no asset assigned"));
+		return FReply::Handled();
+	}
+
+	// Load the asset and open it in the editor
+	if (UMCore_PDA_UITheme_Base* ThemeAsset = ThemeEntry.ThemeAsset.LoadSynchronous())
+	{
+		if (GEditor)
+		{
+			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(ThemeAsset);
+			UE_LOG(LogModulusEditor, Log, TEXT("Opened theme asset: %s"), *ThemeAsset->GetName());
+		}
+	}
+
+	return FReply::Handled();
 }
 
 void SModulusHubTab::RefreshInstalledPlugins()
