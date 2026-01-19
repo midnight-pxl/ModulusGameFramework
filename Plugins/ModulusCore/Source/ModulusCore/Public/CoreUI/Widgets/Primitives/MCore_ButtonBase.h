@@ -99,14 +99,16 @@ public:
 	/** Set button icon from soft reference (async-friendly) */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon);
-	
+
+	/** Set button display mode (text only, icon only, or both) */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetDisplayMode(EMCore_ButtonDisplayMode InMode);
 
+	/** Get current button display mode */
 	UFUNCTION(BlueprintPure, Category = "Button")
 	EMCore_ButtonDisplayMode GetDisplayMode() const { return DisplayMode; }
-	
-	//~ Optional child widget bindings
+
+	//~ Begin Optional Widget Bindings
 	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
 	TObjectPtr<UCommonTextBlock> Txt_BtnLabel;
 
@@ -151,26 +153,32 @@ protected:
 
 	/**
 	 * Optional button style override. When set, takes precedence over the active theme's button style.
-	 * Leave empty/None to use the theme's default ButtonTextStyle or PrimaryButtonStyle.
+	 * Leave empty/None to use the theme's PrimaryButtonStyle.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Style")
 	TSubclassOf<UCommonButtonStyle> ButtonStyleOverride;
 
 	/**
 	 * Optional text style override. When set, takes precedence over the active theme's text style.
-	 * Leave empty/None to use the theme's default ButtonTextStyle.
+	 * Leave empty/None to use the theme's BodyTextStyle.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Style")
 	TSubclassOf<UCommonTextStyle> TextStyleOverride;
 
 private:
-	/** Syncs design-time properties to bound widgets */
+	/** Sync design-time properties to bound child widgets */
 	void SyncPropertiesToWidgets();
+
+	/** Callback for UISubsystem theme change delegate */
 	UFUNCTION()
 	void HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme);
 
+	/** Subscribe to theme change notifications */
 	void BindThemeDelegate();
+
+	/** Unsubscribe from theme change notifications */
 	void UnbindThemeDelegate();
 
+	/** Tracks whether theme delegate is currently bound */
 	bool bThemeDelegateBound{false};
 };

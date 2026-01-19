@@ -75,20 +75,19 @@ protected:
 	virtual void Deinitialize() override;
 
 private:
-
 	/** Multicast RPC - Server delivers global event to all clients */
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastGlobalEvent(const FMCore_EventData& EventData);
 
-	// RPC implementations
+	/** RPC validation and implementation */
 	bool ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData);
 	void ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData);
 	void MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData);
 
-	// Registered listener components
+	/** Registered global listener components */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> GlobalListeners;
 
-	// Deliver event to listeners on this client
+	/** Deliver event to listeners on this client */
 	void DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData);
 };

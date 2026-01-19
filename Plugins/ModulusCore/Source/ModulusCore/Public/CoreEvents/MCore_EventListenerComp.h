@@ -34,7 +34,6 @@ class MODULUSCORE_API UMCore_EventListenerComp : public UMCore_NetworkingCompone
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
 	UMCore_EventListenerComp();
 
 	/** Tags to filter events (e.g., MCore.Events.Player.*, MCore.Events.Quest.Completed). Leave empty to receive all events */
@@ -73,12 +72,14 @@ public:
 	bool ShouldReceiveEvent(const FMCore_EventData& EventData, bool bIsGlobalEvent) const;
 
 private:
-	// Cached references to both subsystems
+	/** Cached reference to local event subsystem */
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_LocalEventSubsystem> CachedLocalSubsystem;
-    
+
+	/** Cached reference to global event subsystem */
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_GlobalEventSubsystem> CachedGlobalSubsystem;
 
+	/** Tracks whether component is registered with subsystems */
 	bool bRegisteredWithSubsystem{false};
 };

@@ -161,7 +161,7 @@ bool UMCore_GameMenuHub::SetTabEnabled(FGameplayTag TabID, bool bEnabled)
         return false;
     }
     
-    // Call native SetTabEnabled in TabListWidgetBase post checks
+    /** Call native SetTabEnabled in TabListWidgetBase post checks */
     TabList->SetTabEnabled(TabNameID, bEnabled);
     
     UE_LOG(LogModulusUI, Log, TEXT("SetTabEnabled: Tab '%s' is %s"),
@@ -193,7 +193,7 @@ bool UMCore_GameMenuHub::SetTabHidden(FGameplayTag TabID, bool bIsHidden)
         return false;
     }
     
-    // Call native SetTabVisibility in TabListWidgetBase post checks
+    /** Call native SetTabVisibility in TabListWidgetBase post checks */
     TabList->SetTabVisibility(TabNameID, bIsHidden ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
     
     UE_LOG(LogModulusUI, Log, TEXT("SetTabHidden: Tab '%s' is %s"),

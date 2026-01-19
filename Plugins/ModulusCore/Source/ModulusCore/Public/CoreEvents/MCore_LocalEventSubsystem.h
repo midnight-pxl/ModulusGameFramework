@@ -50,7 +50,7 @@ protected:
 	virtual void Deinitialize() override;
 	
 private:
-	// Local listener components on this client
+	/** Registered local listener components */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> LocalListeners;
 };

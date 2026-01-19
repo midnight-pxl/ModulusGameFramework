@@ -56,16 +56,12 @@ public:
 	void ForceNetUpdate();
 
 protected:
-	// Called when the game starts
+	//~ Begin UActorComponent Interface
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	//~ End UActorComponent Interface
 
-	/** TODO - Uncomment if using Iris Replication System (Remove line)
-	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, 
-											   UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
-	* Remove line */
-	
 	template<typename TOperation>
 	bool ExecuteWithAuthority(TOperation&& Operation, bool bRequireServerAuthority = true);
 

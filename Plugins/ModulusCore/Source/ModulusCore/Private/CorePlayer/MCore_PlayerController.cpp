@@ -1,11 +1,9 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CorePlayer/MCore_PlayerController.h"
 
 #include "Net/UnrealNetwork.h"
 #include "CoreData/Logging/LogModulusUI.h"
-
 
 AMCore_PlayerController::AMCore_PlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -74,8 +72,8 @@ void AMCore_PlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	if (!IsLocalController()) return;
-	
+	if (!IsLocalController()) { return; }
+
 }
 
 void AMCore_PlayerController::OnPossess(APawn* aPawn)

@@ -1,9 +1,9 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreUI/Widgets/Primitives/MCore_ContainerBase.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "Components/Border.h"
 #include "Components/Image.h"
 #include "Components/NamedSlot.h"
@@ -11,7 +11,14 @@
 
 UMCore_ContainerBase::UMCore_ContainerBase()
 {
-	// Defaults
+}
+
+void UMCore_ContainerBase::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+
+	/** Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
+	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
 }
 
 void UMCore_ContainerBase::NativeOnInitialized()
@@ -20,7 +27,7 @@ void UMCore_ContainerBase::NativeOnInitialized()
 
 	BindThemeDelegate();
 
-	// Apply initial theme
+	/** Apply initial theme from UISubsystem */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -79,7 +86,6 @@ void UMCore_ContainerBase::SetContentPadding(FMargin InPadding)
 
 void UMCore_ContainerBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
 {
-	// Base implementation - derived classes override for specific styling
 	K2_OnThemeApplied(Theme);
 }
 

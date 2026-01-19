@@ -111,5 +111,5 @@ private:
 	TMap<FGameplayTag, TArray<TSharedPtr<FMCore_UIExtension>>> ExtensionMap;
 	TMap<uint32, TSharedPtr<FMCore_UIExtensionPoint>> ExtensionPointHandles;
 	TMap<uint32, TSharedPtr<FMCore_UIExtension>> ExtensionHandles;
-	uint32 NextHandleID = 1;
+	uint32 NextHandleID{1};
 };

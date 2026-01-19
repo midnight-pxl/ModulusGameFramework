@@ -18,13 +18,13 @@ const FName FModulusEditorStyle::DocsIconName = TEXT("ModulusEditor.DocsIcon");
 namespace ModulusColors
 {
 	/** Background colors */
-	const FLinearColor Background = FLinearColor(0.110f, 0.110f, 0.118f, 1.0f);
-	const FLinearColor SectionBackground = FLinearColor(0.145f, 0.145f, 0.153f, 1.0f);
+	const FLinearColor Background = FLinearColor(0.110f, 0.110f, 0.12f, 1.0f);
+	const FLinearColor SectionBackground = FLinearColor(0.145f, 0.145f, 0.15f, 1.0f);
 	const FLinearColor HeaderBackground = FLinearColor(0.227f, 0.227f, 0.235f, 1.0f);
 	
 	/** Modulus Primary/Secondary colors */
-	const FLinearColor Accent = FLinearColor(1.0f, 0.420f, 0.102f, 1.0f);
-	const FLinearColor Secondary = FLinearColor(0.0f, 0.749f, 1.0f, 1.0f);
+	const FLinearColor Accent = FLinearColor(1.0f, 0.420f, 0.1f, 1.0f);
+	const FLinearColor Secondary = FLinearColor(0.0f, 0.75f, 1.0f, 1.0f);
 	
 	/** Status colors */
 	const FLinearColor Success = FLinearColor(0.2f, 0.9f, 0.4f, 1.0f);

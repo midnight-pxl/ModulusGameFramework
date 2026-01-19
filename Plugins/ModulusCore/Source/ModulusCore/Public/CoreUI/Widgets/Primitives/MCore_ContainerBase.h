@@ -54,6 +54,7 @@ public:
 
 protected:
 	//~ UUserWidget Interface
+	virtual void NativePreConstruct() override;
 	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 	//~ End UUserWidget Interface
@@ -72,7 +73,7 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Theme", meta = (DisplayName = "On Theme Applied"))
 	void K2_OnThemeApplied(UMCore_PDA_UITheme_Base* Theme);
 
-	//~ Optional child widget bindings
+	//~ Begin Optional Widget Bindings
 	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
 	TObjectPtr<UBorder> Border_Background;
 
@@ -81,14 +82,19 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
 	TObjectPtr<UNamedSlot> Slot_Content;
+	//~ End Optional Widget Bindings
 
 private:
+	/** Callback for UISubsystem theme change delegate */
 	UFUNCTION()
 	void HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme);
 
+	/** Subscribe to theme change notifications */
 	void BindThemeDelegate();
+
+	/** Unsubscribe from theme change notifications */
 	void UnbindThemeDelegate();
 
+	/** Tracks whether theme delegate is currently bound */
 	bool bThemeDelegateBound{false};
-	
 };

@@ -47,10 +47,10 @@ class MODULUSCORE_API UMCore_UISubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 
 public:
-	/**~ USubsystem Interface */
+	//~ Begin USubsystem Interface
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
-	/**~ End USubsystem Interface */
+	//~ End USubsystem Interface
 
 	/** Get the primary game layout widget for this local player */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
@@ -125,10 +125,7 @@ public:
 	 UFUNCTION(BlueprintCallable, Category = "UI|Theme")
 	UMCore_PDA_UITheme_Base* GetActiveTheme() const { return CachedActiveTheme; }
 	
-	//--------------------------------------------------------------
-	// Theme System
-	//--------------------------------------------------------------
-	
+	//~ Begin Theme System
 	UPROPERTY(BlueprintAssignable, Category = "UI|Theme")
 	FOnThemeChanged OnThemeChanged;
 

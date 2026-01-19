@@ -11,7 +11,6 @@
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 
-
 void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -62,21 +61,21 @@ bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InL
 	{
 		if (CachedPrimaryGameLayout.Get() == InLayout)
 		{
-			UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: PrimaryGameLayout '%s' already registered"), 
+			UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: PrimaryGameLayout '%s' already registered"),
 				*GetNameSafe(InLayout));
 			return true;
 		}
-	
-	// Different layout - warn but allow replacement (may happen during level transitions)
-	UE_LOG(LogModulusUI, Warning, 
-		TEXT("UISubsystem: Replacing existing PrimaryGameLayout '%s' with '%s'"),
-		*GetNameSafe(CachedPrimaryGameLayout.Get()), *GetNameSafe(InLayout));
+
+		/** Different layout - warn but allow replacement (may happen during level transitions) */
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("UISubsystem: Replacing existing PrimaryGameLayout '%s' with '%s'"),
+			*GetNameSafe(CachedPrimaryGameLayout.Get()), *GetNameSafe(InLayout));
 	}
 
 	CachedPrimaryGameLayout = InLayout;
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Registered PrimaryGameLayout '%s'"), *GetNameSafe(InLayout));
 
-	// If MenuHub was created before layout, it may need to rebuild
+	/** If MenuHub was created before layout, rebuild tab bar */
 	if (CachedMenuHub.IsValid())
 	{
 		CachedMenuHub->RebuildTabBar();
@@ -232,7 +231,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 			TEXT("UISubsystem::UnregisterMenuScreen: '%s' unregistered (Remaining: %d)"),
 			*TabID.ToString(), RegisteredMenuScreens.Num());
 
-		// Rebuild MenuHub if it exists
+		/** Rebuild MenuHub if it exists */
 		if (CachedMenuHub.IsValid())
 		{
 			CachedMenuHub->RebuildTabBar();
@@ -299,7 +298,6 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 
 void UMCore_UISubsystem::LoadWidgetClasses()
 {
-	// Hard-coded defaults for v1.0 - no project settings complexity yet
 	MenuHubClass = UMCore_GameMenuHub::StaticClass();
 
 	if (!MenuHubClass)

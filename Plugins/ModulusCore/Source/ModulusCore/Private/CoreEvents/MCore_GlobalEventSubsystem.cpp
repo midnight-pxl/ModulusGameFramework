@@ -6,7 +6,7 @@
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_EventListenerComp.h"
 
-// Conditional verbose logging macro - only logs when Event System Logging is enabled in Project Settings
+/** Conditional verbose logging macro - only logs when Event System Logging is enabled in Project Settings */
 #define MCORE_EVENT_LOG(Format, ...) \
 	do { \
 		if (const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get()) \
@@ -46,10 +46,7 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 
 	MCORE_EVENT_LOG(TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
 
-	// Deliver to current listeners
 	DeliverGlobalEventToLocalListeners(EventData);
-
-	// Send to all clients
 	MulticastGlobalEvent(EventData);
 }
 
@@ -121,7 +118,7 @@ bool UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Validate(const FMCo
 
 void UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData)
 {
-	// Server receives RPC, validates, and broadcasts to all clients
+	/** Server receives RPC, validates, and broadcasts to all clients */
 	if (HasGlobalEventAuthority())
 	{
 		MCORE_EVENT_LOG(TEXT("Server received client event request: %s"),
@@ -137,20 +134,17 @@ void UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Implementation(cons
 
 void UMCore_GlobalEventSubsystem::MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData)
 {
-	// All clients (including server) receive this and deliver locally
 	DeliverGlobalEventToLocalListeners(EventData);
 }
 
 void UMCore_GlobalEventSubsystem::DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData)
 {
-	// Early exit if no listeners
 	if (GlobalListeners.Num() == 0) { return; }
 
-	// Deliver event to all registered local listeners
 	for (int32 i = GlobalListeners.Num() - 1; i >= 0; --i)
 	{
 		TWeakObjectPtr<UMCore_EventListenerComp>& WeakListener = GlobalListeners[i];
-        
+
 		if (WeakListener.IsValid())
 		{
 			UMCore_EventListenerComp* Listener = WeakListener.Get();
@@ -161,7 +155,6 @@ void UMCore_GlobalEventSubsystem::DeliverGlobalEventToLocalListeners(const FMCor
 		}
 		else
 		{
-			// Remove stale reference during iteration
 			GlobalListeners.RemoveAtSwap(i);
 		}
 	}

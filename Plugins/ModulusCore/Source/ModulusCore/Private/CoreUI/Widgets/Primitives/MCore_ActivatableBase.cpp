@@ -2,10 +2,11 @@
 
 #include "CoreUI/Widgets/Primitives/MCore_ActivatableBase.h"
 #include "GameplayTagAssetInterface.h"
+#include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Logging/LogModulusUI.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "Input/CommonUIInputTypes.h"
-
 
 #if WITH_EDITOR
 #include "Editor/WidgetCompilerLog.h"
@@ -82,9 +83,28 @@ void UMCore_ActivatableBase::UnregisterAllBindings()
 	IABindingHandles.Empty();
 }
 
+void UMCore_ActivatableBase::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+
+	/** Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
+	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
+}
+
 void UMCore_ActivatableBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+
+	BindThemeDelegate();
+
+	/** Apply initial theme from UISubsystem */
+	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	{
+		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
+		{
+			ApplyTheme(UI->GetActiveTheme());
+		}
+	}
 }
 
 void UMCore_ActivatableBase::NativeOnActivated()
@@ -174,6 +194,8 @@ void UMCore_ActivatableBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* 
 
 void UMCore_ActivatableBase::HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme)
 {
+	CachedTheme = NewTheme;
+	ApplyTheme(NewTheme);
 }
 
 void UMCore_ActivatableBase::BindThemeDelegate()
@@ -192,6 +214,28 @@ void UMCore_ActivatableBase::BindThemeDelegate()
 
 void UMCore_ActivatableBase::UnbindThemeDelegate()
 {
+	if (!bThemeDelegateBound) { return; }
+
+	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
+	if (!LocalPlayer)
+	{
+		bThemeDelegateBound = false;
+		return;
+	}
+
+	UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+	if (UI)
+	{
+		UI->OnThemeChanged.RemoveDynamic(this, &UMCore_ActivatableBase::HandleThemeChanged);
+	}
+
+	bThemeDelegateBound = false;
+}
+
+void UMCore_ActivatableBase::NativeDestruct()
+{
+	UnbindThemeDelegate();
+	Super::NativeDestruct();
 }
 
 #if WITH_EDITOR
@@ -202,13 +246,12 @@ void UMCore_ActivatableBase::ValidateCompiledWidgetTree(const UWidgetTree& Bluep
 
 	if (GetClass()->ClassGeneratedBy == nullptr) { return; }
 
-	// CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function
-	// (displayed as "Get Desired Focus Target" in Blueprint graphs)
+	/** CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function */
 	static const FName BPGetDesiredFocusTargetName = TEXT("BP_GetDesiredFocusTarget");
 
 	if (!GetClass()->IsFunctionImplementedInScript(BPGetDesiredFocusTargetName))
 	{
-		// Only warn for direct children - intermediate C++ classes may implement it natively
+		/** Only warn for direct children - intermediate C++ classes may implement it natively */
 		const UClass* ParentClass = GetClass()->GetSuperClass();
 		if (ParentClass == UMCore_ActivatableBase::StaticClass())
 		{

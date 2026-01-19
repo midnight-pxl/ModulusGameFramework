@@ -75,7 +75,8 @@ struct MODULUSCORE_API FMCore_EventData
 		EventParams.Reserve(InEventParams.Num());
 		for (const auto& Pair : InEventParams)
 		{
-			if (!Pair.Key.IsEmpty()) /** Skip invalid entries */
+			/** Skip invalid entries */
+			if (!Pair.Key.IsEmpty())
 			{
 				EventParams.Emplace(Pair.Key, Pair.Value);
 			}

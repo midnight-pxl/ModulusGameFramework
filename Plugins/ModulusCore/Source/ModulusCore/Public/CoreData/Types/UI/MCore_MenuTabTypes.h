@@ -43,7 +43,7 @@ public:
 
 	/** Icon displayed on tab button (optional) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")
-	TObjectPtr<UTexture2D> TabIcon = nullptr;
+	TObjectPtr<UTexture2D> TabIcon{nullptr};
 
 	/** 
 	 * Extract display name from TabID

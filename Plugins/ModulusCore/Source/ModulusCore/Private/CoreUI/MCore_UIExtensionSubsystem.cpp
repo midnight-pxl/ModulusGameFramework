@@ -6,9 +6,7 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogMCoreUIExtension, Log, All);
 
-/**=============================================================================
- * USubsystem Interface
- *=============================================================================*/
+//~ Begin USubsystem Interface
 
 void UMCore_UIExtensionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -32,9 +30,9 @@ void UMCore_UIExtensionSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-/**=============================================================================
- * Extension Point Registration
- *=============================================================================*/
+//~ End USubsystem Interface
+
+//~ Begin Extension Point Registration
 
 FMCore_UIExtensionPointHandle UMCore_UIExtensionSubsystem::RegisterExtensionPoint(
 	const FGameplayTag& ExtensionPointTag,
@@ -113,9 +111,9 @@ void UMCore_UIExtensionSubsystem::UnregisterExtensionPoint(
 		TEXT("Unregistered extension point: HandleID=%u"), HandleID);
 }
 
-/**=============================================================================
- * Extension Registration
- *=============================================================================*/
+//~ End Extension Point Registration
+
+//~ Begin Extension Registration
 
 FMCore_UIExtensionHandle UMCore_UIExtensionSubsystem::RegisterExtension(
 	const FGameplayTag& ExtensionPointTag,
@@ -201,9 +199,9 @@ void UMCore_UIExtensionSubsystem::UnregisterExtension(FMCore_UIExtensionHandle& 
 		TEXT("Unregistered extension: HandleID=%u"), HandleID);
 }
 
-/**=============================================================================
- * Query Functions
- *=============================================================================*/
+//~ End Extension Registration
+
+//~ Begin Query Functions
 
 TSubclassOf<UUserWidget> UMCore_UIExtensionSubsystem::GetWidgetClassForExtension(
 	const FMCore_UIExtensionHandle& ExtensionHandle) const
@@ -244,9 +242,9 @@ bool UMCore_UIExtensionSubsystem::IsExtensionPointRegistered(
 	return ExtensionPointHandles.Contains(ExtensionPointHandle.GetID());
 }
 
-/**=============================================================================
- * Internal Notification System
- *=============================================================================*/
+//~ End Query Functions
+
+//~ Begin Internal Notification System
 
 void UMCore_UIExtensionSubsystem::NotifyExtensionPointsOfExtension(
 	EMCore_UIExtensionAction Action,

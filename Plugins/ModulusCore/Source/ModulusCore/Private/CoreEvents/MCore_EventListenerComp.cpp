@@ -1,15 +1,11 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreEvents/MCore_EventListenerComp.h"
-
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
 
-
-// Sets default values for this component's properties
 UMCore_EventListenerComp::UMCore_EventListenerComp()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -19,7 +15,6 @@ UMCore_EventListenerComp::UMCore_EventListenerComp()
 	bReceiveGlobalEvents = true;
 }
 
-// Called when the game starts
 void UMCore_EventListenerComp::BeginPlay()
 {
 	Super::BeginPlay();
@@ -38,7 +33,7 @@ void UMCore_EventListenerComp::BeginPlay()
 		return;
 	}
 
-	// Register with local event subsystem (always available on clients)
+	/** Register with local event subsystem */
 	if (bReceiveLocalEvents)
 	{
 		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
@@ -55,7 +50,7 @@ void UMCore_EventListenerComp::BeginPlay()
 		}
 	}
 
-	// Register with global event subsystem
+	/** Register with global event subsystem */
 	if (bReceiveGlobalEvents)
 	{
 		if (UMCore_GlobalEventSubsystem* GlobalEventSys = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
@@ -77,7 +72,7 @@ void UMCore_EventListenerComp::BeginPlay()
 
 void UMCore_EventListenerComp::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Unregister from both subsystems
+	/** Unregister from both subsystems */
 	if (UMCore_LocalEventSubsystem* LocalEventSys = CachedLocalSubsystem.Get())
 	{
 		LocalEventSys->UnregisterLocalListener(this);
@@ -97,24 +92,20 @@ void UMCore_EventListenerComp::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UMCore_EventListenerComp::DeliverEvent(const FMCore_EventData& EventData, bool bWasGlobalEvent)
 {
-	UE_LOG(LogModulusEvent, VeryVerbose, TEXT("Delivering event to %s: %s (Global: %s)"), 
+	UE_LOG(LogModulusEvent, VeryVerbose, TEXT("Delivering event to %s: %s (Global: %s)"),
 	   *GetName(), *EventData.EventTag.ToString(), bWasGlobalEvent ? TEXT("Yes") : TEXT("No"));
 
-	// Call Blueprint event
 	OnEventReceived(EventData, bWasGlobalEvent);
 }
 
 bool UMCore_EventListenerComp::ShouldReceiveEvent(const FMCore_EventData& EventData, bool bIsGlobalEvent) const
 {
-	// Check scope preference
 	if (bIsGlobalEvent && !bReceiveGlobalEvents) { return false; }
-    
 	if (!bIsGlobalEvent && !bReceiveLocalEvents) { return false; }
 
-	// Check event subscription (empty means receive all events)
+	/** Empty subscription list means receive all events */
 	if (!SubscribedEvents.IsEmpty())
 	{
-		// Use hierarchical tag matching - child tags match parent subscriptions
 		return SubscribedEvents.HasTag(EventData.EventTag);
 	}
 

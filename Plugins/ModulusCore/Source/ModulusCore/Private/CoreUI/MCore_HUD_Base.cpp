@@ -1,6 +1,5 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreUI/MCore_HUD_Base.h"
 
 #include "CoreData/Logging/LogModulusUI.h"
@@ -135,7 +134,7 @@ UMCore_UISubsystem* AMCore_HUD_Base::GetUISubsystem()
 	ULocalPlayer* LocalPlayer = OwningPlayer->GetLocalPlayer();
 	if (!LocalPlayer) { return nullptr; }
 	
-	// Get UISubsystem from local player
+	/** Get UISubsystem from local player */
 	CachedUISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
 	return CachedUISubsystem;
 }

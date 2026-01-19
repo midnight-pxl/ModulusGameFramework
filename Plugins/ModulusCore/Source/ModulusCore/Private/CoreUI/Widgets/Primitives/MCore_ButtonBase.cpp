@@ -1,9 +1,9 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/Image.h"
@@ -12,7 +12,6 @@
 
 UMCore_ButtonBase::UMCore_ButtonBase()
 {
-	// Default text is empty
 	ButtonText = FText::GetEmpty();
 }
 
@@ -20,7 +19,9 @@ void UMCore_ButtonBase::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	// Sync properties to widgets for design-time preview
+	/** Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
+	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
+
 	SyncPropertiesToWidgets();
 }
 
@@ -30,7 +31,7 @@ void UMCore_ButtonBase::NativeOnInitialized()
 
 	BindThemeDelegate();
 
-	// Apply initial theme
+	/** Apply initial theme from UISubsystem */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -39,7 +40,6 @@ void UMCore_ButtonBase::NativeOnInitialized()
 		}
 	}
 
-	// Sync design-time properties to runtime widgets
 	SyncPropertiesToWidgets();
 }
 
@@ -113,7 +113,7 @@ void UMCore_ButtonBase::SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon)
 		return;
 	}
 
-	// Synchronous load - for async, use StreamableManager pattern
+	/** Synchronous load - for async, use StreamableManager pattern */
 	SetButtonIcon(InIcon.LoadSynchronous());
 }
 
@@ -131,7 +131,7 @@ void UMCore_ButtonBase::SetButtonStyleOverride(TSubclassOf<UCommonButtonStyle> I
 {
 	ButtonStyleOverride = InStyle;
 
-	// Re-apply current theme to pick up the override
+	/** Re-apply current theme to pick up the override */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -145,7 +145,7 @@ void UMCore_ButtonBase::SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InSty
 {
 	TextStyleOverride = InStyle;
 
-	// Re-apply current theme to pick up the override
+	/** Re-apply current theme to pick up the override */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -157,7 +157,7 @@ void UMCore_ButtonBase::SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InSty
 
 void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
 {
-	// Apply button style: override takes precedence, then theme default
+	/** Apply button style: override takes precedence, then theme default */
 	TSubclassOf<UCommonButtonStyle> ButtonStyleToApply = ButtonStyleOverride;
 	if (!ButtonStyleToApply && Theme)
 	{
@@ -168,18 +168,17 @@ void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme
 		SetStyle(ButtonStyleToApply);
 	}
 
-	// Apply text style: override takes precedence, then theme default
+	/** Apply text style: override takes precedence, then theme default */
 	TSubclassOf<UCommonTextStyle> TextStyleToApply = TextStyleOverride;
 	if (!TextStyleToApply && Theme)
 	{
-		TextStyleToApply = Theme->ButtonTextStyle;
+		TextStyleToApply = Theme->BodyTextStyle;
 	}
 	if (TextStyleToApply && Txt_BtnLabel)
 	{
 		Txt_BtnLabel->SetStyle(TextStyleToApply);
 	}
 
-	// Allow Blueprint to do additional styling
 	K2_OnThemeApplied(Theme);
 }
 
@@ -224,20 +223,15 @@ void UMCore_ButtonBase::UnbindThemeDelegate()
 
 void UMCore_ButtonBase::SyncPropertiesToWidgets()
 {
-	// Sync text
 	if (Txt_BtnLabel && !ButtonText.IsEmpty())
 	{
 		Txt_BtnLabel->SetText(ButtonText);
 	}
 
-	// Sync justification
 	SetTextJustification(TextJustification);
-
-	// Sync display mode
 	SetDisplayMode(DisplayMode);
 
-	// Sync style overrides for design-time preview
-	// These will be overridden by ApplyTheme at runtime, but allow designers to see the effect
+	/** Sync style overrides for design-time preview */
 	if (ButtonStyleOverride)
 	{
 		SetStyle(ButtonStyleOverride);

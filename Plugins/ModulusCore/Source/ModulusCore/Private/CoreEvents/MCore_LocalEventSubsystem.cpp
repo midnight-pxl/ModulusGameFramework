@@ -6,7 +6,7 @@
 #include "CoreEvents/MCore_EventListenerComp.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 
-// Conditional verbose logging macro - only logs when Event System Logging is enabled in Project Settings
+/** Conditional verbose logging macro - only logs when Event System Logging is enabled in Project Settings */
 #define MCORE_EVENT_LOG(Format, ...) \
 	do { \
 		if (const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get()) \
@@ -57,7 +57,6 @@ void UMCore_LocalEventSubsystem::UnregisterLocalListener(UMCore_EventListenerCom
 
 void UMCore_LocalEventSubsystem::BroadcastLocalEvent(const FMCore_EventData& EventData)
 {
-	// Early exit if no listeners or event invalid
 	if (LocalListeners.Num() == 0 || !EventData.IsValid()) { return; }
 
 	MCORE_EVENT_LOG(TEXT("Broadcasting local event: %s"),
@@ -72,7 +71,7 @@ void UMCore_LocalEventSubsystem::BroadcastLocalEvent(const FMCore_EventData& Eve
 		{
 			UMCore_EventListenerComp* CurrentListener = WeakListener.Get();
 		
-			if (CurrentListener->ShouldReceiveEvent(EventData, false)) // false == not global event
+			if (CurrentListener->ShouldReceiveEvent(EventData, false))
 			{
 				CurrentListener->DeliverEvent(EventData, false);
 			}

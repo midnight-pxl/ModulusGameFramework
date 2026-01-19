@@ -2,7 +2,6 @@
 
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
 #include "Engine/World.h"
-#include "Engine/World.h"
 #include "Engine/LocalPlayer.h"
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
@@ -25,7 +24,7 @@ void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* World
 		return;
 	}
 
-	// Create event data with context ID
+	/** Create event data with context ID */
 	FMCore_EventData EventData(EventTag, ContextID);
 	RouteEventToSubsystem(WorldContext, EventData, EventScope);
 }
@@ -83,9 +82,7 @@ TMap<FString, FString> UMCore_EventFunctionLibrary::MakeEventParameters(const TA
 	return Params;
 }
 
-/**
- *  parameter helpers
- */
+//~ Begin Parameter Helpers
 
 FString UMCore_EventFunctionLibrary::GetEventContextID(const FMCore_EventData& EventData)
 {
@@ -108,7 +105,7 @@ bool UMCore_EventFunctionLibrary::GetBoolParameter(const FMCore_EventData& Event
 		return DefaultValue;
 	}
     
-	// Handle common bool representations
+	/** Handle common bool representations */
 	Value = Value.ToLower();
 	return Value == TEXT("true") || Value == TEXT("1") || Value == TEXT("yes") || Value == TEXT("on");
 }
@@ -165,7 +162,7 @@ FGameplayTag UMCore_EventFunctionLibrary::GetGameplayTagParameter(const FMCore_E
 		return DefaultValue;
 	}
     
-	// Convert string back to gameplay tag
+	/** Convert string back to gameplay tag */
 	FGameplayTag Result = FGameplayTag::RequestGameplayTag(FName(*Value), false);
 	return Result.IsValid() ? Result : DefaultValue;
 }
@@ -194,18 +191,18 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 
 	if (EventScope == EMCore_EventScope::Global)
 	{
-		// Route to global event subsystem (server authority)
+		/** Route to global event subsystem (server authority) */
 		if (UMCore_GlobalEventSubsystem* GlobalSystem = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
 		{
 			ENetMode NetMode = World->GetNetMode();
 			if (NetMode == NM_Standalone || NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
 			{
-				// We have authority, broadcast directly
+				/** We have authority, broadcast directly */
 				GlobalSystem->BroadcastGlobalEvent(EventData);
 			}
 			else if (NetMode == NM_Client)
 			{
-				// Client sends to server for validation and broadcasting
+				/** Client sends to server for validation and broadcasting */
 				GlobalSystem->ServerBroadcastGlobalEvent(EventData);
 			}
 		}
@@ -214,9 +211,9 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 			UE_LOG(LogModulusEvent, Error, TEXT("Failed to get GlobalEventSubsystem"));
 		}
 	}
-	else // Local scoped event
+	else
 	{
-		// Route to local event subsystem (client-side only)
+		/** Route to local event subsystem (client-side only) */
 		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
 		{
 			if (UMCore_LocalEventSubsystem* LocalSystem = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())

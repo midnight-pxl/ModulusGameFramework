@@ -53,8 +53,7 @@ void UMCore_NetworkingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 void UMCore_NetworkingComponent::DetectNetworkingSystem()
 {
-	// Iris replication detection - currently disabled
-	// Enable when Iris is configured at the project level (Target.cs: bWithIris = true)
+	/** Iris replication detection - currently disabled. Enable when Iris is configured at project level */
 	bIrisDetected = false;
 }
 
@@ -65,7 +64,7 @@ bool UMCore_NetworkingComponent::IsUsingIrisReplication() const
 
 bool UMCore_NetworkingComponent::IsIrisAvailable() const
 {
-	// Iris availability check - implement when Iris replication is needed
+	/** Iris availability check - implement when Iris replication is needed */
 	return false;
 }
 
@@ -75,4 +74,3 @@ void UMCore_NetworkingComponent::ForceNetUpdate()
 
 	if (AActor* Owner = GetOwner()) { Owner->ForceNetUpdate(); }
 }
-

@@ -171,7 +171,7 @@ struct FMCore_UIExtension
 	 */
 	bool operator<(const FMCore_UIExtension& Other) const
 	{
-		return Priority > Other.Priority;  // Higher priority first
+		return Priority > Other.Priority;
 	}
 };
 
