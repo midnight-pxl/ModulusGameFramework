@@ -49,6 +49,22 @@ UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
 	return nullptr;
 }
 
+UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag LayerTag) const
+{
+	return nullptr;
+}
+
+UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass,
+	FGameplayTag LayerTag)
+{
+	return nullptr;
+}
+
+bool UMCore_UISubsystem::IsLayerActive(FGameplayTag LayerTag) const
+{
+	return false;
+}
+
 bool UMCore_UISubsystem::RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout)
 {
 	if (!IsValid(InLayout))
@@ -309,4 +325,8 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 	UE_LOG(LogModulusUI, Verbose, 
 		TEXT("UISubsystem: Widget classes loaded - MenuHub: %s"),
 		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
+}
+
+void UMCore_UISubsystem::BuildLayerStackMap()
+{
 }

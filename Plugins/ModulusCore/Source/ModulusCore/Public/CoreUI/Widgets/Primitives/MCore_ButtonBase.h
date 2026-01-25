@@ -13,13 +13,7 @@ class UCommonTextStyle;
 class UWidgetSwitcher;
 class UImage;
 
-UENUM(BlueprintType)
-enum class EMCore_TextJustify : uint8
-{
-	Left,
-	Center,
-	Right
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnModulusButtonClicked);
 
 UENUM(BlueprintType)
 enum class EMCore_ButtonDisplayMode : uint8
@@ -60,14 +54,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Button|Text")
 	FText GetButtonText() const;
 
-	/** Set text justification/alignment */
-	UFUNCTION(BlueprintCallable, Category = "Button|Text")
-	void SetTextJustification(EMCore_TextJustify InJustification);
-
-	/** Get current text justification */
-	UFUNCTION(BlueprintPure, Category = "Button|Text")
-	EMCore_TextJustify GetTextJustification() const { return TextJustification; }
-
 	/** Get the underlying text block for advanced customization. May return nullptr if not bound. */
 	UFUNCTION(BlueprintPure, Category = "Button|Text")
 	UCommonTextBlock* GetTextBlock() const { return Txt_BtnLabel; }
@@ -95,8 +81,8 @@ public:
 	/** Set button icon */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIcon(UTexture2D* InIcon);
-
-	/** Set button icon from soft reference (async-friendly) */
+	
+	/** Set button icon using soft reference (async-friendly) */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon);
 
@@ -117,11 +103,15 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
 	TObjectPtr<UWidgetSwitcher> Switcher_Content;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Button")
+	FOnModulusButtonClicked OnButtonClicked;
 
 protected:
 	//~ UUserWidget Interface
 	virtual void NativePreConstruct() override;
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnClicked() override;
 	virtual void NativeDestruct() override;
 	//~ End UUserWidget Interface
 
@@ -146,10 +136,6 @@ protected:
 	/** Button label text - editable at design-time and runtime */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Text", meta = (MultiLine = false))
 	FText ButtonText;
-
-	/** Text alignment/justification */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Text")
-	EMCore_TextJustify TextJustification = EMCore_TextJustify::Center;
 
 	/**
 	 * Optional button style override. When set, takes precedence over the active theme's button style.

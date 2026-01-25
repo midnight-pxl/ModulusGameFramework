@@ -43,6 +43,12 @@ void UMCore_ButtonBase::NativeOnInitialized()
 	SyncPropertiesToWidgets();
 }
 
+void UMCore_ButtonBase::NativeOnClicked()
+{
+	Super::NativeOnClicked();
+	OnButtonClicked.Broadcast();
+}
+
 void UMCore_ButtonBase::NativeDestruct()
 {
 	UnbindThemeDelegate();
@@ -63,30 +69,6 @@ void UMCore_ButtonBase::SetButtonText(const FText& InText)
 FText UMCore_ButtonBase::GetButtonText() const
 {
 	return ButtonText;
-}
-
-void UMCore_ButtonBase::SetTextJustification(EMCore_TextJustify InJustification)
-{
-	TextJustification = InJustification;
-
-	if (Txt_BtnLabel)
-	{
-		ETextJustify::Type SlateJustify;
-		switch (InJustification)
-		{
-		case EMCore_TextJustify::Left:
-			SlateJustify = ETextJustify::Left;
-			break;
-		case EMCore_TextJustify::Right:
-			SlateJustify = ETextJustify::Right;
-			break;
-		case EMCore_TextJustify::Center:
-		default:
-			SlateJustify = ETextJustify::Center;
-			break;
-		}
-		Txt_BtnLabel->SetJustification(SlateJustify);
-	}
 }
 
 void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
@@ -227,8 +209,7 @@ void UMCore_ButtonBase::SyncPropertiesToWidgets()
 	{
 		Txt_BtnLabel->SetText(ButtonText);
 	}
-
-	SetTextJustification(TextJustification);
+	
 	SetDisplayMode(DisplayMode);
 
 	/** Sync style overrides for design-time preview */

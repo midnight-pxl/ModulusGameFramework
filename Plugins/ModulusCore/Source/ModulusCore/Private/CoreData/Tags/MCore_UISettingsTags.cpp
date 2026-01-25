@@ -6,6 +6,12 @@
 
 namespace MCore_UISettingsTags
 {
+    /** CommonUI Layer Categories */
+    UE_DEFINE_GAMEPLAY_TAG(UI_Layers_Game, "UI.Layers.Game");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Layers_GameMenu, "UI.Layers.GameMenu");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Layers_Menu, "UI.Layers.Menu");
+    UE_DEFINE_GAMEPLAY_TAG(UI_Layers_Modal, "UI.Layers.Modal");
+    
     /** Setting Categories */
     UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Display, "UI.Categories.Display");
     UE_DEFINE_GAMEPLAY_TAG(UI_Categories_Graphics, "UI.Categories.Graphics");

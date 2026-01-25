@@ -4,42 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
+#include "GameplayTagContainer.h"
 #include "CoreData/Types/UI/MCore_MenuTabTypes.h"
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "MCore_UISubsystem.generated.h"
 
 class UCommonActivatableWidgetStack;
+class UCommonActivatableWidget;
 class UMCore_PDA_UITheme_Base;
-class UTexture2D;
-class UCommonTabListWidgetBase;
 class UMCore_GameMenuHub;
 class UMCore_PrimaryGameLayout;
-class UCommonActivatableWidget;
+class UTexture2D;
 struct FGameplayTag;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnThemeChanged, UMCore_PDA_UITheme_Base*, NewTheme);
 
 /**
- * For accessing the primary game layout (CommonUI Widget Stacks)
- * and registering with ModulusCore's In-Game Menu Hub
+ * Central access point for ModulusCore UI systems.
  *
- * Provides access to the PrimaryGameLayout widget and its layer stacks.
+ * Provides:
+ * - Layer stack access via gameplay tags
+ * - MenuHub registration for plugin screens
+ * - Theme management
+ *
  * One instance per LocalPlayer (supports split-screen).
  *
- * Common Uses:
- * - Push menus to MenuLayer (settings, pause menu)
- * - Push HUD to GameLayer (health bar, minimap)
- * - Push modals to ModalLayer (confirmation dialogs)
- * - Register plugin menu screens (inventory, quests, etc.)
- *
- * Blueprint Usage:
- * 1. Get UI Subsystem from LocalPlayer
- * 2. GetPrimaryGameLayout() to access layer stacks
- * 3. Use CommonUI AddWidget/RemoveWidget on desired layer
- *
- * Network: Client-only
- * - Zero server overhead (LocalPlayerSubsystem)
- * - Each client manages their own UI independently
+ * Usage:
+ *   UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+ *   UI->PushWidgetToLayer(MenuClass, MCore_UISettingsTags::UI_Layers_Menu);
+ *   UI->GetLayerStack(MCore_UISettingsTags::UI_Layers_Modal)->AddWidget(DialogClass);
  */
 UCLASS()
 class MODULUSCORE_API UMCore_UISubsystem : public ULocalPlayerSubsystem
@@ -51,34 +44,49 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	//~ End USubsystem Interface
+	
+	/**
+	 * Layout Registration
+	 */
+	
+	/**
+	 * Register primary game layout (called automatically by layout).
+	 * Builds layer stack map for tag-based access.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout")
+	bool RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
+
+	/** Unregister primary game layout. Clears cached reference and layer map. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout")
+	void UnregisterPrimaryGameLayout();
 
 	/** Get the primary game layout widget for this local player */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
-	/**
-	 * Returns whether a valid PrimaryGameLayout is registered.
-	 */
+	/** Returns whether a valid PrimaryGameLayout is registered */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	bool HasPrimaryGameLayout() const { return CachedPrimaryGameLayout.IsValid(); }
 	
 	/**
-	 * Register primary game layout (called automatically during layout construction)
-	 *
-	 * Do not call manually - layout registers itself in NativeOnInitialized().
-	 *
-	 * @return True if registration succeeded
+	 * Layer Access
 	 */
-	UFUNCTION(BlueprintCallable, Category = "UI|Layout")
-	bool RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
+	
+	/** Get stack by layer tag. Returns nullptr if layout not ready or tag invalid. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
+	UCommonActivatableWidgetStack* GetLayerStack(FGameplayTag LayerTag) const;
 
+	/** Push widget to layer by tag. Returns created widget or nullptr. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout", meta = (DeterminesOutputType = "WidgetClass"))
+	UCommonActivatableWidget* PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass, FGameplayTag LayerTag);
+
+	/** Check if a layer has any active widget. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
+	bool IsLayerActive(FGameplayTag LayerTag) const;
+	
 	/**
-	 * Unregister primary game layout (called by AMCore_HUD_Base during EndPlay).
-	 * 
-	 * Clears the cached reference. Does NOT destroy the widget (HUD owns it).
+	 * Menu Hub
 	 */
-	UFUNCTION(BlueprintCallable, Category = "UI|Layout")
-	void UnregisterPrimaryGameLayout();
 	
 	/** 
 	 * Get or create the menu hub widget
@@ -120,12 +128,13 @@ public:
 	void RebuildMenuHubTabBar();
 	
 	/**
-	 * Get active UI theme from Dev Settings
+	 * Modulus Theme System
 	 */
-	 UFUNCTION(BlueprintCallable, Category = "UI|Theme")
+	
+	/** Get active UI theme from Dev Settings */
+	UFUNCTION(BlueprintPure, Category = "UI|Theme")
 	UMCore_PDA_UITheme_Base* GetActiveTheme() const { return CachedActiveTheme; }
 	
-	//~ Begin Theme System
 	UPROPERTY(BlueprintAssignable, Category = "UI|Theme")
 	FOnThemeChanged OnThemeChanged;
 
@@ -144,30 +153,36 @@ protected:
 	TSubclassOf<UMCore_GameMenuHub> MenuHubClass;
 
 private:
+	void LoadWidgetClasses();
+	void BuildLayerStackMap();
+
+	/**
+	 * Cached References
+	 */
 	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_PrimaryGameLayout> CachedPrimaryGameLayout;
-
-	/** Cached reference to menu hub tab list (if created) */
+	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_GameMenuHub> CachedMenuHub;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PDA_UITheme_Base> CachedActiveTheme;
 
-	int32 ActiveThemeIndex = INDEX_NONE;
+	int32 ActiveThemeIndex{INDEX_NONE};
+	
+	/**
+	 * Layer Management
+	 */
+
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidgetStack>> LayerStackMap;
+	
+	/**
+	 * Hub Menu Data
+	 */
 	
 	/** Registered menu screens for this local player */
 	UPROPERTY(Transient)
 	TArray<FMCore_MenuTab> RegisteredMenuScreens;
-	
-	/**
-	 * Load widget classes from configuration
-	 * 
-	 * Current: Hard-coded asset paths (temporary)
-	 * Future: Load from UMCore_UISettings (project settings)
-	 * 
-	 * Called during Initialize() before CreatePrimaryGameLayout()
-	 */
-	void LoadWidgetClasses();
 };

@@ -8,6 +8,12 @@ enum class EMCore_SettingType : uint8;
 
 namespace MCore_UISettingsTags
 {
+    /** CommonUI Layer Categories */
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layers_Game);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layers_GameMenu);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layers_Menu);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Layers_Modal);
+    
     /** Setting Categories */
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Display);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Categories_Graphics);
