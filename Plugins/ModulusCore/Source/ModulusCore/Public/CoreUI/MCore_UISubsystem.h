@@ -152,6 +152,8 @@ private:
 
 	/** Creates and adds PrimaryGameLayout to viewport. Called from Initialize(). */
 	void CreatePrimaryGameLayout();
+	/** Creates the deferred PrimaryGameLayout once PlayerController is ready (avoid race condition) */
+	void OnPlayerControllerReady(APlayerController* PlayerController);
 	
 	/**
 	 * Cached References
@@ -162,7 +164,7 @@ private:
 	TObjectPtr<UMCore_PrimaryGameLayout> PrimaryGameLayout;
 	
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UMCore_GameMenuHub> CachedMenuHub;
+	TObjectPtr<UMCore_GameMenuHub> CachedMenuHub;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PDA_UITheme_Base> CachedActiveTheme;

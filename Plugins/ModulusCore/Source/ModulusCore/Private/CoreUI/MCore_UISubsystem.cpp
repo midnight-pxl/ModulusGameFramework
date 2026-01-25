@@ -15,25 +15,83 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	
-	if (IsRunningDedicatedServer()) { return; }
+	if (IsRunningDedicatedServer())
+	{
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Skipping initialization on dedicated server"));
+		return;
+	}
 
+	LoadWidgetClasses();
 	CreatePrimaryGameLayout();
-	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized"));
+	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized for LocalPlayer"));
 }
 
 void UMCore_UISubsystem::Deinitialize()
 {
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize - Cleaning up"));
 	
-	if (CachedMenuHub.IsValid())
+	/** Clear layer stack map (old references) */
+	LayerStackMap.Empty();
+	
+	if (IsValid(CachedMenuHub))
 	{
 		CachedMenuHub->RemoveFromParent();
-		CachedMenuHub.Reset();
+		CachedMenuHub = nullptr;
+	}
+	
+	/** Clean up PrimaryGameLayout */
+	if (IsValid(PrimaryGameLayout))
+	{
+		PrimaryGameLayout->RemoveFromParent();
+		PrimaryGameLayout = nullptr;
 	}
 	
 	RegisteredMenuScreens.Empty();
 	
 	Super::Deinitialize();
+}
+
+/**
+ * Primary Game Layout
+ */
+
+void UMCore_UISubsystem::LoadWidgetClasses()
+{
+	const UMCore_CoreSettings* DevSettings = UMCore_CoreSettings::Get();
+	
+	/** Load PrimaryGameLayout from DevSettings || use UISystem default */
+	if (DevSettings && !DevSettings->PrimaryGameLayoutClass.IsNull())
+	{
+		PrimaryGameLayoutClass = DevSettings->PrimaryGameLayoutClass.LoadSynchronous();
+	}
+	
+	if (!PrimaryGameLayoutClass)
+	{
+		PrimaryGameLayoutClass = UMCore_PrimaryGameLayout::StaticClass();
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Using default PrimaryGameLayoutClass"));
+	}
+	
+	/** Load MenuHubClass */
+	if (DevSettings && !DevSettings->MenuHubClass.IsNull())
+	{
+		MenuHubClass = DevSettings->MenuHubClass.LoadSynchronous();
+	}
+
+	if (!MenuHubClass)
+	{
+		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem: MenuHubClass is nullptr - check class exists"));
+		MenuHubClass = UMCore_GameMenuHub::StaticClass();
+	}
+    
+	/** Load ZOrder */
+	if (DevSettings)
+	{
+		PrimaryGameLayoutZOrder = DevSettings->PrimaryGameLayoutZOrder;
+	}
+	
+	UE_LOG(LogModulusUI, Verbose, 
+		TEXT("UISubsystem: Widget classes loaded - MenuHub: %s"),
+		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
 }
 
 UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
@@ -45,6 +103,48 @@ UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
     
 	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: No PrimaryGameLayout registered for this local player"));
 	return nullptr;
+}
+
+void UMCore_UISubsystem::CreatePrimaryGameLayout()
+{
+	if (IsValid(PrimaryGameLayout)) { return; }
+	
+	if (!PrimaryGameLayoutClass)
+	{
+		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem: PrimaryGameLayoutClass not set"));
+		return;
+	}
+	
+	const ULocalPlayer* LocalPlayer = GetLocalPlayer();
+	if (!LocalPlayer) { return; }
+	
+	APlayerController* PlayerController = LocalPlayer->GetPlayerController(GetWorld());
+	if (!PlayerController)
+	{
+		/** PlayerController not yet ready -- defer creation */
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Deferring layout creation until PlayerController ready"));
+		
+		if (LocalPlayer)
+		{
+			PlayerControllerReadyHandle = LocalPlayer->OnControllerIdChanged().AddUObject(
+				this, &UMCore_UISubsystem::OnPlayerControllerReady);
+			return;
+		}
+		
+		PrimaryGameLayout->AddToPlayerScreen(PrimaryGameLayoutZOrder);
+		BuildLayerStackMap();
+		
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout created (ZOrder: %d)"),
+			PrimaryGameLayoutZOrder);
+	}
+}
+
+void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerController)
+{
+	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+	{
+		LocalPlayer->OnControllerIdChanged().Remove(OnPlayerControllerReady())
+	}
 }
 
 UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag LayerTag) const
@@ -264,25 +364,6 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 	return true;
 }
 
-void UMCore_UISubsystem::LoadWidgetClasses()
-{
-	MenuHubClass = UMCore_GameMenuHub::StaticClass();
-
-	if (!MenuHubClass)
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: MenuHubClass is nullptr - check class exists"));
-	}
-    
-	UE_LOG(LogModulusUI, Verbose, 
-		TEXT("UISubsystem: Widget classes loaded - MenuHub: %s"),
-		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
-}
-
 void UMCore_UISubsystem::BuildLayerStackMap()
-{
-}
-
-void UMCore_UISubsystem::CreatePrimaryGameLayout()
 {
 }
