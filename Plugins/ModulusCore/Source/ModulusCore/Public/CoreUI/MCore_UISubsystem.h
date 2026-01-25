@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreData/Types/UI/MCore_MenuTabTypes.h"
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "MCore_UISubsystem.generated.h"
@@ -44,21 +45,6 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	//~ End USubsystem Interface
-	
-	/**
-	 * Layout Registration
-	 */
-	
-	/**
-	 * Register primary game layout (called automatically by layout).
-	 * Builds layer stack map for tag-based access.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout")
-	bool RegisterPrimaryGameLayout(UMCore_PrimaryGameLayout* InLayout);
-
-	/** Unregister primary game layout. Clears cached reference and layer map. */
-	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout")
-	void UnregisterPrimaryGameLayout();
 
 	/** Get the primary game layout widget for this local player */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
@@ -66,10 +52,10 @@ public:
 
 	/** Returns whether a valid PrimaryGameLayout is registered */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
-	bool HasPrimaryGameLayout() const { return CachedPrimaryGameLayout.IsValid(); }
+	bool HasPrimaryGameLayout() const { return IsValid(PrimaryGameLayout); }
 	
 	/**
-	 * Layer Access
+	 * Layer Stacks Access
 	 */
 	
 	/** Get stack by layer tag. Returns nullptr if layout not ready or tag invalid. */
@@ -104,7 +90,7 @@ public:
 		TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass,
 		int32 Priority = 100,
 		UTexture2D* TabIcon = nullptr);
-
+	
 	/**
 	 * Unregister a menu screen tab.
 	 * 
@@ -148,20 +134,32 @@ public:
 	bool SetActiveThemeByIndex(int32 ThemeIndex);
 
 protected:
+	/** Widget class for PrimaryGameLayout. Set in project defaults or override in Blueprint. */
+	UPROPERTY(EditDefaultsOnly, Category = "Modulus|UI")
+	TSubclassOf<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
+	
 	/** Widget class for MenuHub (loaded from settings or defaults) */
 	UPROPERTY()
 	TSubclassOf<UMCore_GameMenuHub> MenuHubClass;
+
+	/** Z-Order for layout when added to viewport. */
+	UPROPERTY(EditDefaultsOnly, Category = "Modulus|UI", meta = (ClampMin = "-100", ClampMax = "100"))
+	int32 PrimaryGameLayoutZOrder = 0;
 
 private:
 	void LoadWidgetClasses();
 	void BuildLayerStackMap();
 
+	/** Creates and adds PrimaryGameLayout to viewport. Called from Initialize(). */
+	void CreatePrimaryGameLayout();
+	
 	/**
 	 * Cached References
 	 */
 	
+	/** Strong reference - UISubsystem owns the layout lifecycle */
 	UPROPERTY(Transient)
-	TWeakObjectPtr<UMCore_PrimaryGameLayout> CachedPrimaryGameLayout;
+	TObjectPtr<UMCore_PrimaryGameLayout> PrimaryGameLayout;
 	
 	UPROPERTY(Transient)
 	TWeakObjectPtr<UMCore_GameMenuHub> CachedMenuHub;

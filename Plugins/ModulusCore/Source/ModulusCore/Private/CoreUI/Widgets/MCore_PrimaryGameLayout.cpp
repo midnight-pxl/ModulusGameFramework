@@ -3,7 +3,6 @@
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 
 #include "CoreData/Logging/LogModulusUI.h"
-#include "CoreData/Tags/MCore_UISettingsTags.h"
 #include "CoreUI/MCore_UISubsystem.h"
 
 UMCore_PrimaryGameLayout::UMCore_PrimaryGameLayout(const FObjectInitializer& ObjectInitializer)
@@ -22,9 +21,13 @@ void UMCore_PrimaryGameLayout::NativeOnInitialized()
 		{
 			if (UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
 			{
-				if (UISubsystem->RegisterPrimaryGameLayout(this))
+				if (UISubsystem)
 				{
 					UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout initialized successfully with all 4 layers"));
+				}
+				else
+				{
+					UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout failed to initialize"));
 				}
 			}
 		}
@@ -33,17 +36,5 @@ void UMCore_PrimaryGameLayout::NativeOnInitialized()
 
 void UMCore_PrimaryGameLayout::NativeDestruct()
 {
-	/** Unregister from UISubsystem */
-	if (APlayerController* ControllerRef = GetOwningPlayer())
-	{
-		if (ULocalPlayer* LocalPlayer = ControllerRef->GetLocalPlayer())
-		{
-			if (UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
-			{
-				UISubsystem->UnregisterPrimaryGameLayout();
-			}
-		}
-	}
-	
 	Super::NativeDestruct();
 }

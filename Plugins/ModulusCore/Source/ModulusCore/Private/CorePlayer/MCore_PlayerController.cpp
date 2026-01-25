@@ -16,54 +16,6 @@ AMCore_PlayerController::AMCore_PlayerController(const FObjectInitializer& Objec
 void AMCore_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (IsLocalController() && ShouldCreatePGLayout())
-	{
-		CreatePGLayout();
-	}
-}
-
-/**
- * UI Layer Management
- */
-
-bool AMCore_PlayerController::ShouldCreatePGLayout_Implementation() const
-{
-	return !IsRunningDedicatedServer() && PrimaryGameLayoutClass != nullptr;
-}
-
-void AMCore_PlayerController::OnPGLayoutReady_Implementation()
-{
-	/** Override in child classes/blueprints */
-}
-
-void AMCore_PlayerController::CreatePGLayout()
-{
-	if (PrimaryGameLayout) { return; }
-	
-	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(this, PrimaryGameLayoutClass);
-	if (PrimaryGameLayout)
-	{
-		PrimaryGameLayout->AddToViewport(0);
-		OnPGLayoutReady();
-	}
-}
-
-void AMCore_PlayerController::SetMenuInputMode()
-{
-}
-
-UMCore_ActivatableBase* AMCore_PlayerController::PushWidgetToLayer(TSubclassOf<UMCore_ActivatableBase> WidgetClass,
-                                                                   FGameplayTag LayerTag)
-{
-	if (!PrimaryGameLayout || !WidgetClass) { return nullptr; }
-	
-	// STUB
-	return nullptr;
-}
-
-void AMCore_PlayerController::RemoveWidget(UMCore_ActivatableBase* Widget)
-{
 }
 
 void AMCore_PlayerController::SetupInputComponent()
