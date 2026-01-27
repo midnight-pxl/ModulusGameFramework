@@ -19,6 +19,8 @@ class UTexture2D;
 struct FGameplayTag;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnThemeChanged, UMCore_PDA_UITheme_Base*, NewTheme);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryGameLayoutReady, UMCore_PrimaryGameLayout*, Layout);
+
 
 /**
  * Central access point for ModulusCore UI systems.
@@ -53,6 +55,9 @@ public:
 	/** Returns whether a valid PrimaryGameLayout is registered */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	bool HasPrimaryGameLayout() const { return IsValid(PrimaryGameLayout); }
+	
+	UPROPERTY(BlueprintAssignable, Category = "Modulus|UI|Events")
+	FOnPrimaryGameLayoutReady OnPrimaryGameLayoutReady;
 	
 	/**
 	 * Layer Stacks Access
@@ -145,6 +150,16 @@ protected:
 	/** Z-Order for layout when added to viewport. */
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|UI", meta = (ClampMin = "-100", ClampMax = "100"))
 	int32 PrimaryGameLayoutZOrder = 0;
+	
+	/**
+	 * Called after PrimaryGameLayout is successfully created and added to viewport.
+	 * Override in C++ or Blueprint subclasses for custom initialization.
+	 * 
+	 * @param Layout The newly created layout widget
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|UI")
+	void OnPrimaryGameLayoutCreated(UMCore_PrimaryGameLayout* Layout);
+	virtual void OnPrimaryGameLayoutCreated_Implementation(UMCore_PrimaryGameLayout* Layout);
 
 private:
 	void LoadWidgetClasses();
@@ -154,6 +169,8 @@ private:
 	void CreatePrimaryGameLayout();
 	/** Creates the deferred PrimaryGameLayout once PlayerController is ready (avoid race condition) */
 	void OnPlayerControllerReady(APlayerController* PlayerController);
+	
+	FDelegateHandle PlayerControllerReadyHandle;
 	
 	/**
 	 * Cached References

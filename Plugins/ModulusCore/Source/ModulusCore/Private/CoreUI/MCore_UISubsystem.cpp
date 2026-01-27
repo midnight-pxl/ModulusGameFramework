@@ -55,6 +55,14 @@ void UMCore_UISubsystem::Deinitialize()
  * Primary Game Layout
  */
 
+void UMCore_UISubsystem::OnPrimaryGameLayoutCreated_Implementation(UMCore_PrimaryGameLayout* Layout)
+{
+	/** 
+	 * Empty by default
+	 * Blueprint or C++ subclasses can override for custom setup
+	 */
+}
+
 void UMCore_UISubsystem::LoadWidgetClasses()
 {
 	const UMCore_CoreSettings* DevSettings = UMCore_CoreSettings::Get();
@@ -124,26 +132,37 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 		/** PlayerController not yet ready -- defer creation */
 		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Deferring layout creation until PlayerController ready"));
 		
-		if (LocalPlayer)
+		if (ULocalPlayer* ThisPlayer = GetLocalPlayer())
 		{
-			PlayerControllerReadyHandle = LocalPlayer->OnControllerIdChanged().AddUObject(
+			PlayerControllerReadyHandle = ThisPlayer->OnPlayerControllerChanged().AddUObject(
 				this, &UMCore_UISubsystem::OnPlayerControllerReady);
-			return;
 		}
-		
-		PrimaryGameLayout->AddToPlayerScreen(PrimaryGameLayoutZOrder);
-		BuildLayerStackMap();
-		
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout created (ZOrder: %d)"),
-			PrimaryGameLayoutZOrder);
+		return;
 	}
+	
+	PrimaryGameLayout->AddToPlayerScreen(PrimaryGameLayoutZOrder);
+	BuildLayerStackMap();
+		
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout created (ZOrder: %d)"),
+		PrimaryGameLayoutZOrder);
+	
+	/** Notify Subclasses and Listeners (BP Native Event + Multicast) */
+	OnPrimaryGameLayoutCreated(PrimaryGameLayout);
+	OnPrimaryGameLayoutReady.Broadcast(PrimaryGameLayout);
 }
 
 void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerController)
 {
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
-		LocalPlayer->OnControllerIdChanged().Remove(OnPlayerControllerReady())
+		LocalPlayer->OnPlayerControllerChanged().Remove(PlayerControllerReadyHandle);
+		PlayerControllerReadyHandle.Reset(); 
+	}
+	
+	if (IsValid(PlayerController) && !IsValid(PrimaryGameLayout))
+	{
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PlayerController initialized, creating PGLayout"));
+		CreatePrimaryGameLayout();
 	}
 }
 
@@ -166,7 +185,7 @@ bool UMCore_UISubsystem::IsLayerActive(FGameplayTag LayerTag) const
 UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 {
 	/** Return cached instance if valid */
-	if (CachedMenuHub.IsValid())
+	if (IsValid(CachedMenuHub))
 	{
 		return CachedMenuHub.Get();
 	}
@@ -203,7 +222,7 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 
 	/** Create MenuHub widget */
 	CachedMenuHub = CreateWidget<UMCore_GameMenuHub>(PlayerController, MenuHubClass);
-	if (!CachedMenuHub.IsValid())
+	if (!IsValid(CachedMenuHub))
 	{
 		UE_LOG(LogModulusUI, Error, 
 			TEXT("UISubsystem: CreateWidget failed for MenuHub"));
@@ -273,7 +292,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 		*NewTab.GetDisplayName().ToString(), Priority, RegisteredMenuScreens.Num());
 
 	/** If MenuHub already created, rebuild tab bar to show new screen */
-	if (CachedMenuHub.IsValid())
+	if (IsValid(CachedMenuHub))
 	{
 		CachedMenuHub.Get()->RebuildTabBar();
 	}
@@ -300,7 +319,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 			*TabID.ToString(), RegisteredMenuScreens.Num());
 
 		/** Rebuild MenuHub if it exists */
-		if (CachedMenuHub.IsValid())
+		if (IsValid(CachedMenuHub))
 		{
 			CachedMenuHub->RebuildTabBar();
 		}
@@ -315,7 +334,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 
 void UMCore_UISubsystem::RebuildMenuHubTabBar()
 {
-	if (CachedMenuHub.IsValid())
+	if (IsValid(CachedMenuHub))
 	{
 		CachedMenuHub->RebuildTabBar();
 	}
