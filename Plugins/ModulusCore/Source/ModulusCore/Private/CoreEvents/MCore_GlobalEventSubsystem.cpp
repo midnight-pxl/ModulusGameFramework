@@ -6,18 +6,6 @@
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_EventListenerComp.h"
 
-/** Conditional verbose logging macro - only logs when Event System Logging is enabled in Project Settings */
-#define MCORE_EVENT_LOG(Format, ...) \
-	do { \
-		if (const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get()) \
-		{ \
-			if (Settings->IsEventLoggingEnabled()) \
-			{ \
-				UE_LOG(LogModulusEvent, Log, Format, ##__VA_ARGS__); \
-			} \
-		} \
-	} while(0)
-
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -44,10 +32,18 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		return;
 	}
 
-	MCORE_EVENT_LOG(TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
+	UE_LOG(LogModulusEvent, Log, TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
 
 	DeliverGlobalEventToLocalListeners(EventData);
 	MulticastGlobalEvent(EventData);
+}
+
+void UMCore_GlobalEventSubsystem::RegisterEventReplicator(UMCore_GlobalEventReplicator* Replicator)
+{
+}
+
+void UMCore_GlobalEventSubsystem::UnregisterEventReplicator(UMCore_GlobalEventReplicator* Replicator)
+{
 }
 
 void UMCore_GlobalEventSubsystem::RegisterGlobalListener(UMCore_EventListenerComp* ListenerComponent)
@@ -55,7 +51,7 @@ void UMCore_GlobalEventSubsystem::RegisterGlobalListener(UMCore_EventListenerCom
 	if (IsValid(ListenerComponent))
 	{
 		GlobalListeners.AddUnique(ListenerComponent);
-		MCORE_EVENT_LOG(TEXT("Registered global event listener: %s"),
+		UE_LOG(LogModulusEvent, Log, TEXT("Registered global event listener: %s"),
 			   *ListenerComponent->GetName());
 	}
 }
@@ -69,9 +65,13 @@ void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerC
 
 	if (RemoveCount > 0)
 	{
-		MCORE_EVENT_LOG(TEXT("Unregistered global event listener: %s"),
+		UE_LOG(LogModulusEvent, Log, TEXT("Unregistered global event listener: %s"),
 			ListenerComponent ? *ListenerComponent->GetName() : TEXT("Unknown"));
 	}
+}
+
+void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData& EventData)
+{
 }
 
 bool UMCore_GlobalEventSubsystem::HasGlobalEventAuthority() const
@@ -95,6 +95,11 @@ bool UMCore_GlobalEventSubsystem::HasGlobalEventAuthority() const
 	default:
 		return false;
 	}
+}
+
+bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& EventData) const
+{
+	return false;
 }
 
 bool UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData)
@@ -121,7 +126,7 @@ void UMCore_GlobalEventSubsystem::ServerBroadcastGlobalEvent_Implementation(cons
 	/** Server receives RPC, validates, and broadcasts to all clients */
 	if (HasGlobalEventAuthority())
 	{
-		MCORE_EVENT_LOG(TEXT("Server received client event request: %s"),
+		UE_LOG(LogModulusEvent, Log, TEXT("Server received client event request: %s"),
 			*EventData.EventTag.ToString());
 		BroadcastGlobalEvent(EventData);
 	}
