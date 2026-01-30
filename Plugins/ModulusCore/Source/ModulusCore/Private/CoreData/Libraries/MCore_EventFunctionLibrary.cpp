@@ -200,11 +200,6 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 				/** We have authority, broadcast directly */
 				GlobalSystem->BroadcastGlobalEvent(EventData);
 			}
-			else if (NetMode == NM_Client)
-			{
-				/** Client sends to server for validation and broadcasting */
-				GlobalSystem->ServerBroadcastGlobalEvent(EventData);
-			}
 		}
 		else
 		{

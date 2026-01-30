@@ -9,8 +9,6 @@
 
 class UMCore_EventListenerComp;
 class UMCore_GlobalEventReplicator;
-class AGameModeBase;
-class APlayerController;
 
 /**
  * Global event subsystem for networked events
@@ -22,6 +20,10 @@ class APlayerController;
  * - Game state changes (match started, round ended)
  * - World events (boss spawned, treasure chest opened)
  * - Cross-player notifications (player joined, achievement unlocked)
+ * 
+ * Network Setup:
+ * Add UMCore_GlobalEventReplicator component to your GameState (or use AMCore_GameStateBase).
+ * Without a replicator, events broadcast locally only with a warning in networked games.
  */
 UCLASS(Config=ModulusGameFramework)
 class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsystem
@@ -37,8 +39,13 @@ public:
 	/**
 	 * Broadcast global event to all clients
 	 *
-	 * Server: Directly multicasts to all clients
-	 * Client: Sends server RPC (subject to validation based on ValidationStrictness)
+	 * With Replicator (networked):
+	 * - Server: Delivers locally + multicasts to all clients
+	 * - Client: Sends server RPC for validation and broadcast
+	 *
+	 * Without Replicator (standalone or not configured):
+	 * - Server/Standalone: Delivers to local listeners only
+	 * - Client: Logs warning, event not broadcast
 	 *
 	 * Use UMCore_EventFunctionLibrary::BroadcastGlobalEvent() instead of calling this directly.
 	 */
@@ -86,29 +93,11 @@ public:
 	 */
 	bool ValidateEventRequest(const FMCore_EventData& EventData) const;
 
-	/**
-	 * Server RPC - Client requests server to broadcast global event
-	 *
-	 * Server validates request based on ValidationStrictness before broadcasting.
-	 * Do not call directly - use BroadcastGlobalEvent() instead.
-	 */
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerBroadcastGlobalEvent(const FMCore_EventData& EventData);
-
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
 private:
-	/** Multicast RPC - Server delivers global event to all clients */
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastGlobalEvent(const FMCore_EventData& EventData);
-
-	/** RPC validation and implementation */
-	bool ServerBroadcastGlobalEvent_Validate(const FMCore_EventData& EventData);
-	void ServerBroadcastGlobalEvent_Implementation(const FMCore_EventData& EventData);
-	void MulticastGlobalEvent_Implementation(const FMCore_EventData& EventData);
-
 	/** Registered global listener components */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> GlobalListeners;
@@ -116,6 +105,6 @@ private:
 	/** Cached reference to the network replicator on GameState */
 	TWeakObjectPtr<UMCore_GlobalEventReplicator> EventReplicator;
 
-	/** Deliver event to listeners on this client */
-	void DeliverGlobalEventToLocalListeners(const FMCore_EventData& EventData);
+	/** Check if we're in a networked game (not standalone) */
+	bool IsNetworkedGame() const;
 };
