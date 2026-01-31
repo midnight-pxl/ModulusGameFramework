@@ -7,9 +7,12 @@
 
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
+#include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
+
+//~ Start of USubsystem Interface
 
 void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -30,6 +33,16 @@ void UMCore_UISubsystem::Deinitialize()
 {
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize - Cleaning up"));
 	
+	/** Clear delegate handle if still bound */
+	if (PlayerControllerReadyHandle.IsValid())
+	{
+		if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+		{
+			LocalPlayer->OnPlayerControllerChanged().Remove(PlayerControllerReadyHandle);
+		}
+		PlayerControllerReadyHandle.Reset();
+	}
+	
 	/** Clear layer stack map (old references) */
 	LayerStackMap.Empty();
 	
@@ -47,21 +60,15 @@ void UMCore_UISubsystem::Deinitialize()
 	}
 	
 	RegisteredMenuScreens.Empty();
+	CachedActiveTheme = nullptr;
+	ActiveThemeIndex = INDEX_NONE;
 	
 	Super::Deinitialize();
 }
 
-/**
- * Primary Game Layout
- */
+//~ End of USubsystem Interface
 
-void UMCore_UISubsystem::OnPrimaryGameLayoutCreated_Implementation(UMCore_PrimaryGameLayout* Layout)
-{
-	/** 
-	 * Empty by default
-	 * Blueprint or C++ subclasses can override for custom setup
-	 */
-}
+//~ Start of Widget Class Loading
 
 void UMCore_UISubsystem::LoadWidgetClasses()
 {
@@ -102,12 +109,13 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
 }
 
+//~ End of Widget Class Loading
+
+//~ Begin Primary Game Layout
+
 UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
 {
-	if (IsValid(PrimaryGameLayout))
-	{
-		return PrimaryGameLayout;
-	}
+	if (IsValid(PrimaryGameLayout)) { return PrimaryGameLayout; }
     
 	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: No PrimaryGameLayout registered for this local player"));
 	return nullptr;
@@ -140,6 +148,14 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 		return;
 	}
 	
+	/** Create Widget */
+	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(PlayerController, PrimaryGameLayoutClass);
+	if (!IsValid(PrimaryGameLayout))
+	{
+		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem: Failed to create PrimaryGameLayout widget"));
+		return;
+	}
+	
 	PrimaryGameLayout->AddToPlayerScreen(PrimaryGameLayoutZOrder);
 	BuildLayerStackMap();
 		
@@ -161,34 +177,128 @@ void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerContro
 	
 	if (IsValid(PlayerController) && !IsValid(PrimaryGameLayout))
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PlayerController initialized, creating PGLayout"));
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PlayerController initialized, creating PrimaryGameLayout"));
 		CreatePrimaryGameLayout();
 	}
 }
 
+void UMCore_UISubsystem::OnPrimaryGameLayoutCreated_Implementation(UMCore_PrimaryGameLayout* Layout)
+{
+	/** 
+	 * Empty by default
+	 * Blueprint or C++ subclasses can override for custom setup
+	 */
+}
+
+void UMCore_UISubsystem::BuildLayerStackMap()
+{
+	LayerStackMap.Empty();
+	
+	if (!IsValid(PrimaryGameLayout))
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Cannot build layer map - no PrimaryGameLayout"));
+		return;
+	}
+	
+	using namespace MCore_UILayerTags;
+	
+	// Map tags to layer stacks
+	if (PrimaryGameLayout->MCore_GameLayer)
+	{
+		LayerStackMap.Add(UI_Layer_Game, PrimaryGameLayout->MCore_GameLayer);
+	}
+	
+	if (PrimaryGameLayout->MCore_GameMenuLayer)
+	{
+		LayerStackMap.Add(UI_Layer_GameMenu, PrimaryGameLayout->MCore_GameMenuLayer);
+	}
+	
+	if (PrimaryGameLayout->MCore_MenuLayer)
+	{
+		LayerStackMap.Add(UI_Layer_Menu, PrimaryGameLayout->MCore_MenuLayer);
+	}
+	
+	if (PrimaryGameLayout->MCore_ModalLayer)
+	{
+		LayerStackMap.Add(UI_Layer_Modal, PrimaryGameLayout->MCore_ModalLayer);
+	}
+	
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: LayerStackMap created with %d layers"), LayerStackMap.Num());
+}
+
+//~ End of Primary Game Layout
+
+//~ Begin of Layer Stack Accessors
+
 UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag LayerTag) const
 {
+	if (!LayerTag.IsValid())
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack: Invalid LayerTag"));
+		return nullptr;
+	}
+	
+	if (const TObjectPtr<UCommonActivatableWidgetStack>* ThisStack = LayerStackMap.Find(LayerTag))
+	{
+		return *ThisStack;
+	}
+	
+	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack: No stack found for tag '%s'"),
+		*LayerTag.ToString());
 	return nullptr;
 }
 
-UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass,
+UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
+	TSubclassOf<UCommonActivatableWidget> WidgetClass,
 	FGameplayTag LayerTag)
 {
-	return nullptr;
+	if (!WidgetClass)
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer: Invalid WidgetClass"));
+		return nullptr;
+	}
+	
+	UCommonActivatableWidgetStack* ThisStack = GetLayerStack(LayerTag);
+	if (!ThisStack)
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer: No stack for tag '%s'"),
+			*LayerTag.ToString());
+		return nullptr;
+	}
+	
+	/** AddWidget handles creation + activation */
+	UCommonActivatableWidget* NewWidget = ThisStack->AddWidget<UCommonActivatableWidget>(WidgetClass);
+	
+	if (NewWidget)
+	{
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::PushWidgetToLayer: Pushed '%s' to layer '%s'"),
+			*WidgetClass->GetName(), *LayerTag.ToString());
+	}
+	else
+	{
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::PushWidgetToLayer: Failed to push '%s' to layer '%s'"),
+			*WidgetClass->GetName(), *LayerTag.ToString());
+	}
+	
+	return NewWidget;
 }
 
 bool UMCore_UISubsystem::IsLayerActive(FGameplayTag LayerTag) const
 {
-	return false;
+	const UCommonActivatableWidgetStack* ThisStack = GetLayerStack(LayerTag);
+	if (!ThisStack) { return false; }
+	
+	return ThisStack->GetActiveWidget() != nullptr;
 }
+
+//~ End of Layer Stack Accessors
+
+//~ Start of Menu Hub
 
 UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 {
 	/** Return cached instance if valid */
-	if (IsValid(CachedMenuHub))
-	{
-		return CachedMenuHub.Get();
-	}
+	if (IsValid(CachedMenuHub)) { return CachedMenuHub; }
     
 	if (!MenuHubClass)
 	{
@@ -236,7 +346,7 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 		TEXT("UISubsystem: MenuHub created with %d registered screens"), 
 		RegisteredMenuScreens.Num());
     
-	return CachedMenuHub.Get();
+	return CachedMenuHub;
 }
 
 void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
@@ -294,7 +404,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	/** If MenuHub already created, rebuild tab bar to show new screen */
 	if (IsValid(CachedMenuHub))
 	{
-		CachedMenuHub.Get()->RebuildTabBar();
+		CachedMenuHub->RebuildTabBar();
 	}
 }
 
@@ -340,6 +450,10 @@ void UMCore_UISubsystem::RebuildMenuHubTabBar()
 	}
 }
 
+//~ End of Menu Hub
+
+//~ Start of Theme System
+
 const TArray<FMCore_ThemeEntry>& UMCore_UISubsystem::GetAvailableThemes() const
 {
 	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
@@ -361,10 +475,7 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 		return false;
 	}
 
-	if (ThemeIndex == ActiveThemeIndex)
-	{
-		return true;
-	}
+	if (ThemeIndex == ActiveThemeIndex) { return true; }
 
 	const FMCore_ThemeEntry& ThemeEntry = Settings->AvailableThemes[ThemeIndex];
 	if (ThemeEntry.ThemeAsset.IsNull())
@@ -383,6 +494,4 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 	return true;
 }
 
-void UMCore_UISubsystem::BuildLayerStackMap()
-{
-}
+//~ End of Theme System
