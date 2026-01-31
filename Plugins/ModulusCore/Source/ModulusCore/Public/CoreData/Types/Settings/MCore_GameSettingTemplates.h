@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "CommonInputBaseTypes.h"
 #include "MCore_GameSettingType.h"
-#include "CoreData/Tags/MCore_UISettingsTags.h"
+#include "CoreData/Tags/MCore_SettingsTags.h"
 #include "MCore_GameSettingTemplates.generated.h"
 
 enum class EPlayerMappableKeySlot : uint8;
