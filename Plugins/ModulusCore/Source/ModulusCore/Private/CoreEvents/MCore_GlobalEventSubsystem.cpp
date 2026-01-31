@@ -129,7 +129,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 		}
 		else
 		{
-			/** invalid pointer -- clean up stale pointer */
+			/** invalid pointer -- clean up */
 			GlobalListeners.RemoveAt(i);
 		}
 	}
@@ -166,44 +166,29 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 		return false;
 	}
 	
-	switch (ValidationStrictness)
+	/** Currently hardcoding param limits -- override ValidateEventRequest() to customize */
+	constexpr int32 MaxParams{8};
+	constexpr int32 MaxContextIDLength{64};
+	
+	if (EventData.EventParams.Num() > MaxParams)
 	{
-	case EMCore_ValidationStrictness::Permissive:
-		return true;
-		
-	case EMCore_ValidationStrictness::Balanced:
-		if (EventData.EventParams.Num() >= 10)
-		{
-			UE_LOG(LogModulusEvent, Warning, TEXT("ValidateEventRequest: Too many params (%d >= 10)"),
-				EventData.EventParams.Num());
-			return false;
-		}
-		if (EventData.ContextID.Len() >= 100)
-		{
-			UE_LOG(LogModulusEvent, Warning, TEXT("ValidateEventRequest: ContextID too long (%d >= 100)"),
-				EventData.ContextID.Len());
-			return false;
-		}
-		return true;
-		
-	case EMCore_ValidationStrictness::Strict:
-		if (EventData.EventParams.Num() >= 6)
-		{
-			UE_LOG(LogModulusEvent, Warning, TEXT("ValidateEventRequest: Too many params (%d >= 6) [Strict]"),
-				EventData.EventParams.Num());
-			return false;
-		}
-		if (EventData.ContextID.Len() >= 60)
-		{
-			UE_LOG(LogModulusEvent, Warning, TEXT("ValidateEventRequest: ContextID too long (%d >= 60) [Strict]"),
-				EventData.ContextID.Len());
-			return false;
-		}
-		return true;
-
-	default:
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("Event Rejected: '%s' -- %d params exceeds cap of %d. "
+				 "Override ValidateEventRequest() for custom limits."),
+				 *EventData.EventTag.ToString(), EventData.EventParams.Num(), MaxParams);
 		return false;
 	}
+	
+	if (EventData.ContextID.Len() > MaxContextIDLength)
+	{
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("Event Rejected: '%s' -- ContextID length of %d exceeds cap of %d. "
+				 "Override ValidateEventRequest() for custom limits."),
+				 *EventData.EventTag.ToString(), EventData.ContextID.Len(), MaxContextIDLength);
+		return false;
+	}
+	
+	return true;
 }
 
 bool UMCore_GlobalEventSubsystem::IsNetworkedGame() const

@@ -31,11 +31,6 @@ class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsyste
 	GENERATED_BODY()
 
 public:
-
-	/** Validation strictness for global events (Permissive, Balanced, Strict) */
-	UPROPERTY(EditAnywhere, Config, Category = "Event System Configuration")
-	EMCore_ValidationStrictness ValidationStrictness = EMCore_ValidationStrictness::Balanced;
-
 	/**
 	 * Broadcast global event to all clients
 	 *
