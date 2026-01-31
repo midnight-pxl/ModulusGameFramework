@@ -65,11 +65,11 @@ public:
 
 protected:
     /** Handles button creation, clicks, visual states, gamepad nav */
-    UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
+    UPROPERTY(BlueprintReadOnly, meta=(BindWidgetOptional))
     TObjectPtr<UCommonTabListWidgetBase> TabList;
 
     /** Widget switcher for displaying active tab's page */
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
     TObjectPtr<UCommonAnimatedSwitcher> PageSwitcher;
 
     /** Tab button class UMCore_ButtonBase for text and icon integration */
