@@ -13,24 +13,22 @@ UMCore_PrimaryGameLayout::UMCore_PrimaryGameLayout(const FObjectInitializer& Obj
 void UMCore_PrimaryGameLayout::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
-
-	/** Register with UISubsystem for cross-plugin access */
-	if (APlayerController* ControllerRef = GetOwningPlayer())
+	
+	/** Validate BindWidget properties */
+	const bool bAllLayersValid = MCore_GameLayer && MCore_GameMenuLayer && MCore_MenuLayer && MCore_ModalLayer;
+	
+	if (bAllLayersValid)
 	{
-		if (ULocalPlayer* LocalPlayer = ControllerRef->GetLocalPlayer())
-		{
-			if (UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
-			{
-				if (UISubsystem)
-				{
-					UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout initialized successfully with all 4 layers"));
-				}
-				else
-				{
-					UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout failed to initialize"));
-				}
-			}
-		}
+		UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout: All 4 layer stacks bound successfully"));
+	}
+	else
+	{
+		UE_LOG(LogModulusUI, Error,
+			TEXT("PrimaryGameLayout: Missing layer stacks - Game:%s GameMenu:%s Menu:%s Modal:%s"),
+			MCore_GameLayer ? TEXT("OK") : TEXT("MISSING"),
+			MCore_GameMenuLayer ? TEXT("OK") : TEXT("MISSING"),
+			MCore_MenuLayer ? TEXT("OK") : TEXT("MISSING"),
+			MCore_ModalLayer ? TEXT("OK") : TEXT("MISSING"));
 	}
 }
 

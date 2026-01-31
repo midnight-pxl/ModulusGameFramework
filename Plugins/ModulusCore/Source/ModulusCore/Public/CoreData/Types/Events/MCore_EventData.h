@@ -6,17 +6,6 @@
 #include "MCore_EventData.generated.h"
 
 /**
- * Authority validation strictness levels
- */
-UENUM(BlueprintType)
-enum class EMCore_ValidationStrictness : uint8
-{
-	Permissive  UMETA(DisplayName = "Permissive", ToolTip = "Graceful degradation, warnings for authority issues"),
-	Balanced    UMETA(DisplayName = "Balanced", ToolTip = "Standard validation with clear error reporting"),
-	Strict      UMETA(DisplayName = "Strict", ToolTip = "Fail-fast validation, good for competitive games")
-};
-
-/**
  * Event scope enumeration - determines routing behavior
  */
 UENUM(BlueprintType)

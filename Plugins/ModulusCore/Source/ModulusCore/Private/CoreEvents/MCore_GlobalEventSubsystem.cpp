@@ -53,7 +53,7 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		}
 		else
 		{
-			/** Client w/o replicator: cannot broadcast */
+			/** Client w/o replicator: cannot request broadcast */
 			UE_LOG(LogModulusEvent, Warning,
 				TEXT("Global event not broadcast - not authority and no replicator found; "
 					 "add UMCore_GlobalEventReplicator to GameState for network support."))
@@ -95,9 +95,9 @@ void UMCore_GlobalEventSubsystem::RegisterGlobalListener(UMCore_EventListenerCom
 
 void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerComp* ListenerComponent)
 {
-	int32 RemoveCount = GlobalListeners.RemoveAll([ListenerComponent](const TWeakObjectPtr<UMCore_EventListenerComp>& WeakPtr)
+	int32 RemoveCount = GlobalListeners.RemoveAll([ListenerComponent](const TWeakObjectPtr<UMCore_EventListenerComp>& RemovePtr)
 	{
-		return !WeakPtr.IsValid() || WeakPtr.Get() == ListenerComponent;
+		return !RemovePtr.IsValid() || RemovePtr.Get() == ListenerComponent;
 	});
 
 	if (RemoveCount > 0)
@@ -109,7 +109,7 @@ void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerC
 
 void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData& EventData)
 {
-	if (GlobalListeners.Num() == 0) { return; }
+	if (GlobalListeners.IsEmpty()) { return; }
 	
 	UE_LOG(LogModulusEvent, Verbose, TEXT("Delivering global event '%s' to %d listeners"),
 		*EventData.EventTag.ToString(), GlobalListeners.Num());

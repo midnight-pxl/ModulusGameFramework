@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
-#include "CoreNetworking/MCore_NetworkingComponent.h"
 #include "MCore_EventListenerComp.generated.h"
 
 class UMCore_LocalEventSubsystem;
@@ -28,8 +27,8 @@ struct FMCore_EventData;
  * 2. Set SubscribedEvents tags (or leave empty to receive all events)
  * 3. Implement OnEventReceived Blueprint event
  */
-UCLASS(ClassGroup=(ModulusGameFramework), BlueprintType, meta=(BlueprintSpawnableComponent))
-class MODULUSCORE_API UMCore_EventListenerComp : public UMCore_NetworkingComponent
+UCLASS(ClassGroup=(ModulusCore), BlueprintType, meta=(BlueprintSpawnableComponent))
+class MODULUSCORE_API UMCore_EventListenerComp : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -59,17 +58,16 @@ public:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Event Handling")
 	void OnEventReceived(const FMCore_EventData& EventData, bool bWasGlobalEvent);
-
-protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-public:
+	
 	/** Internal - called by subsystems to deliver events. Do not call directly */
 	void DeliverEvent(const FMCore_EventData& EventData, bool bWasGlobalEvent);
 
 	/** Internal - check if this component should receive a specific event based on filters */
 	bool ShouldReceiveEvent(const FMCore_EventData& EventData, bool bIsGlobalEvent) const;
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	/** Cached reference to local event subsystem */
@@ -79,7 +77,4 @@ private:
 	/** Cached reference to global event subsystem */
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_GlobalEventSubsystem> CachedGlobalSubsystem;
-
-	/** Tracks whether component is registered with subsystems */
-	bool bRegisteredWithSubsystem{false};
 };

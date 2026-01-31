@@ -3,7 +3,7 @@
 
 #include "CorePlayer/MCore_PlayerController.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
-#include "CoreData/Tags/MCore_UISettingsTags.h"
+#include "CoreData/Tags/MCore_SettingsTags.h"
 #include "CoreData\Logging\LogModulusUI.h"
 #include "CoreUI/Widgets/Primitives/MCore_ActivatableBase.h"
 #include "Net/UnrealNetwork.h"

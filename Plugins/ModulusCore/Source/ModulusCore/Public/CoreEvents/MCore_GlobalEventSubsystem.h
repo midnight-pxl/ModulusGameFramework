@@ -25,7 +25,7 @@ class UMCore_GlobalEventReplicator;
  * Add UMCore_GlobalEventReplicator component to your GameState (or use AMCore_GameStateBase).
  * Without a replicator, events broadcast locally only with a warning in networked games.
  */
-UCLASS(Config=ModulusGameFramework)
+UCLASS(Config=ModulusCore)
 class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()

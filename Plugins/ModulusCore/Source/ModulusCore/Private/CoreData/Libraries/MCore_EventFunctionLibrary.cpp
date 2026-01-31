@@ -8,19 +8,32 @@
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
 
-void UMCore_EventFunctionLibrary::BroadcastSimpleEvent(const UObject* WorldContext, FGameplayTag EventTag,
-	EMCore_EventScope EventScope)
-{
-	TMap<FString, FString> EmptyParams;
-	BroadcastEvent(WorldContext, EventTag, EmptyParams, EventScope);
-}
+//~ Start of Broadcast Functions
 
-void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* WorldContext, FGameplayTag EventTag,
-	const FString& ContextID, EMCore_EventScope EventScope)
+void UMCore_EventFunctionLibrary::BroadcastSimpleEvent(const UObject* WorldContext,
+	FGameplayTag EventTag,
+	EMCore_EventScope EventScope)
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("BroadcastEventWithContext: Invalid parameters"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("BroadcastSimpleEvent: Invalid parameters (WorldContext: %s, Tag: %s)"),
+			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
+		return;
+	}
+	
+	FMCore_EventData EventData(EventTag);
+	RouteEventToSubsystem(WorldContext, EventData, EventScope);
+}
+
+void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* WorldContext,
+	FGameplayTag EventTag,
+	const FString& ContextID,
+	EMCore_EventScope EventScope)
+{
+	if (!WorldContext || !EventTag.IsValid())
+	{
+		UE_LOG(LogModulusEvent, Warning, TEXT("BroadcastEventWithContext: Invalid parameters (WorldContext: %s, Tag: %s)"),
+			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
 
@@ -45,51 +58,17 @@ void UMCore_EventFunctionLibrary::BroadcastEvent(const UObject* WorldContext,
 	RouteEventToSubsystem(WorldContext, EventData, EventScope);
 }
 
-void UMCore_EventFunctionLibrary::BroadcastLocalEvent(const UObject* WorldContext, FGameplayTag EventTag,
-                                                      const TMap<FString, FString>& Parameters)
-{
-	BroadcastEvent(WorldContext, EventTag, Parameters, EMCore_EventScope::Local);
-}
+//~ End of Broadcast Functions
 
-void UMCore_EventFunctionLibrary::BroadcastGlobalEvent(const UObject* WorldContext, FGameplayTag EventTag,
-	const TMap<FString, FString>& Parameters)
-{
-	BroadcastEvent(WorldContext, EventTag, Parameters, EMCore_EventScope::Global);
-}
-
-FMCore_EventData UMCore_EventFunctionLibrary::MakeEventData(FGameplayTag EventTag,
-	const TMap<FString, FString>& Parameters)
-{
-	return FMCore_EventData(EventTag, Parameters);
-}
-
-TMap<FString, FString> UMCore_EventFunctionLibrary::MakeEventParameters(const TArray<FString>& Keys,
-																		const TArray<FString>& Values)
-{
-	TMap<FString, FString> Params;
-    
-	int32 MaxIndex = FMath::Min(Keys.Num(), Values.Num());
-	Params.Reserve(MaxIndex);
-    
-	for (int32 i = 0; i < MaxIndex; ++i)
-	{
-		if (!Keys[i].IsEmpty())
-		{
-			Params.Add(Keys[i], Values[i]);
-		}
-	}
-    
-	return Params;
-}
-
-//~ Begin Parameter Helpers
+//~ Start of Parameter Accessors
 
 FString UMCore_EventFunctionLibrary::GetEventContextID(const FMCore_EventData& EventData)
 {
 	return EventData.ContextID;
 }
 
-FString UMCore_EventFunctionLibrary::GetEventParameter(const FMCore_EventData& EventData, const FString& Key,
+FString UMCore_EventFunctionLibrary::GetEventParameter(const FMCore_EventData& EventData,
+	const FString& Key,
 	const FString& DefaultValue)
 {
 	return EventData.GetParameter(Key, DefaultValue);
@@ -99,75 +78,40 @@ bool UMCore_EventFunctionLibrary::GetBoolParameter(const FMCore_EventData& Event
 	const FString& Key,
 	bool DefaultValue)
 {
-	FString Value = GetEventParameter(EventData, Key);
-	if (Value.IsEmpty()) 
-	{
-		return DefaultValue;
-	}
-    
-	/** Handle common bool representations */
-	Value = Value.ToLower();
-	return Value == TEXT("true") || Value == TEXT("1") || Value == TEXT("yes") || Value == TEXT("on");
+	const FString InValue = EventData.GetParameter(Key);
+	if (InValue.IsEmpty()) { return DefaultValue; }
+	
+	const FString ParamValue = InValue.ToLower();
+	return ParamValue == TEXT("true") || ParamValue == TEXT("1")
+	|| ParamValue == TEXT("on") || ParamValue == TEXT("yes");
 }
 
-int32 UMCore_EventFunctionLibrary::GetIntParameter(const FMCore_EventData& EventData, const FString& Key,
+int32 UMCore_EventFunctionLibrary::GetIntParameter(const FMCore_EventData& EventData,
+	const FString& Key,
 	int32 DefaultValue)
 {
-	FString Value = GetEventParameter(EventData, Key);
-	if (Value.IsEmpty()) 
-	{
-		return DefaultValue;
-	}
+	const FString InValue = EventData.GetParameter(Key);
+	if (InValue.IsEmpty()) { return DefaultValue; }
 	
-	return FCString::Atoi(*Value);
+	return FCString::Atoi(*InValue);
 }
 
-float UMCore_EventFunctionLibrary::GetFloatParameter(const FMCore_EventData& EventData, const FString& Key,
+float UMCore_EventFunctionLibrary::GetFloatParameter(const FMCore_EventData& EventData,
+	const FString& Key,
 	float DefaultValue)
 {
-	FString Value = GetEventParameter(EventData, Key);
-	if (Value.IsEmpty()) 
-	{
-		return DefaultValue;
-	}
+	FString InValue = EventData.GetParameter(Key);
+	if (InValue.IsEmpty()) { return DefaultValue; }
 	
-	return FCString::Atof(*Value);
+	return FCString::Atof(*InValue);
 }
 
-FString UMCore_EventFunctionLibrary::GetStringParameter(const FMCore_EventData& EventData, const FString& Key,
-	const FString& DefaultValue)
-{
-	return EventData.GetParameter(Key, DefaultValue);
-}
+//~ End of Parameter Accessors
 
-FVector UMCore_EventFunctionLibrary::GetVectorParameter(const FMCore_EventData& EventData, const FString& Key,
-	const FVector& DefaultValue)
-{
-	FString Value = GetEventParameter(EventData, Key);
-	if (Value.IsEmpty()) 
-	{
-		return DefaultValue;
-	}
-    
-	FVector Result;
-	return Result.InitFromString(Value) ? Result : DefaultValue;
-}
+//~ Subsystem Internal Routing
 
-FGameplayTag UMCore_EventFunctionLibrary::GetGameplayTagParameter(const FMCore_EventData& EventData, const FString& Key,
-	const FGameplayTag& DefaultValue)
-{
-	FString Value = GetEventParameter(EventData, Key);
-	if (Value.IsEmpty()) 
-	{
-		return DefaultValue;
-	}
-    
-	/** Convert string back to gameplay tag */
-	FGameplayTag Result = FGameplayTag::RequestGameplayTag(FName(*Value), false);
-	return Result.IsValid() ? Result : DefaultValue;
-}
-
-void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldContext, const FMCore_EventData& EventData,
+void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldContext,
+	const FMCore_EventData& EventData,
 	EMCore_EventScope EventScope)
 {
 	const UWorld* World = WorldContext->GetWorld();
@@ -184,22 +128,16 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 		return;
 	}
 	
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Routing event: %s (Scope: %s, Params: %d)"), 
+	UE_LOG(LogModulusEvent, Verbose, TEXT("Routing event: %s (Scope: %s)"), 
 		   *EventData.EventTag.ToString(), 
-		   EventScope == EMCore_EventScope::Global ? TEXT("Global") : TEXT("Local"),
-		   EventData.EventParams.Num());
+		   EventScope == EMCore_EventScope::Global ? TEXT("Global") : TEXT("Local"));
 
 	if (EventScope == EMCore_EventScope::Global)
 	{
-		/** Route to global event subsystem (server authority) */
+		/** Global event: Subsystem handles Authority, Replicator routing, and fallback */
 		if (UMCore_GlobalEventSubsystem* GlobalSystem = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
 		{
-			ENetMode NetMode = World->GetNetMode();
-			if (NetMode == NM_Standalone || NetMode == NM_ListenServer || NetMode == NM_DedicatedServer)
-			{
-				/** We have authority, broadcast directly */
-				GlobalSystem->BroadcastGlobalEvent(EventData);
-			}
+			GlobalSystem->BroadcastGlobalEvent(EventData);
 		}
 		else
 		{
@@ -208,7 +146,7 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 	}
 	else
 	{
-		/** Route to local event subsystem (client-side only) */
+		/** Local event: Route to LocalPlayerSubsystem */
 		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
 		{
 			if (UMCore_LocalEventSubsystem* LocalSystem = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
@@ -217,8 +155,12 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 			}
 			else
 			{
-				UE_LOG(LogModulusEvent, Error, TEXT("Failed to get LocalEventSubsystem"));
+				UE_LOG(LogModulusEvent, Error, TEXT("RouteEventToSubsystem: Failed to get LocalEventSubsystem"));
 			}
+		}
+		else
+		{
+			UE_LOG(LogModulusEvent, Warning, TEXT("RouteEventToSubsystem: No LocalPlayer found for event"));
 		}
 	}
 }
