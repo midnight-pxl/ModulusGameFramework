@@ -93,13 +93,11 @@ void UMCore_GameMenuHub::RebuildTabBar()
     }
 
     /** Register tabs with CommonUI */
-    /** Performance: 8 tabs × 0.17ms = 1.36ms total (widget creation dominates) */
     for (int32 Index = 0; Index < RegisteredScreens.Num(); ++Index)
     {
         const FMCore_MenuTab& Tab = RegisteredScreens[Index];
         
         FName TabNameID = FName(*Tab.TabID.ToString());
-        FText DisplayName = Tab.GetDisplayName();
 
         /** Create screen widget for this tab */
         UCommonActivatableWidget* ScreenWidget = CreateWidget<UCommonActivatableWidget>(
@@ -120,6 +118,14 @@ void UMCore_GameMenuHub::RebuildTabBar()
 
         /** Cache widget reference for future queries */
         ScreenWidgets.Add(TabNameID, ScreenWidget);
+        
+        OnPageCreated(TabNameID, ScreenWidget);
+        
+        /** Notify Blueprint(s) - page created */
+        if (UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabNameID))
+        {
+            OnTabCreated(TabNameID, TabButton);
+        }
     }
 
     /** Bind tab selection delegate */
