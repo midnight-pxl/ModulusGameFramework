@@ -248,9 +248,12 @@ UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag La
 		return nullptr;
 	}
 	
-	if (const TObjectPtr<UCommonActivatableWidgetStack>* ThisStack = LayerStackMap.Find(LayerTag))
+	if (const TObjectPtr<UCommonActivatableWidgetStack> ThisStack = LayerStackMap.FindRef(LayerTag))
 	{
-		return *ThisStack;
+		UE_LOG(LogModulusUI, Warning, TEXT("GetLayerStack: Tag='%s', Stack=%s"),
+			*LayerTag.ToString(), ThisStack ? *ThisStack->GetName() : TEXT("NULL"));
+		
+		return ThisStack;
 	}
 	
 	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack: No stack found for tag '%s'"),
