@@ -54,7 +54,7 @@ protected:
 	
 	/**
 	 * Layer to push PrimaryWidgetClass onto.
-	 * Default: UI_Layer_Game
+	 * Default: MCore_UI_Layer_Game
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI", meta = (Categories = "MCore.UI.Layer"))
 	FGameplayTag PrimaryWidgetLayer;

@@ -26,6 +26,16 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	LoadWidgetClasses();
 	CreatePrimaryGameLayout();
+	
+	/** Load Theming for widget creation */
+	const UMCore_CoreSettings* DevSettings = UMCore_CoreSettings::Get();
+	if (DevSettings && !DevSettings->IsValidThemeIndex(DevSettings->DefaultThemeIndex))
+	{
+		SetActiveThemeByIndex(DevSettings->DefaultThemeIndex);
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Loaded default theme from index %d"),
+			DevSettings->DefaultThemeIndex);
+	}
+	
 	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized for LocalPlayer"));
 }
 
@@ -205,22 +215,22 @@ void UMCore_UISubsystem::BuildLayerStackMap()
 	// Map tags to layer stacks
 	if (PrimaryGameLayout->MCore_GameLayer)
 	{
-		LayerStackMap.Add(UI_Layer_Game, PrimaryGameLayout->MCore_GameLayer);
+		LayerStackMap.Add(MCore_UI_Layer_Game, PrimaryGameLayout->MCore_GameLayer);
 	}
 	
 	if (PrimaryGameLayout->MCore_GameMenuLayer)
 	{
-		LayerStackMap.Add(UI_Layer_GameMenu, PrimaryGameLayout->MCore_GameMenuLayer);
+		LayerStackMap.Add(MCore_UI_Layer_GameMenu, PrimaryGameLayout->MCore_GameMenuLayer);
 	}
 	
 	if (PrimaryGameLayout->MCore_MenuLayer)
 	{
-		LayerStackMap.Add(UI_Layer_Menu, PrimaryGameLayout->MCore_MenuLayer);
+		LayerStackMap.Add(MCore_UI_Layer_Menu, PrimaryGameLayout->MCore_MenuLayer);
 	}
 	
 	if (PrimaryGameLayout->MCore_ModalLayer)
 	{
-		LayerStackMap.Add(UI_Layer_Modal, PrimaryGameLayout->MCore_ModalLayer);
+		LayerStackMap.Add(MCore_UI_Layer_Modal, PrimaryGameLayout->MCore_ModalLayer);
 	}
 	
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: LayerStackMap created with %d layers"), LayerStackMap.Num());

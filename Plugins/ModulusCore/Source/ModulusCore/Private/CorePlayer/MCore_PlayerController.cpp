@@ -2,9 +2,6 @@
 
 #include "CorePlayer/MCore_PlayerController.h"
 
-#include "EnhancedInputSubsystems.h"
-#include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
-#include "CoreData/Tags/MCore_SettingsTags.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CoreData\Logging\LogModulusUI.h"
 #include "CoreUI/MCore_UISubsystem.h"
@@ -12,14 +9,14 @@
 
 AMCore_PlayerController::AMCore_PlayerController()
 {
-	PrimaryWidgetLayer = MCore_UILayerTags::UI_Layer_Game;
+	PrimaryWidgetLayer = MCore_UILayerTags::MCore_UI_Layer_Game;
 }
 
 void AMCore_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (IsLocalController()) { return; }
+	if (!IsLocalController()) { return; }
 	
 	InitializeUISystem();
 }
@@ -119,19 +116,3 @@ void AMCore_PlayerController::OnUISystemReady_Implementation(UMCore_UISubsystem*
 	
 	bUISystemInitialized = true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

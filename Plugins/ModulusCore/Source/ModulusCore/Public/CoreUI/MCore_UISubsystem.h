@@ -69,7 +69,8 @@ public:
 
 	/** Push widget to layer by tag. Returns created widget or nullptr. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout", meta = (DeterminesOutputType = "WidgetClass"))
-	UCommonActivatableWidget* PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass, FGameplayTag LayerTag);
+	UCommonActivatableWidget* PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass,
+		UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag);
 
 	/** Check if a layer has any active widget. */
 	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
