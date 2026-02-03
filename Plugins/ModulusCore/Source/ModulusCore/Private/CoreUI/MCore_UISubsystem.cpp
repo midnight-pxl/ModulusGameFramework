@@ -29,7 +29,7 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 	/** Load Theming for widget creation */
 	const UMCore_CoreSettings* DevSettings = UMCore_CoreSettings::Get();
-	if (DevSettings && !DevSettings->IsValidThemeIndex(DevSettings->DefaultThemeIndex))
+	if (DevSettings && DevSettings->IsValidThemeIndex(DevSettings->DefaultThemeIndex))
 	{
 		SetActiveThemeByIndex(DevSettings->DefaultThemeIndex);
 		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Loaded default theme from index %d"),
@@ -281,15 +281,24 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 	
 	/** AddWidget handles creation + activation */
 	UCommonActivatableWidget* NewWidget = ThisStack->AddWidget<UCommonActivatableWidget>(WidgetClass);
-	
+
 	if (NewWidget)
 	{
-		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::PushWidgetToLayer: Pushed '%s' to layer '%s'"),
+		/** Safeguard: Ensure the stack activated the widget.
+		 *  Some engine versions may defer activation after AddWidget returns. */
+		if (!NewWidget->IsActivated())
+		{
+			UE_LOG(LogModulusUI, Warning, TEXT("PushWidgetToLayer: Stack did not activate '%s', activating manually"),
+				*WidgetClass->GetName());
+			NewWidget->ActivateWidget();
+		}
+
+		UE_LOG(LogModulusUI, Log, TEXT("PushWidgetToLayer: Pushed '%s' to layer '%s'"),
 			*WidgetClass->GetName(), *LayerTag.ToString());
 	}
 	else
 	{
-		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::PushWidgetToLayer: Failed to push '%s' to layer '%s'"),
+		UE_LOG(LogModulusUI, Warning, TEXT("PushWidgetToLayer: Failed to add '%s' to layer '%s'"),
 			*WidgetClass->GetName(), *LayerTag.ToString());
 	}
 	

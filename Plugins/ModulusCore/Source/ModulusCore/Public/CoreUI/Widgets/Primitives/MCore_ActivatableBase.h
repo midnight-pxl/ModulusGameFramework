@@ -83,6 +83,7 @@ public:
 
 protected:
 	//~ Begin UUserWidget Interface
+	virtual void NativeConstruct() override;
 	virtual void NativePreConstruct() override;
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;

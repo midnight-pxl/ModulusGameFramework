@@ -18,6 +18,26 @@
 UMCore_ActivatableBase::UMCore_ActivatableBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	bAutoActivate = false;
+}
+
+void UMCore_ActivatableBase::NativeConstruct()
+{
+	/**
+	 * Guard: Widget stacks manage activation via HandleActiveIndexChanged → ActivateWidget().
+	 * If bAutoActivate is true, NativeConstruct auto-activates BEFORE the stack calls
+	 * ActivateWidget, making the stack's call a no-op (bIsActive already true).
+	 * This silently prevents NativeOnActivated and BP_OnActivated from ever firing.
+	 */
+	if (bAutoActivate)
+	{
+		UE_LOG(LogModulusUI, Error,
+			TEXT("[%s] bAutoActivate is TRUE - stack-managed widgets must not auto-activate. Forcing to false."),
+			*GetName());
+		bAutoActivate = false;
+	}
+
+	Super::NativeConstruct();
 }
 
 void UMCore_ActivatableBase::RegisterBinding(
@@ -95,6 +115,23 @@ void UMCore_ActivatableBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	/**
+	 * Guard: Reset stale bIsActive from Blueprint CDO serialization.
+	 * bIsActive is a non-Transient UPROPERTY in CommonActivatableWidget.
+	 * If a Blueprint was saved while its widget preview was in an active state,
+	 * bIsActive=true gets baked into the CDO. Every new instance then starts
+	 * "already activated", causing the stack's ActivateWidget() to silently
+	 * skip InternalProcessActivation → NativeOnActivated → BP_OnActivated.
+	 * Reset() clears bIsActive so the stack can properly activate the widget.
+	 */
+	if (IsActivated())
+	{
+		UE_LOG(LogModulusUI, Log,
+			TEXT("[%s] Stale bIsActive detected in CDO - resetting for stack-managed activation"),
+			*GetName());
+		Reset();
+	}
+
 	BindThemeDelegate();
 
 	/** Apply initial theme from UISubsystem */
@@ -142,10 +179,10 @@ void UMCore_ActivatableBase::NativeOnDeactivated()
 {
 	/** Cleanup own input bindings BEFORE calling Super (memory leaks) */
 	UnregisterAllBindings();
-	
+
 	Super::NativeOnDeactivated();
-	
-	UE_LOG(LogModulusUI, Log, TEXT("Widget %s deactivated, input bindings cleared"),
+
+	UE_LOG(LogModulusUI, Log, TEXT("[%s] Deactivated, input bindings cleared"),
 		*GetName());
 }
 

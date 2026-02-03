@@ -107,6 +107,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Button")
 	FOnModulusButtonClicked OnButtonClicked;
 
+	/** Programmatically trigger this button's click logic (sound, animation, delegates) */
+	UFUNCTION(BlueprintCallable, Category = "Button")
+	void SimulateClick();
+
 protected:
 	//~ UUserWidget Interface
 	virtual void NativePreConstruct() override;

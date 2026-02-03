@@ -49,6 +49,11 @@ void UMCore_ButtonBase::NativeOnClicked()
 	OnButtonClicked.Broadcast();
 }
 
+void UMCore_ButtonBase::SimulateClick()
+{
+	HandleButtonClicked();
+}
+
 void UMCore_ButtonBase::NativeDestruct()
 {
 	UnbindThemeDelegate();
