@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DeveloperSettings.h"
-#include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "MCore_GameSettingType.generated.h"
 
