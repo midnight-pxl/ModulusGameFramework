@@ -36,6 +36,117 @@ static TAutoConsoleVariable<int32> CVarInvertLookY(
 	ECVF_Default
 );
 
+float UMCore_GameSettingsLibrary::GetSettingFloat(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting)
+{
+	return 0.0f;
+}
+
+int32 UMCore_GameSettingsLibrary::GetSettingInt(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting)
+{
+	return 0;
+}
+
+bool UMCore_GameSettingsLibrary::GetSettingBool(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting)
+{
+	return false;
+}
+
+FKey UMCore_GameSettingsLibrary::GetSettingKey(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting)
+{
+	return FKey{};
+}
+
+void UMCore_GameSettingsLibrary::SetSettingFloat(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting, float Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::SetSettingInt(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting, int32 Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::SetSettingBool(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting, bool Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::SetSettingKey(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting, const FKey& Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyPendingSettings(const UObject* WorldContextObject,
+	const UMCore_DA_SettingsCollection* Collection)
+{
+}
+
+void UMCore_GameSettingsLibrary::DiscardPendingSettings(const UObject* WorldContextObject,
+	const UMCore_DA_SettingsCollection* Collection)
+{
+}
+
+void UMCore_GameSettingsLibrary::PreviewPendingSettings(const UObject* WorldContextObject,
+	const UMCore_DA_SettingsCollection* Collection)
+{
+}
+
+void UMCore_GameSettingsLibrary::ResetSettingToDefault(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting)
+{
+}
+
+void UMCore_GameSettingsLibrary::SavePlayerSettings(const UObject* WorldContextObject)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDefinition* Setting, float FloatValue,
+	int32 IntValue, bool BoolValue)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyName, float Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyName, int32 Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyName, bool Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, float Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, int32 Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, bool Value)
+{
+}
+
+void UMCore_GameSettingsLibrary::ApplyToSoundClass(const TSoftObjectPtr<USoundClass>& SoundClassRef, float Volume)
+{
+}
+
+void UMCore_GameSettingsLibrary::BroadcastSettingChanged(const UObject* WorldContextObject,
+	const FGameplayTag& SettingTag)
+{
+}
+
+UMCore_PlayerSettingsSave* UMCore_GameSettingsLibrary::GetPlayerSave(const UObject* WorldContextObject)
+{
+	return nullptr;
+}
+
 void UMCore_GameSettingsLibrary::ApplyGraphicsPreset(EMCore_GraphicsPreset Preset)
 {
 	UGameUserSettings* Settings = UGameUserSettings::GetGameUserSettings();
@@ -79,58 +190,6 @@ EMCore_GraphicsPreset UMCore_GameSettingsLibrary::GetCurrentGraphicsPreset()
 	}
 	
 	return ConvertScalabilityLevelToPreset(CurrentScalabilityLevel);
-}
-
-void UMCore_GameSettingsLibrary::SetLookSensitivityX(float XSensitivity)
-{
-	XSensitivity = FMath::Clamp(XSensitivity, 0.1f, 10.0f);
-	CVarLookSensitivityX->Set(XSensitivity);
-
-	UE_LOG(LogModulusSettings, Log, TEXT("MCore_GameSettingsLibrary: Set look sensitivity X to %.2f"), XSensitivity);
-}
-
-float UMCore_GameSettingsLibrary::GetLookSensitivityX()
-{
-	return CVarLookSensitivityX.GetValueOnGameThread();
-}
-
-void UMCore_GameSettingsLibrary::SetLookSensitivityY(float YSensitivity)
-{
-	YSensitivity = FMath::Clamp(YSensitivity, 0.1f, 10.0f);
-	CVarLookSensitivityX->Set(YSensitivity);
-
-	UE_LOG(LogModulusSettings, Log, TEXT("MCore_GameSettingsLibrary: Set look sensitivity X to %.2f"), YSensitivity);
-}
-
-float UMCore_GameSettingsLibrary::GetLookSensitivityY()
-{
-	return CVarLookSensitivityY.GetValueOnGameThread();
-}
-
-void UMCore_GameSettingsLibrary::SetInvertLookY(bool bInvert)
-{
-	CVarInvertLookY->Set(bInvert ? 1 : 0);
-    
-	UE_LOG(LogTemp, Log, TEXT("MCore_GameSettingsLibrary: Set invert look Y to %s"), 
-		bInvert ? TEXT("true") : TEXT("false"));
-}
-
-bool UMCore_GameSettingsLibrary::GetInvertLookY()
-{
-	return CVarInvertLookY.GetValueOnGameThread() ? true : false;
-}
-
-void UMCore_GameSettingsLibrary::SetInvertLookX(bool bInvert)
-{
-	CVarInvertLookX->Set(bInvert ? 1 : 0);
-    
-	UE_LOG(LogTemp, Log, TEXT("MCore_GameSettingsLibrary: Set invert look X to %s"), 
-		bInvert ? TEXT("true") : TEXT("false"));
-}
-
-bool UMCore_GameSettingsLibrary::GetInvertLookX()
-{
-	return CVarInvertLookX.GetValueOnGameThread() ? true : false;
 }
 
 int32 UMCore_GameSettingsLibrary::ConvertPresetToScalabilityLevel(EMCore_GraphicsPreset Preset)
