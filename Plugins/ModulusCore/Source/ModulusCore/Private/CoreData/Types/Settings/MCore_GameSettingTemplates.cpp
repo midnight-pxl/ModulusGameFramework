@@ -20,14 +20,14 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Display");
     Category.CategoryDescription = FText::FromString("Screen Resolution, Window Mode, and Display Options");
-    Category.CategoryTag = MCore_SettingsTags::Category_Display;
+    Category.CategoryTag = MCore_SettingsTags::MCore_Settings_Category_Display;
 
     /** Screen Resolution */
     FMCore_SettingDefinition Resolution;
     Resolution.DisplayName = FText::FromString("Resolution");
     Resolution.Description = FText::FromString("Screen Resolution");
     Resolution.SettingType = EMCore_SettingType::Dropdown;
-    Resolution.SettingTag = MCore_SettingsTags::Display_Resolution;
+    Resolution.SettingTag = MCore_SettingsTags::MCore_Settings_Display_Resolution;
     Resolution.DropdownOptions = {
         FText::FromString("1280x720"),
         FText::FromString("1366x768"),
@@ -47,7 +47,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     WindowMode.DisplayName = FText::FromString("Window Mode");
     WindowMode.Description = FText::FromString("Fullscreen, Windowed, or Borderless");
     WindowMode.SettingType = EMCore_SettingType::Dropdown;
-    WindowMode.SettingTag = MCore_SettingsTags::Display_WindowMode;
+    WindowMode.SettingTag = MCore_SettingsTags::MCore_Settings_Display_WindowMode;
     WindowMode.DropdownOptions = {
         FText::FromString("Fullscreen"),
         FText::FromString("Windowed"),
@@ -61,7 +61,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     VSync.DisplayName = FText::FromString("Vertical Sync");
     VSync.Description = FText::FromString("Prevents screen tearing but may reduce performance");
     VSync.SettingType = EMCore_SettingType::Toggle;
-    VSync.SettingTag = MCore_SettingsTags::Display_VSync;
+    VSync.SettingTag = MCore_SettingsTags::MCore_Settings_Display_VSync;
     VSync.DefaultToggleValue = true;
     Category.Settings.Add(VSync);
 
@@ -70,7 +70,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateDisplaySettings()
     FrameRate.DisplayName = FText::FromString("Frame Rate Limit");
     FrameRate.Description = FText::FromString("Maximum frames per second (0 = unlimited)");
     FrameRate.SettingType = EMCore_SettingType::Dropdown;
-    FrameRate.SettingTag = MCore_SettingsTags::Display_FrameRateLimit;
+    FrameRate.SettingTag = MCore_SettingsTags::MCore_Settings_Display_FrameRateLimit;
     FrameRate.DropdownOptions = {
         FText::FromString("Unlimited"),
         FText::FromString("60 FPS"),
@@ -94,14 +94,14 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Graphics");
     Category.CategoryDescription = FText::FromString("Visual quality and rendering options");
-    Category.CategoryTag = MCore_SettingsTags::Category_Graphics;
+    Category.CategoryTag = MCore_SettingsTags::MCore_Settings_Category_Graphics;
 
     /** Overall Quality Preset */
     FMCore_SettingDefinition QualityPreset;
     QualityPreset.DisplayName = FText::FromString("Quality Preset");
     QualityPreset.Description = FText::FromString("Overall graphics quality level");
     QualityPreset.SettingType = EMCore_SettingType::Dropdown;
-    QualityPreset.SettingTag = MCore_SettingsTags::Graphics_QualityPreset;
+    QualityPreset.SettingTag = MCore_SettingsTags::MCore_Settings_Graphics_QualityPreset;
     QualityPreset.DropdownOptions = {
         FText::FromString("Low"),
         FText::FromString("Medium"),
@@ -117,7 +117,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     TextureQuality.DisplayName = FText::FromString("Texture Quality");
     TextureQuality.Description = FText::FromString("Detail level of textures");
     TextureQuality.SettingType = EMCore_SettingType::Dropdown;
-    TextureQuality.SettingTag = MCore_SettingsTags::Graphics_TextureQuality;
+    TextureQuality.SettingTag = MCore_SettingsTags::MCore_Settings_Graphics_TextureQuality;
     TextureQuality.DropdownOptions = {
         FText::FromString("Low"),
         FText::FromString("Medium"),
@@ -132,7 +132,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     ShadowQuality.DisplayName = FText::FromString("Shadow Quality");
     ShadowQuality.Description = FText::FromString("Quality and distance of shadows");
     ShadowQuality.SettingType = EMCore_SettingType::Dropdown;
-    ShadowQuality.SettingTag = MCore_SettingsTags::Graphics_ShadowQuality;
+    ShadowQuality.SettingTag = MCore_SettingsTags::MCore_Settings_Graphics_ShadowQuality;
     ShadowQuality.DropdownOptions = {
         FText::FromString("Off"),
         FText::FromString("Low"),
@@ -147,7 +147,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     AntiAliasing.DisplayName = FText::FromString("Anti-Aliasing");
     AntiAliasing.Description = FText::FromString("Smooths jagged edges");
     AntiAliasing.SettingType = EMCore_SettingType::Dropdown;
-    AntiAliasing.SettingTag = MCore_SettingsTags::Graphics_AntiAliasing;
+    AntiAliasing.SettingTag = MCore_SettingsTags::MCore_Settings_Graphics_AntiAliasing;
     AntiAliasing.DropdownOptions = {
         FText::FromString("Off"),
         FText::FromString("FXAA"),
@@ -163,7 +163,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateGraphicsSettings()
     ViewDistance.DisplayName = FText::FromString("View Distance");
     ViewDistance.Description = FText::FromString("How far objects are rendered");
     ViewDistance.SettingType = EMCore_SettingType::Slider;
-    ViewDistance.SettingTag = MCore_SettingsTags::Graphics_ViewDistance;
+    ViewDistance.SettingTag = MCore_SettingsTags::MCore_Settings_Graphics_ViewDistance;
     ViewDistance.MinValue = 0.1f;
     ViewDistance.MaxValue = 1.0f;
     ViewDistance.DefaultValue = 0.7f;
@@ -182,14 +182,14 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Audio");
     Category.CategoryDescription = FText::FromString("Volume levels and audio options");
-    Category.CategoryTag = MCore_SettingsTags::Category_Audio;
+    Category.CategoryTag = MCore_SettingsTags::MCore_Settings_Category_Audio;
 
     /** Master Volume */
     FMCore_SettingDefinition MasterVolume;
     MasterVolume.DisplayName = FText::FromString("Master Volume");
     MasterVolume.Description = FText::FromString("Overall game volume");
     MasterVolume.SettingType = EMCore_SettingType::Slider;
-    MasterVolume.SettingTag = MCore_SettingsTags::Audio_MasterVolume;
+    MasterVolume.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_MasterVolume;
     MasterVolume.MinValue = 0.0f;
     MasterVolume.MaxValue = 1.0f;
     MasterVolume.DefaultValue = 0.6f;
@@ -201,7 +201,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     MusicVolume.DisplayName = FText::FromString("Music Volume");
     MusicVolume.Description = FText::FromString("Background music volume");
     MusicVolume.SettingType = EMCore_SettingType::Slider;
-    MusicVolume.SettingTag = MCore_SettingsTags::Audio_MusicVolume;
+    MusicVolume.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_MusicVolume;
     MusicVolume.MinValue = 0.0f;
     MusicVolume.MaxValue = 1.0f;
     MusicVolume.DefaultValue = 0.7f;
@@ -213,7 +213,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     SFXVolume.DisplayName = FText::FromString("Effects Volume");
     SFXVolume.Description = FText::FromString("Sound effects volume");
     SFXVolume.SettingType = EMCore_SettingType::Slider;
-    SFXVolume.SettingTag = MCore_SettingsTags::Audio_SFXVolume;
+    SFXVolume.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_SFXVolume;
     SFXVolume.MinValue = 0.0f;
     SFXVolume.MaxValue = 1.0f;
     SFXVolume.DefaultValue = 0.8f;
@@ -225,7 +225,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     VoiceVolume.DisplayName = FText::FromString("Voice Volume");
     VoiceVolume.Description = FText::FromString("Character dialogue volume");
     VoiceVolume.SettingType = EMCore_SettingType::Slider;
-    VoiceVolume.SettingTag = MCore_SettingsTags::Audio_VoiceVolume;
+    VoiceVolume.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_VoiceVolume;
     VoiceVolume.MinValue = 0.0f;
     VoiceVolume.MaxValue = 1.0f;
     VoiceVolume.DefaultValue = 0.9f;
@@ -237,7 +237,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     AudioQuality.DisplayName = FText::FromString("Audio Quality");
     AudioQuality.Description = FText::FromString("Audio processing quality");
     AudioQuality.SettingType = EMCore_SettingType::Dropdown;
-    AudioQuality.SettingTag = MCore_SettingsTags::Audio_Quality;
+    AudioQuality.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_Quality;
     AudioQuality.DropdownOptions = {
         FText::FromString("Low"),
         FText::FromString("Medium"),
@@ -258,14 +258,14 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Controls");
     Category.CategoryDescription = FText::FromString("Input sensitivity and key bindings");
-    Category.CategoryTag = MCore_SettingsTags::Category_Controls;
+    Category.CategoryTag = MCore_SettingsTags::MCore_Settings_Category_Controls;
 
     /** Mouse Sensitivity */
     FMCore_SettingDefinition MouseSensitivity;
     MouseSensitivity.DisplayName = FText::FromString("Mouse Sensitivity");
     MouseSensitivity.Description = FText::FromString("How fast the camera moves with mouse input");
     MouseSensitivity.SettingType = EMCore_SettingType::Slider;
-    MouseSensitivity.SettingTag = MCore_SettingsTags::Controls_MouseSensitivity;
+    MouseSensitivity.SettingTag = MCore_SettingsTags::MCore_Settings_Controls_MouseSensitivity;
     MouseSensitivity.MinValue = 0.1f;
     MouseSensitivity.MaxValue = 3.0f;
     MouseSensitivity.DefaultValue = 1.0f;
@@ -277,7 +277,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     InvertY.DisplayName = FText::FromString("Invert Y Axis");
     InvertY.Description = FText::FromString("Invert vertical mouse movement");
     InvertY.SettingType = EMCore_SettingType::Toggle;
-    InvertY.SettingTag = MCore_SettingsTags::Controls_InvertY;
+    InvertY.SettingTag = MCore_SettingsTags::MCore_Settings_Controls_InvertLookY;
     InvertY.DefaultToggleValue = false;
     Category.Settings.Add(InvertY);
 
@@ -286,29 +286,12 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateControlsSettings()
     GamepadSensitivity.DisplayName = FText::FromString("Gamepad Sensitivity");
     GamepadSensitivity.Description = FText::FromString("Controller stick sensitivity");
     GamepadSensitivity.SettingType = EMCore_SettingType::Slider;
-    GamepadSensitivity.SettingTag = MCore_SettingsTags::Controls_GamepadSensitivity;
+    GamepadSensitivity.SettingTag = MCore_SettingsTags::MCore_Settings_Controls_GamepadSensitivity;
     GamepadSensitivity.MinValue = 0.1f;
     GamepadSensitivity.MaxValue = 3.0f;
     GamepadSensitivity.DefaultValue = 1.0f;
     GamepadSensitivity.StepSize = 0.02f;
     Category.Settings.Add(GamepadSensitivity);
-
-    /** Key Binding Examples (commonly remapped keys) */
-    FMCore_SettingDefinition MoveForward;
-    MoveForward.DisplayName = FText::FromString("Move Forward");
-    MoveForward.Description = FText::FromString("Key to move forward");
-    MoveForward.SettingType = EMCore_SettingType::KeyBinding;
-    MoveForward.SettingTag = MCore_SettingsTags::Controls_MoveForward;
-    MoveForward.DefaultKey = EKeys::W;
-    Category.Settings.Add(MoveForward);
-
-    FMCore_SettingDefinition Jump;
-    Jump.DisplayName = FText::FromString("Jump");
-    Jump.Description = FText::FromString("Key to jump");
-    Jump.SettingType = EMCore_SettingType::KeyBinding;
-    Jump.SettingTag = MCore_SettingsTags::Controls_Jump;
-    Jump.DefaultKey = EKeys::SpaceBar;
-    Category.Settings.Add(Jump);
 
     return Category;
 }
@@ -322,14 +305,14 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     FMCore_SettingCategory Category;
     Category.CategoryName = FText::FromString("Accessibility");
     Category.CategoryDescription = FText::FromString("Options to improve game accessibility");
-    Category.CategoryTag = MCore_SettingsTags::Category_Accessibility;
+    Category.CategoryTag = MCore_SettingsTags::MCore_Settings_Category_Accessibility;
 
     /** Subtitles */
     FMCore_SettingDefinition Subtitles;
     Subtitles.DisplayName = FText::FromString("Subtitles");
     Subtitles.Description = FText::FromString("Show text for spoken dialogue");
     Subtitles.SettingType = EMCore_SettingType::Toggle;
-    Subtitles.SettingTag = MCore_SettingsTags::Accessibility_Subtitles;
+    Subtitles.SettingTag = MCore_SettingsTags::MCore_Settings_Accessibility_Subtitles;
     Subtitles.DefaultToggleValue = false;
     Category.Settings.Add(Subtitles);
 
@@ -338,7 +321,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     SubtitleSize.DisplayName = FText::FromString("Subtitle Size");
     SubtitleSize.Description = FText::FromString("Size of subtitle text");
     SubtitleSize.SettingType = EMCore_SettingType::Dropdown;
-    SubtitleSize.SettingTag = MCore_SettingsTags::Accessibility_SubtitleSize;
+    SubtitleSize.SettingTag = MCore_SettingsTags::MCore_Settings_Accessibility_SubtitleSize;
     SubtitleSize.DropdownOptions = {
         FText::FromString("Small"),
         FText::FromString("Medium"),
@@ -353,7 +336,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     ColorblindMode.DisplayName = FText::FromString("Colorblind Support");
     ColorblindMode.Description = FText::FromString("Adjust colors for colorblind players");
     ColorblindMode.SettingType = EMCore_SettingType::Dropdown;
-    ColorblindMode.SettingTag = MCore_SettingsTags::Accessibility_ColorblindMode;
+    ColorblindMode.SettingTag = MCore_SettingsTags::MCore_Settings_Accessibility_ColorblindMode;
     ColorblindMode.DropdownOptions = {
         FText::FromString("None"),
         FText::FromString("Protanopia"),
@@ -368,21 +351,12 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAccessibilitySettings(
     UIScale.DisplayName = FText::FromString("UI Scale");
     UIScale.Description = FText::FromString("Size of user interface elements");
     UIScale.SettingType = EMCore_SettingType::Slider;
-    UIScale.SettingTag = MCore_SettingsTags::Accessibility_UIScale;
+    UIScale.SettingTag = MCore_SettingsTags::MCore_Settings_Accessibility_UIScale;
     UIScale.MinValue = 0.4f;
     UIScale.MaxValue = 2.0f;
     UIScale.DefaultValue = 1.0f;
     UIScale.StepSize = 0.2f;
     Category.Settings.Add(UIScale);
-
-    /** Reduce Motion */
-    FMCore_SettingDefinition ReduceMotion;
-    ReduceMotion.DisplayName = FText::FromString("Reduce Motion");
-    ReduceMotion.Description = FText::FromString("Reduce screen shake and camera effects");
-    ReduceMotion.SettingType = EMCore_SettingType::Toggle;
-    ReduceMotion.SettingTag = MCore_SettingsTags::Accessibility_ReduceMotion;
-    ReduceMotion.DefaultToggleValue = false;
-    Category.Settings.Add(ReduceMotion);
 
     return Category;
 }
@@ -761,7 +735,7 @@ TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControl
 
     /** Mouse Sensitivity */
     BasicControls.Add(CreateSliderSetting(
-        MCore_SettingsTags::Controls_MouseSensitivity,
+        MCore_SettingsTags::MCore_Settings_Controls_MouseSensitivity,
         FText::FromString("Mouse Sensitivity"),
         FText::FromString("How fast the camera moves with mouse input"),
         0.1f,  /** Min */
@@ -772,7 +746,7 @@ TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControl
 
     /** Invert Y Axis */
     BasicControls.Add(CreateToggleSetting(
-        MCore_SettingsTags::Controls_InvertY,
+        MCore_SettingsTags::MCore_Settings_Controls_InvertLookY,
         FText::FromString("Invert Y Axis"),
         FText::FromString("Invert vertical mouse movement"),
         false /** Default off */
@@ -780,7 +754,7 @@ TArray<FMCore_SettingDefinition> UMCore_GameSettingTemplates::CreateBasicControl
 
     /** Gamepad Sensitivity */
     BasicControls.Add(CreateSliderSetting(
-        MCore_SettingsTags::Controls_GamepadSensitivity,
+        MCore_SettingsTags::MCore_Settings_Controls_GamepadSensitivity,
         FText::FromString("Gamepad Sensitivity"),
         FText::FromString("Controller stick sensitivity"),
         0.1f,  /** Min */

@@ -26,28 +26,63 @@ static TAutoConsoleVariable<float> CVarLookSensitivityX(
 	2.0f,
 	TEXT("Horizontal look sensitivity multiplier (0.1-10.0, default: 2.0)"),
 	ECVF_Default
-);
+	);
 
 static TAutoConsoleVariable<float> CVarLookSensitivityY(
 	TEXT("Modulus.Input.LookSensitivityY"),
 	2.0f,
 	TEXT("Vertical look sensitivity multiplier (0.1-10.0, default: 2.0)"),
 	ECVF_Default
-);
+	);
 
 static TAutoConsoleVariable<int32> CVarInvertLookX(
 	TEXT("Modulus.Input.InvertLookX"),
 	0,
 	TEXT("Invert horizontal look axis (0=normal, 1=inverted, default: 0)"),
 	ECVF_Default
-);
+	);
 
 static TAutoConsoleVariable<int32> CVarInvertLookY(
 	TEXT("Modulus.Input.InvertLookY"),
 	1,
 	TEXT("Invert vertical look axis (0=normal, 1=inverted, default: 1)"),
 	ECVF_Default
-);
+	);
+
+static TAutoConsoleVariable<int32> CVarVibration(
+	TEXT("Modulus.Input.Vibration"),
+	1,
+	TEXT("Controller vibration (0=off, 1=on)"),
+	ECVF_Default
+	);
+
+static TAutoConsoleVariable<int32> CVarMouseSmoothing(
+	TEXT("Modulus.Input.MouseSmoothing"),
+	0,
+	TEXT("Mouse smoothing (0=off, 1=on)"),
+	ECVF_Default
+	);
+
+static TAutoConsoleVariable<int32> CVarSubtitles(
+	TEXT("Modulus.Audio.Subtitles"),
+	1,
+	TEXT("Show subtitles (0=off, 1=on)"),
+	ECVF_Default
+	);
+
+static TAutoConsoleVariable<int32> CVarScreenReader(
+	TEXT("Modulus.Accessibility.ScreenReader"), 
+	0,
+	TEXT("Screen reader support (0=off, 1=on)"), 
+	ECVF_Default
+	);
+
+static TAutoConsoleVariable<int32> CVarLargeText(
+	TEXT("Modulus.Accessibility.LargeText"),
+	0,
+	TEXT("Large text mode (0=off, 1=on)"),
+	ECVF_Default
+	);
 
 // ============================================================================
 // INTERNAL HELPER
