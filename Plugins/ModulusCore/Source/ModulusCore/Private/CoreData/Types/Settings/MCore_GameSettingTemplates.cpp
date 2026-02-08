@@ -225,7 +225,7 @@ FMCore_SettingCategory UMCore_GameSettingTemplates::CreateAudioSettings()
     VoiceVolume.DisplayName = FText::FromString("Voice Volume");
     VoiceVolume.Description = FText::FromString("Character dialogue volume");
     VoiceVolume.SettingType = EMCore_SettingType::Slider;
-    VoiceVolume.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_VoiceVolume;
+    VoiceVolume.SettingTag = MCore_SettingsTags::MCore_Settings_Audio_DialogueVolume;
     VoiceVolume.MinValue = 0.0f;
     VoiceVolume.MaxValue = 1.0f;
     VoiceVolume.DefaultValue = 0.9f;

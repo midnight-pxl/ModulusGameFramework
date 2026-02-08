@@ -19,7 +19,7 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_Resolution, "MCore.Settings.Display.Resolution");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_WindowMode, "MCore.Settings.Display.WindowMode");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_VSync, "MCore.Settings.Display.VSync");
-    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_FrameRateLimit, "Display.FrameRateLimit");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_FrameRateLimit, "MCore.Settings.Display.FrameRateLimit");
 
     /** Graphics Settings */
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Graphics_QualityPreset, "MCore.Settings.Graphics.QualityPreset");
@@ -35,7 +35,7 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_Quality, "MCore.Settings.Audio.Quality");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_MusicVolume, "MCore.Settings.Audio.MusicVolume");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_SFXVolume, "MCore.Settings.Audio.SFXVolume");
-    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_VoiceVolume, "MCore.Settings.Audio.VoiceVolume");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_DialogueVolume, "MCore.Settings.Audio.DialogueVolume");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_AmbientVolume, "MCore.Settings.Audio.AmbientVolume");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_UIVolume, "MCore.Settings.Audio.UIVolume");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_MuteAudio, "MCore.Settings.Audio.MuteAudio");

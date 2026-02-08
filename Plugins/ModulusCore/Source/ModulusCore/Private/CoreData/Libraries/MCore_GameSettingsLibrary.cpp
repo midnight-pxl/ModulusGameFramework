@@ -21,6 +21,20 @@
 // CONSOLE VARIABLES (registered DataAssets target)
 // ============================================================================
 
+static TAutoConsoleVariable<float> CVarMouseSensitivity(
+	TEXT("Modulus.Input.MouseSensitivity"),
+	1.0f,
+	TEXT("Overall mouse sensitivity multiplier (0.1-10.0, default: 1.0)"),
+	ECVF_Default
+	);
+
+static TAutoConsoleVariable<float> CVarGamepadSensitivity(
+	TEXT("Modulus.Input.GamepadSensitivity"),
+	1.0f,
+	TEXT("Overall gamepad sensitivity multiplier (0.1-10.0, default: 1.0)"),
+	ECVF_Default
+	);
+
 static TAutoConsoleVariable<float> CVarLookSensitivityX(
 	TEXT("Modulus.Input.LookSensitivityX"),
 	2.0f,
