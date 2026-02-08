@@ -6,7 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
 #include "InputCoreTypes.h"
-#include "MCore_GameSettingType.h"
+#include "MCore_SettingsTypes.h"
 #include "MCore_DA_SettingDefinition.generated.h"
 
 class UInputAction;

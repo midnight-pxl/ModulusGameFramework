@@ -29,15 +29,9 @@ bool UMCore_DA_SettingDefinition::IsValid() const
 		&& DefaultDropdownIndex >= 0
 		&& DefaultDropdownIndex < DropdownOptions.Num();
 		
-	case EMCore_SettingType::TextInput:
-		return MaxTextLength >= 0;
-		
 	case EMCore_SettingType::KeyBinding:
 		return InputAction != nullptr
 		&& InputMappingContext != nullptr;
-		
-	case EMCore_SettingType::Action:
-		return !ActionButtonText.IsEmpty();
 		
 	case EMCore_SettingType::Toggle:
 	default:
@@ -99,15 +93,6 @@ EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationCo
 		}
 		break;
 		
-	case EMCore_SettingType::TextInput:
-		if (MaxTextLength < 0)
-		{
-			Context.AddError(FText::FromString(
-				FString::Printf(TEXT("%s: MaxTextLength cannot be less than 0"), *GetName())));
-			Result = EDataValidationResult::Invalid;
-		}
-		break;
-		
 	case EMCore_SettingType::KeyBinding:
 		if (InputAction == nullptr)
 		{
@@ -119,15 +104,6 @@ EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationCo
 		{
 			Context.AddError(FText::FromString(
 				FString::Printf(TEXT("%s: KeyBinding requires an InputMappingContext reference"), *GetName())));
-			Result = EDataValidationResult::Invalid;
-		}
-		break;
-		
-	case EMCore_SettingType::Action:
-		if (ActionButtonText.IsEmpty())
-		{
-			Context.AddError(FText::FromString(
-				FString::Printf(TEXT("%s: Action's ButtonText is empty"), *GetName())));
 			Result = EDataValidationResult::Invalid;
 		}
 		break;

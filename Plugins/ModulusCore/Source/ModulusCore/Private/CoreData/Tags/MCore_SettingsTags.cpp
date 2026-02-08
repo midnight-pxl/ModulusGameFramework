@@ -2,7 +2,7 @@
 
 #include "CoreData/Tags/MCore_SettingsTags.h"
 
-#include "CoreData/Types/Settings/MCore_GameSettingType.h" /** For EMCore_SettingType */
+#include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 
 namespace MCore_SettingsTags
 {

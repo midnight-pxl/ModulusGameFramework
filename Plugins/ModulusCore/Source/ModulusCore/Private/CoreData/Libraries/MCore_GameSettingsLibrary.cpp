@@ -10,12 +10,18 @@
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
 
+#include "InputAction.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Sound/SoundClass.h"
 #include "Engine/LocalPlayer.h"
+#include "InputMappingContext.h"
 #include "HAL/IConsoleManager.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedActionKeyMapping.h"
+#include "PlayerMappableKeySettings.h"
 #include "GameFramework/GameUserSettings.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
 
 // ============================================================================
 // CONSOLE VARIABLES (registered DataAssets target)
@@ -796,6 +802,281 @@ EMCore_GraphicsPreset UMCore_GameSettingsLibrary::GetCurrentGraphicsPreset()
 	}
 	
 	return ConvertScalabilityLevelToPreset(CurrentLevel);
+}
+
+void UMCore_GameSettingsLibrary::GetMappableActionsFromContext(const UInputMappingContext* Context,
+	ECommonInputType InputType, TArray<UInputAction*>& OutActions)
+{
+	OutActions.Empty();
+	if (!Context) { return; }
+
+	const TArray<FEnhancedActionKeyMapping>& Mappings = Context->GetMappings();
+	TSet<const UInputAction*> UniqueActions;
+
+	for (const FEnhancedActionKeyMapping& Mapping : Mappings)
+	{
+		const UInputAction* Action = Mapping.Action;
+		if (!Action || UniqueActions.Contains(Action)) { continue; }
+
+		if (!Action->GetPlayerMappableKeySettings()) { continue; }
+
+		const bool bIsGamepadKey = Mapping.Key.IsGamepadKey();
+		const bool bWantGamepad = (InputType == ECommonInputType::Gamepad);
+		if (bIsGamepadKey != bWantGamepad) { continue; }
+
+		UniqueActions.Add(Action);
+		OutActions.Add(const_cast<UInputAction*>(Action));
+	}
+}
+
+TArray<FMCore_KeyBindingGroup> UMCore_GameSettingsLibrary::GetAllKeyBindingCategories(UObject* WorldContextObject,
+	ECommonInputType InputType)
+{
+	TArray<FMCore_KeyBindingGroup> Categories;
+
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(WorldContextObject);
+    if (!Subsystem)
+    {
+        UE_LOG(LogModulusSettings, Error,
+            TEXT("GetAllKeyBindingCategories: Enhanced Input subsystem unavailable"));
+        return Categories;
+    }
+
+    const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+    if (!UserSettings)
+    {
+        UE_LOG(LogModulusSettings, Error,
+            TEXT("GetAllKeyBindingCategories: EnhancedInputUserSettings not initialized. "
+                 "Enable User Settings in Project Settings > Enhanced Input."));
+        return Categories;
+    }
+
+    const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
+    if (!Profile) { return Categories; }
+
+    const TMap<FName, FKeyMappingRow>& MappingRows = Profile->GetPlayerMappingRows();
+    if (MappingRows.Num() == 0) { return Categories; }
+
+    TMap<FName, TArray<FMCore_DiscoveredKeyBinding>> CategoryMap;
+
+    for (const auto& [ActionName, MappingRow] : MappingRows)
+    {
+        for (const FPlayerKeyMapping& Mapping : MappingRow.Mappings)
+        {
+            const bool bIsGamepadKey = Mapping.GetCurrentKey().IsGamepadKey();
+            const bool bWantGamepad = (InputType == ECommonInputType::Gamepad);
+            if (bIsGamepadKey != bWantGamepad) { continue; }
+
+            const UInputAction* Action = Mapping.GetAssociatedInputAction();
+            if (!Action) { continue; }
+
+            const UPlayerMappableKeySettings* MappableSettings = Action->GetPlayerMappableKeySettings();
+            if (!MappableSettings) { continue; }
+
+            FName CategoryName = GetActionDisplayCategory(Action);
+
+            FMCore_DiscoveredKeyBinding Binding;
+            Binding.DisplayName = MappableSettings->DisplayName;
+            Binding.Description = FText::FromString(MappableSettings->DisplayCategory.ToString());
+            Binding.ActionName = ActionName;
+            Binding.CurrentKey = Mapping.GetCurrentKey();
+            Binding.InputAction = Action;
+
+            const FString TagString = FString::Printf(
+                TEXT("MCore.Settings.Controls.%s"), *ActionName.ToString());
+            Binding.SettingTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
+
+            if (Binding.SettingTag.IsValid())
+            {
+                CategoryMap.FindOrAdd(CategoryName).Add(Binding);
+            }
+        }
+    }
+
+    for (const auto& [CategoryName, Bindings] : CategoryMap)
+    {
+        FMCore_KeyBindingGroup Group;
+        Group.CategoryName = FText::FromName(CategoryName);
+        Group.KeyBindings = Bindings;
+    	Categories.Add(Group);
+    }
+
+    Categories.Sort([](const FMCore_KeyBindingGroup& First, const FMCore_KeyBindingGroup& Second)
+    {
+        return First.CategoryName.CompareTo(Second.CategoryName) < 0;
+    });
+
+    UE_LOG(LogModulusSettings, Log,
+        TEXT("GetAllKeyBindingCategories: Discovered %d categories with %d total rows for %s"),
+        Categories.Num(), MappingRows.Num(),
+        InputType == ECommonInputType::Gamepad ? TEXT("Gamepad") : TEXT("Keyboard/Mouse"));
+
+    return Categories;
+}
+
+bool UMCore_GameSettingsLibrary::ValidateEnhancedInputSetup(UObject* WorldContextObject,
+	TArray<FString>& ValidationErrors)
+{
+	ValidationErrors.Empty();
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(WorldContextObject);
+	if (!Subsystem)
+	{
+		ValidationErrors.Add(TEXT("EnhancedInputLocalPlayerSubsystem not found. "
+			"Is the Enhanced Input plugin enabled?"));
+		return false;
+	}
+
+	const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+	if (!UserSettings)
+	{
+		ValidationErrors.Add(TEXT("EnhancedInputUserSettings not initialized."));
+		ValidationErrors.Add(TEXT("Solution: Enable 'User Settings' in Project Settings > Enhanced Input."));
+		return false;
+	}
+
+	const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
+	if (!Profile)
+	{
+		ValidationErrors.Add(TEXT("No active key profile found."));
+		ValidationErrors.Add(TEXT("Solution: Ensure at least one key profile is created in User Settings."));
+		return false;
+	}
+
+	const TMap<FName, FKeyMappingRow>& MappingRows = Profile->GetPlayerMappingRows();
+	if (MappingRows.Num() == 0)
+	{
+		ValidationErrors.Add(TEXT("No input mappings found in key profile."));
+		ValidationErrors.Add(TEXT("Solution: Register Input Mapping Contexts with player-mappable actions."));
+		return false;
+	}
+
+	int32 TotalMappableActions = 0;
+	for (const auto& [ActionName, MappingRow] : MappingRows)
+	{
+		TotalMappableActions += MappingRow.Mappings.Num();
+	}
+
+	if (TotalMappableActions == 0)
+	{
+		ValidationErrors.Add(TEXT("No player-mappable actions found in registered contexts."));
+		ValidationErrors.Add(TEXT("Solution: Mark Input Actions as 'Player Mappable' in their asset settings."));
+		return false;
+	}
+
+	UE_LOG(LogModulusSettings, Log,
+		TEXT("Enhanced Input validation passed: %d mapping rows, %d mappable actions"),
+		MappingRows.Num(), TotalMappableActions);
+
+	return true;
+}
+
+FName UMCore_GameSettingsLibrary::GetActionDisplayCategory(const UInputAction* Action)
+{
+	if (!Action) { return NAME_None; }
+	
+	const UPlayerMappableKeySettings* KeySettings = Action->GetPlayerMappableKeySettings();
+	if (!KeySettings || KeySettings->DisplayCategory.IsEmpty())
+	{
+		return FName(TEXT("General"));
+	}
+	
+	return FName(*KeySettings->DisplayCategory.ToString());
+}
+
+TArray<FName> UMCore_GameSettingsLibrary::GetActionsUsingKey(UObject* WorldContextObject, FKey Key, FName ExcludeAction)
+{
+	TArray<FName> ConflictingActions;
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(WorldContextObject);
+	if (!Subsystem) { return ConflictingActions; }
+
+	const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+	if (!UserSettings) { return ConflictingActions; }
+
+	const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
+	if (!Profile) { return ConflictingActions; }
+
+	const TMap<FName, FKeyMappingRow>& Rows = Profile->GetPlayerMappingRows();
+	for (const auto& [ActionName, Row] : Rows)
+	{
+		if (ActionName == ExcludeAction) { continue; }
+
+		for (const FPlayerKeyMapping& Mapping : Row.Mappings)
+		{
+			if (Mapping.GetCurrentKey() == Key)
+			{
+				ConflictingActions.Add(ActionName);
+				break;
+			}
+		}
+	}
+
+	return ConflictingActions;
+}
+
+FKey UMCore_GameSettingsLibrary::GetCurrentKeyForAction(UObject* WorldContextObject, const UInputAction* Action, EPlayerMappableKeySlot Slot)
+{
+	if (!Action) { return EKeys::Invalid; }
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(WorldContextObject);
+	if (!Subsystem) { return EKeys::Invalid; }
+
+	const UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+	if (!UserSettings) { return EKeys::Invalid; }
+
+	const UEnhancedPlayerMappableKeyProfile* Profile = UserSettings->GetActiveKeyProfile();
+	if (!Profile) { return EKeys::Invalid; }
+
+	const FKeyMappingRow* Row = Profile->FindKeyMappingRow(Action->GetFName());
+	if (!Row) { return EKeys::Invalid; }
+
+	for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+	{
+		if (Mapping.GetSlot() == Slot)
+		{
+			return Mapping.GetCurrentKey();
+		}
+	}
+
+	return EKeys::Invalid;
+}
+
+UEnhancedInputLocalPlayerSubsystem* UMCore_GameSettingsLibrary::GetEnhancedInputSubsystem(UObject* WorldContextObject)
+{
+	if (!WorldContextObject) { return nullptr; }
+
+	const UWorld* World = WorldContextObject->GetWorld();
+	if (!World) { return nullptr; }
+
+	/** Dedicated server has no local players */
+	if (World->GetNetMode() == NM_DedicatedServer) { return nullptr; }
+
+	/** Try to resolve the specific local player from context (split-screen safe) */
+	ULocalPlayer* LocalPlayer = nullptr;
+
+	/** If called from a PlayerController, get its local player directly */
+	if (const APlayerController* PC = Cast<APlayerController>(WorldContextObject))
+	{
+		LocalPlayer = PC->GetLocalPlayer();
+	}
+	/** If called from a widget, get the owning local player */
+	else if (const UUserWidget* Widget = Cast<UUserWidget>(WorldContextObject))
+	{
+		LocalPlayer = Widget->GetOwningLocalPlayer();
+	}
+
+	/** Fallback: first local player (single-player and listen server) */
+	if (!LocalPlayer)
+	{
+		const UGameInstance* GameInstance = World->GetGameInstance();
+		if (!GameInstance) { return nullptr; }
+		LocalPlayer = GameInstance->GetFirstGamePlayer();
+	}
+
+	if (!LocalPlayer) { return nullptr; }
+
+	return LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 }
 
 int32 UMCore_GameSettingsLibrary::ConvertPresetToScalabilityLevel(EMCore_GraphicsPreset Preset)
