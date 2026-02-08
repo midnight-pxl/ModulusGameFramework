@@ -45,6 +45,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	TArray<FGameplayTag> GetAllCategories() const;
 
+	/** Get all setting definitions (Internal - may contain nulls during editing) */
+	const TArray<TObjectPtr<UMCore_DA_SettingDefinition>>& GetAllSettings() const { return Settings; }
+	
 	/** Find a single setting by its tag. Returns nullptr if not found. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	UMCore_DA_SettingDefinition* FindSettingByTag(const FGameplayTag& SettingTag) const;
