@@ -13,6 +13,7 @@
 class UCommonActivatableWidgetStack;
 class UCommonActivatableWidget;
 class UMCore_PDA_UITheme_Base;
+class UMCore_PlayerSettingsSave;
 class UMCore_GameMenuHub;
 class UMCore_PrimaryGameLayout;
 class UTexture2D;
@@ -75,6 +76,14 @@ public:
 	/** Check if a layer has any active widget. */
 	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
 	bool IsLayerActive(FGameplayTag LayerTag) const;
+	
+	/**
+	 * Player Settings
+	 */
+	
+	/** Get cached player settings. Loads from disk on first access. */
+	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
+	UMCore_PlayerSettingsSave* GetPlayerSettings();
 	
 	/**
 	 * Menu Hub
@@ -188,6 +197,14 @@ private:
 	TObjectPtr<UMCore_PDA_UITheme_Base> CachedActiveTheme;
 
 	int32 ActiveThemeIndex{INDEX_NONE};
+	
+	/**
+	 * Player Settings
+	 */
+	
+	/** Cached player settings - loaded on first access, saved on Deinitialize */
+	UPROPERTY(Transient)
+	TObjectPtr<UMCore_PlayerSettingsSave> CachedPlayerSettings;
 	
 	/**
 	 * Layer Management

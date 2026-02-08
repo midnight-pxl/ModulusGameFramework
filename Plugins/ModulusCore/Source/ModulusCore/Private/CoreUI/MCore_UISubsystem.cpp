@@ -7,6 +7,7 @@
 
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
+#include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
@@ -51,6 +52,13 @@ void UMCore_UISubsystem::Deinitialize()
 			LocalPlayer->OnPlayerControllerChanged().Remove(PlayerControllerReadyHandle);
 		}
 		PlayerControllerReadyHandle.Reset();
+	}
+	
+	/** Save and release player settings */
+	if (CachedPlayerSettings)
+	{
+		CachedPlayerSettings->SaveSettings();
+		CachedPlayerSettings = nullptr;
 	}
 	
 	/** Clear layer stack map (old references) */
@@ -237,6 +245,22 @@ void UMCore_UISubsystem::BuildLayerStackMap()
 }
 
 //~ End of Primary Game Layout
+
+//~ Begin Player Settings
+
+UMCore_PlayerSettingsSave* UMCore_UISubsystem::GetPlayerSettings()
+{
+	if (!CachedPlayerSettings)
+	{
+		CachedPlayerSettings = UMCore_PlayerSettingsSave::LoadPlayerSettings();
+
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Player settings loaded"));
+	}
+
+	return CachedPlayerSettings;
+}
+
+//~ End Player Settings
 
 //~ Begin of Layer Stack Accessors
 
