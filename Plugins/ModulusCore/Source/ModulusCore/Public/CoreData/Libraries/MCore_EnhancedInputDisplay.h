@@ -7,8 +7,10 @@
 #include "MCore_EnhancedInputDisplay.generated.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
+class UEnhancedPlayerMappableKeyProfile;
 class APlayerController;
 class UInputAction;
+
 /**
  * 
  */
@@ -55,6 +57,9 @@ public:
 									UPARAM(DisplayName = "Error Message") FText& OutError);
 
 private:
-	// Helper function to get Enhanced Input subsystem with validation
+	/** Resolve Enhanced Input subsystem from PlayerController with validation */
 	static UEnhancedInputLocalPlayerSubsystem* GetEnhancedInputSubsystem(APlayerController* PlayerController);
+
+	/** Resolve the active key profile (Subsystem → UserSettings → Profile) */
+	static UEnhancedPlayerMappableKeyProfile* GetActiveKeyProfile(APlayerController* PlayerController);
 };

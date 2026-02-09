@@ -214,9 +214,10 @@ bool UMCore_GameMenuHub::IsTabEnabled(FGameplayTag TabID) const
     if (!TabList || !TabID.IsValid()) return false;
     
     FName TabNameID = FName(*TabID.ToString());
-    if (!ScreenWidgets.Contains(TabNameID)) return false;
+    UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabNameID);
+    if (!TabButton) return false;
     
-    return TabList->GetIsEnabled();
+    return TabButton->GetIsEnabled();
 }
 
 bool UMCore_GameMenuHub::IsTabHidden(FGameplayTag TabID) const
@@ -224,9 +225,10 @@ bool UMCore_GameMenuHub::IsTabHidden(FGameplayTag TabID) const
     if (!TabList || !TabID.IsValid()) return false;
     
     FName TabNameID = FName(*TabID.ToString());
-    if (!ScreenWidgets.Contains(TabNameID)) return false;
+    UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabNameID);
+    if (!TabButton) return false;
     
-    return TabList->IsInViewport();
+    return !TabButton->IsVisible();
 }
 
 void UMCore_GameMenuHub::HandleTabSelected(FName TabNameID)
