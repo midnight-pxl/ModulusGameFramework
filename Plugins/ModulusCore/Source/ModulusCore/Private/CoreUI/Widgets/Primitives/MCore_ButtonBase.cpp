@@ -171,6 +171,7 @@ void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme
 
 void UMCore_ButtonBase::HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme)
 {
+	CachedTheme = NewTheme;
 	ApplyTheme(NewTheme);
 }
 

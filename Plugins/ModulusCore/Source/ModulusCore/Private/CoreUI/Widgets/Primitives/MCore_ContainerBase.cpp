@@ -91,6 +91,7 @@ void UMCore_ContainerBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Th
 
 void UMCore_ContainerBase::HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme)
 {
+	CachedTheme = NewTheme;
 	ApplyTheme(NewTheme);
 }
 
@@ -110,11 +111,7 @@ void UMCore_ContainerBase::BindThemeDelegate()
 
 void UMCore_ContainerBase::UnbindThemeDelegate()
 {
-	if (!bThemeDelegateBound)
-	{
-		bThemeDelegateBound = false;
-		return;
-	}
+	if (!bThemeDelegateBound) return;
 
 	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
 	if (!LocalPlayer)

@@ -94,6 +94,10 @@ private:
 
 	/** Unsubscribe from theme change notifications */
 	void UnbindThemeDelegate();
+	
+	/** Cached theme reference */
+	UPROPERTY(Transient)
+	mutable TWeakObjectPtr<UMCore_PDA_UITheme_Base> CachedTheme;
 
 	/** Tracks whether theme delegate is currently bound */
 	bool bThemeDelegateBound{false};
