@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "MCore_SettingsTypes.generated.h"
 
 class UInputAction;
@@ -50,10 +49,6 @@ struct MODULUSCORE_API FMCore_DiscoveredKeyBinding
     /** Player's current key for this action */
     UPROPERTY(BlueprintReadOnly, Category = "ModulusCore|Input")
     FKey CurrentKey;
-
-    /** Generated tag: MCore.Settings.Controls.{ActionName} */
-    UPROPERTY(BlueprintReadOnly, Category = "ModulusCore|Input")
-    FGameplayTag SettingTag;
 
     /** Source InputAction asset reference */
     UPROPERTY(BlueprintReadOnly, Category = "ModulusCore|Input")

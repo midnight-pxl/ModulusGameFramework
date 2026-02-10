@@ -833,15 +833,8 @@ TArray<FMCore_KeyBindingGroup> UMCore_GameSettingsLibrary::GetAllKeyBindingCateg
             Binding.ActionName = ActionName;
             Binding.CurrentKey = Mapping.GetCurrentKey();
             Binding.InputAction = Action;
-
-            const FString TagString = FString::Printf(
-                TEXT("MCore.Settings.Controls.%s"), *ActionName.ToString());
-            Binding.SettingTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
-
-            if (Binding.SettingTag.IsValid())
-            {
-                CategoryMap.FindOrAdd(CategoryName).Add(Binding);
-            }
+        	
+        	CategoryMap.FindOrAdd(CategoryName).Add(Binding);
         }
     }
 
@@ -994,6 +987,11 @@ FKey UMCore_GameSettingsLibrary::GetCurrentKeyForAction(UObject* WorldContextObj
 	return EKeys::Invalid;
 }
 
+/**
+ * Non-const WorldContextObject required: APlayerController::GetLocalPlayer()
+ * UUserWidget::GetOwningLocalPlayer() non-const in UE.
+ * Settings functions use const via GEngine->GetWorldFromContextObject.
+ */
 UEnhancedInputLocalPlayerSubsystem* UMCore_GameSettingsLibrary::GetEnhancedInputSubsystem(UObject* WorldContextObject)
 {
 	if (!WorldContextObject) { return nullptr; }
