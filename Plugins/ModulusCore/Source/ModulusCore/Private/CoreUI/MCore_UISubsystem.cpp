@@ -274,7 +274,7 @@ UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag La
 	
 	if (const TObjectPtr<UCommonActivatableWidgetStack> ThisStack = LayerStackMap.FindRef(LayerTag))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("GetLayerStack: Tag='%s', Stack=%s"),
+		UE_LOG(LogModulusUI, Verbose, TEXT("GetLayerStack: Tag='%s', Stack=%s"),
 			*LayerTag.ToString(), ThisStack ? *ThisStack->GetName() : TEXT("NULL"));
 		
 		return ThisStack;

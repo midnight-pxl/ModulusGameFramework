@@ -120,6 +120,13 @@ FText UMCore_EnhancedInputDisplay::GetActionDisplayCategory(APlayerController* P
 	if (!KeyProfile) return FText::FromString(TEXT("General"));
 	
 	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
+	if (!KeyRow) return FText::FromString(TEXT("General"));
+	
+	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
+	{
+		FText DisplayCat = KeyMapping.GetDisplayCategory();
+		if (!DisplayCat.IsEmpty()) return DisplayCat;
+	}
 	
 	return FText::FromString(TEXT("General"));
 }

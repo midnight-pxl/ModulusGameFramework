@@ -90,18 +90,6 @@ public:
 				EditConditionHides, ClampMin = "0"))
 	int32 DefaultDropdownIndex{0};
 
-	/** Default text (TextInput type) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|TextInput",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::TextInput",
-		        EditConditionHides))
-	FString DefaultTextValue;
-
-	/** Max character length, 0 = unlimited (TextInput type) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|TextInput",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::TextInput",
-		        EditConditionHides, ClampMin = "0"))
-	int32 MaxTextLength{100};
-
 	/** Default key binding (KeyBinding type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|KeyBinding",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding",
@@ -119,12 +107,6 @@ public:
 		meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding",
 		        EditConditionHides))
 	TObjectPtr<const UInputMappingContext> InputMappingContext;
-
-	/** Button label text (Action type) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Action",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::Action",
-		        EditConditionHides))
-	FText ActionButtonText = FText::FromString("Execute");
 
 	// ========================================================================
 	// CATEGORIZATION

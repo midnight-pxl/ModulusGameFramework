@@ -7,7 +7,6 @@
 #include "CommonInputBaseTypes.h"
 #include "GameplayTagContainer.h"
 #include "InputCoreTypes.h"
-#include "CoreData/Types/Settings/MCore_SettingsPresets.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "MCore_GameSettingsLibrary.generated.h"
 
@@ -130,18 +129,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static void SavePlayerSettings(const UObject* WorldContextObject);
-
-	// ========================================================================
-	// GRAPHICS PRESETS (thin wrapper around UGameUserSettings)
-	// ========================================================================
-
-	/** Apply graphics quality preset (affects all scalability settings) */
-	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings|Graphics")
-	static void ApplyGraphicsPreset(EMCore_GraphicsPreset Preset);
-
-	/** Get current graphics preset based on scalability levels */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings|Graphics")
-	static EMCore_GraphicsPreset GetCurrentGraphicsPreset();
 	
 	 // =========================================================================
     // Enhanced Input Helpers
@@ -251,11 +238,4 @@ private:
 
 	/** Get PlayerSettingsSave from UISubsystem via world context */
 	static UMCore_PlayerSettingsSave* GetPlayerSave(const UObject* WorldContextObject);
-
-	// ========================================================================
-	// GRAPHICS PRESET HELPERS
-	// ========================================================================
-
-	static int32 ConvertPresetToScalabilityLevel(EMCore_GraphicsPreset Preset);
-	static EMCore_GraphicsPreset ConvertScalabilityLevelToPreset(int32 Level);
 };
