@@ -15,7 +15,6 @@ public class ModulusCoreEditor : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "ModulusCore",
-                "EditorStyle"
             }
         );
 

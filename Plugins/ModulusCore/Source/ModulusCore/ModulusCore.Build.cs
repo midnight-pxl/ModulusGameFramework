@@ -46,11 +46,15 @@ public class ModulusCore : ModuleRules
 			new string[]
 			{
 				"ApplicationCore",
-				"PropertyPath",
-				"GameplayDebugger"
+				"PropertyPath"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
+
+		if (Target.bBuildDeveloperTools)
+		{
+			PrivateDependencyModuleNames.Add("GameplayDebugger");
+		}
 
 		bUseUnity = true;
 		OptimizeCode = CodeOptimization.InShippingBuildsOnly;
