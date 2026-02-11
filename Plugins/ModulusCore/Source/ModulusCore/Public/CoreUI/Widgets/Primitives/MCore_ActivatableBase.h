@@ -107,6 +107,7 @@ protected:
 	bool bShouldBlockActivation() const;
 
 	/** When true, automatically focuses GetDesiredFocusTarget on activation */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="UI|Activation")
 	bool bShouldFocusOnActivation{false};
 
 	/** Cached theme reference for quick access */
