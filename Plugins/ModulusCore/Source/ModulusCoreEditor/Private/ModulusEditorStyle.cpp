@@ -4,6 +4,7 @@
 #include "Styling/SlateStyleRegistry.h"
 #include "Styling/SlateTypes.h"
 #include "Styling/CoreStyle.h"
+#include "Brushes/SlateImageBrush.h"
 #include "Interfaces/IPluginManager.h"
 
 TSharedPtr<FSlateStyleSet> FModulusEditorStyle::StyleInstance = nullptr;
@@ -174,12 +175,12 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 
 	Style->Set("ModulusEditor.Button.Primary", PrimaryButton);
 
-	/** Register icons - using colored boxes as placeholders until image assets are created */
-	
-	/** Main Modulus icon - used in toolbar */
-	Style->Set(ModulusIconName, new FSlateRoundedBoxBrush(ModulusColors::Accent, 4.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set("ModulusEditor.ModulusIcon.Small", new FSlateRoundedBoxBrush(ModulusColors::Accent, 2.0f, FVector2f(16.0f, 16.0f)));
-	Style->Set("ModulusEditor.ModulusIcon.Large", new FSlateRoundedBoxBrush(ModulusColors::Accent, 6.0f, FVector2f(40.0f, 40.0f)));
+	/** Register icons */
+
+	/** Main Modulus icon - used in toolbar and hub header */
+	Style->Set(ModulusIconName, new FSlateImageBrush(Style->RootToContentDir(TEXT("Modulus_M_Sm"), TEXT(".png")), FVector2D(16.0, 16.0)));
+	Style->Set("ModulusEditor.ModulusIcon.Small", new FSlateImageBrush(Style->RootToContentDir(TEXT("Modulus_M_Sm"), TEXT(".png")), FVector2D(16.0, 16.0)));
+	Style->Set("ModulusEditor.ModulusIcon.Large", new FSlateImageBrush(Style->RootToContentDir(TEXT("Modulus_M_Sm"), TEXT(".png")), FVector2D(40.0, 40.0)));
 
 	/** Section icons - using colored boxes as placeholders */
 	Style->Set(SettingsIconName, new FSlateRoundedBoxBrush(ModulusColors::HeaderBackground, 2.0f, FVector2f(16.0f, 16.0f)));
