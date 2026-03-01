@@ -7,7 +7,6 @@
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/Image.h"
-#include "Components/WidgetSwitcher.h"
 #include "Engine/Texture2D.h"
 
 UMCore_ButtonBase::UMCore_ButtonBase()
@@ -78,6 +77,8 @@ FText UMCore_ButtonBase::GetButtonText() const
 
 void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
 {
+	ButtonIcon = InIcon;
+	
 	if (Img_BtnIcon)
 	{
 		if (InIcon)
@@ -100,17 +101,29 @@ void UMCore_ButtonBase::SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon)
 		return;
 	}
 
-	/** Synchronous load - for async, use StreamableManager pattern */
+	/** Synchronous load - for async, use StreamableManager pattern - Future Implement */
 	SetButtonIcon(InIcon.LoadSynchronous());
 }
 
 void UMCore_ButtonBase::SetDisplayMode(EMCore_ButtonDisplayMode InMode)
 {
 	DisplayMode = InMode;
-
-	if (Switcher_Content)
+	
+	const bool bShowText = (DisplayMode == EMCore_ButtonDisplayMode::TextOnly
+		|| DisplayMode == EMCore_ButtonDisplayMode::TextAndIcon);
+	const bool bShowIcon = (DisplayMode == EMCore_ButtonDisplayMode::IconOnly
+		|| DisplayMode == EMCore_ButtonDisplayMode::TextAndIcon);
+	
+	if (Txt_BtnLabel)
 	{
-		Switcher_Content->SetActiveWidgetIndex(static_cast<int32>(DisplayMode));
+		Txt_BtnLabel->SetVisibility(bShowText ?
+			ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	}
+	
+	if (Img_BtnIcon)
+	{
+		Img_BtnIcon->SetVisibility(bShowIcon ?
+			ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 	}
 }
 
@@ -214,6 +227,11 @@ void UMCore_ButtonBase::SyncPropertiesToWidgets()
 	if (Txt_BtnLabel && !ButtonText.IsEmpty())
 	{
 		Txt_BtnLabel->SetText(ButtonText);
+	}
+	
+	if (Img_BtnIcon && ButtonIcon)
+	{
+		Img_BtnIcon->SetBrushFromTexture(ButtonIcon);
 	}
 	
 	SetDisplayMode(DisplayMode);

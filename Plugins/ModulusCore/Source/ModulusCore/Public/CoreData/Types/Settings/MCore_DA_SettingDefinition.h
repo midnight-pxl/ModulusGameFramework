@@ -13,6 +13,18 @@ class UInputAction;
 class UInputMappingContext;
 class USoundClass;
 
+/** How slider values display in the UI */
+UENUM(BlueprintType)
+enum class EMCore_SliderDisplayFormat : uint8
+{
+	/** Show raw value: 0.75 */
+	RawValue,
+	/** Show percentage: 75% */
+	Percentage,
+	/** Show integer: 75 */
+	WholeNumber
+};
+
 /**
  * Data Asset for defining a single game setting.
  *
@@ -47,6 +59,12 @@ public:
 	/** What kind of control this setting uses */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Type")
 	EMCore_SettingType SettingType = EMCore_SettingType::Toggle;
+	
+	/** How this slider value displays in the UI (Slider type) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
+				EditConditionHides))
+	EMCore_SliderDisplayFormat SliderDisplayFormat = EMCore_SliderDisplayFormat::RawValue;
 
 	/** Minimum value (Slider type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",

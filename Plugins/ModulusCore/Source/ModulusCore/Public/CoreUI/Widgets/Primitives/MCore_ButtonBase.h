@@ -101,9 +101,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
 	TObjectPtr<UImage> Img_BtnIcon;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Components", meta = (BindWidgetOptional))
-	TObjectPtr<UWidgetSwitcher> Switcher_Content;
-	
 	UPROPERTY(BlueprintAssignable, Category = "Button")
 	FOnModulusButtonClicked OnButtonClicked;
 
@@ -140,6 +137,10 @@ protected:
 	/** Button label text - editable at design-time and runtime */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Text", meta = (MultiLine = false))
 	FText ButtonText;
+	
+	/** Button icon texture - editable at design-time and runtime */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button|Icon")
+	TObjectPtr<UTexture2D> ButtonIcon;
 
 	/**
 	 * Optional button style override. When set, takes precedence over the active theme's button style.
