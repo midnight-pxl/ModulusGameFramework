@@ -135,6 +135,7 @@ protected:
     UPROPERTY(Transient)
     mutable TWeakObjectPtr<UMCore_PDA_UITheme_Base> CachedTheme;
 
+    virtual void NativePreConstruct() override;
     virtual void NativeOnInitialized() override;
     virtual void NativeDestruct() override;
 

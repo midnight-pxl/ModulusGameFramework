@@ -7,6 +7,7 @@
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CommonTextBlock.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 
 // ============================================================================
 // INITIALIZATION
@@ -131,6 +132,19 @@ void UMCore_SettingsWidget_Base::ClearDirtyFlag()
 
 void UMCore_SettingsWidget_Base::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* NewTheme)
 {
+	if (NewTheme)
+	{
+		if (Txt_SettingName && NewTheme->BodyTextStyle)
+		{
+			Txt_SettingName->SetStyle(NewTheme->BodyTextStyle);
+		}
+		
+		if (Txt_SettingDescription && NewTheme->CaptionTextStyle)
+		{
+			Txt_SettingDescription->SetStyle(NewTheme->CaptionTextStyle);
+		}
+	}
+	
 	K2_OnThemeApplied(NewTheme);
 }
 
@@ -177,6 +191,12 @@ void UMCore_SettingsWidget_Base::UnbindThemeDelegate()
 // ============================================================================
 // LIFECYCLE
 // ============================================================================
+
+void UMCore_SettingsWidget_Base::NativePreConstruct()
+{
+	Super::NativePreConstruct();
+	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
+}
 
 void UMCore_SettingsWidget_Base::NativeOnInitialized()
 {
