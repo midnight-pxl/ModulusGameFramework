@@ -29,10 +29,6 @@ bool UMCore_DA_SettingDefinition::IsValid() const
 		&& DefaultDropdownIndex >= 0
 		&& DefaultDropdownIndex < DropdownOptions.Num();
 		
-	case EMCore_SettingType::KeyBinding:
-		return InputAction != nullptr
-		&& InputMappingContext != nullptr;
-		
 	case EMCore_SettingType::Toggle:
 	default:
 		return true;
@@ -89,21 +85,6 @@ EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationCo
 			Context.AddError(FText::FromString(
 				FString::Printf(TEXT("%s: Dropdown index is out of range [0, %d]"),
 					*GetName(), DropdownOptions.Num()-1)));
-			Result = EDataValidationResult::Invalid;
-		}
-		break;
-		
-	case EMCore_SettingType::KeyBinding:
-		if (InputAction == nullptr)
-		{
-			Context.AddError(FText::FromString(
-				FString::Printf(TEXT("%s: KeyBinding requires an InputAction reference"), *GetName())));
-			Result = EDataValidationResult::Invalid;
-		}
-		if (InputMappingContext == nullptr)
-		{
-			Context.AddError(FText::FromString(
-				FString::Printf(TEXT("%s: KeyBinding requires an InputMappingContext reference"), *GetName())));
 			Result = EDataValidationResult::Invalid;
 		}
 		break;

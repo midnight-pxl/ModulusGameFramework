@@ -4,18 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "CommonInputBaseTypes.h"
 #include "GameplayTagContainer.h"
-#include "InputCoreTypes.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "MCore_GameSettingsLibrary.generated.h"
 
-class UEnhancedInputLocalPlayerSubsystem;
-enum class EPlayerMappableKeySlot : uint8;
 class UMCore_DA_SettingDefinition;
 class UMCore_PlayerSettingsSave;
-class UInputMappingContext;
-class UInputAction;
 class USoundClass;
 
 /**
@@ -52,12 +46,6 @@ public:
 	static bool GetSettingBool(const UObject* WorldContextObject,
 		const UMCore_DA_SettingDefinition* Setting);
 
-	/** Get effective key binding for a setting */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
-		meta = (WorldContext = "WorldContextObject"))
-	static FKey GetSettingKey(const UObject* WorldContextObject,
-		const UMCore_DA_SettingDefinition* Setting);
-
 	// ========================================================================
 	// TYPED SETTERS (stage to pending)
 	// ========================================================================
@@ -79,12 +67,6 @@ public:
 		meta = (WorldContext = "WorldContextObject"))
 	static void SetSettingBool(const UObject* WorldContextObject,
 		const UMCore_DA_SettingDefinition* Setting, bool Value);
-
-	/** Stage a key binding setting change */
-	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
-		meta = (WorldContext = "WorldContextObject"))
-	static void SetSettingKey(const UObject* WorldContextObject,
-		const UMCore_DA_SettingDefinition* Setting, const FKey& Value);
 
 	// ========================================================================
 	// DEFERRED-APPLY LIFECYCLE
@@ -129,76 +111,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static void SavePlayerSettings(const UObject* WorldContextObject);
-	
-	 // =========================================================================
-    // Enhanced Input Helpers
-    // =========================================================================
-
-    /**
-     * Get player-mappable actions from an Input Mapping Context.
-     * Filters by input type (keyboard/mouse vs gamepad).
-     * Only returns actions marked as "Player Mappable" in their settings.
-     */
-    UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings|Input")
-    static void GetMappableActionsFromContext(
-        const UInputMappingContext* Context,
-        ECommonInputType InputType,
-        TArray<UInputAction*>& OutActions);
-
-    /**
-     * Discover all key binding categories from Enhanced Input User Settings.
-     * Groups player-mappable actions by their DisplayCategory for settings menus.
-     */
-    UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings|Input",
-        meta = (WorldContext = "WorldContextObject"))
-    static TArray<FMCore_KeyBindingGroup> GetAllKeyBindingCategories(
-        UObject* WorldContextObject,
-        ECommonInputType InputType = ECommonInputType::MouseAndKeyboard);
-
-    /** Get the display category for an Input Action */
-    UFUNCTION(BlueprintPure, Category = "ModulusCore|Settings|Input")
-    static FName GetActionDisplayCategory(const UInputAction* Action);
-
-    /**
-     * Find all actions currently using a specific key (conflict detection).
-     * ExcludeAction omits the action being rebound from results.
-     */
-    UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings|Input")
-    static TArray<FName> GetActionsUsingKey(
-    	UObject* WorldContextObject,
-        FKey Key,
-        FName ExcludeAction = NAME_None);
-
-    /** Get the current key binding for an Input Action in a specific slot */
-    UFUNCTION(BlueprintPure, Category = "ModulusCore|Settings|Input")
-    static FKey GetCurrentKeyForAction(
-    	UObject* WorldContextObject,
-        const UInputAction* Action,
-        EPlayerMappableKeySlot Slot);
-
-    /**
-     * Validate Enhanced Input setup for key rebinding.
-     * Returns false with diagnostic messages if configuration is incomplete.
-     */
-    UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings|Input",
-        meta = (WorldContext = "WorldContextObject"))
-    static bool ValidateEnhancedInputSetup(
-        UObject* WorldContextObject,
-        TArray<FString>& ValidationErrors);
 
 private:
-	// ========================================================================
-	// INTERNAL ENHANCED INPUT HELPER
-	// ========================================================================
-	
-	/** 
-	 * Resolve the Enhanced Input subsystem for the local player owning this context.
-	 * Split-screen safe: resolves owning player from widget/controller context.
-	 * Returns nullptr on dedicated server or if Enhanced Input is unavailable.
-	 */
-	static UEnhancedInputLocalPlayerSubsystem* GetEnhancedInputSubsystem(
-		UObject* WorldContextObject);
-	
 	// ========================================================================
 	// ENGINE APPLY HELPERS
 	// ========================================================================

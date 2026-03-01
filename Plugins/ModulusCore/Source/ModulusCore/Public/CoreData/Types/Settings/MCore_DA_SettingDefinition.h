@@ -98,33 +98,15 @@ public:
 
 	/** Dropdown option labels (Dropdown type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Switcher",
 				EditConditionHides))
 	TArray<FText> DropdownOptions;
 
 	/** Default selected index (Dropdown type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Switcher",
 				EditConditionHides, ClampMin = "0"))
 	int32 DefaultDropdownIndex{0};
-
-	/** Default key binding (KeyBinding type) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|KeyBinding",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding",
-		        EditConditionHides))
-	FKey DefaultKey;
-
-	/** Input action for key binding discovery (KeyBinding type) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|KeyBinding",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding",
-		        EditConditionHides))
-	TObjectPtr<const UInputAction> InputAction;
-
-	/** Input mapping context (KeyBinding type) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|KeyBinding",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::KeyBinding",
-		        EditConditionHides))
-	TObjectPtr<const UInputMappingContext> InputMappingContext;
 
 	// ========================================================================
 	// CATEGORIZATION
