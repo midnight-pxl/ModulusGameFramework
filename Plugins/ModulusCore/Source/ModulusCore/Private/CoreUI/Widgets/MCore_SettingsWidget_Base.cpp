@@ -31,7 +31,6 @@ void UMCore_SettingsWidget_Base::InitFromDefinition(const UMCore_DA_SettingDefin
 	}
 
 	SettingDefinition = InDefinition;
-	bIsDirty = false;
 
 	/** Populate common display text */
 	if (Txt_SettingName)
@@ -60,22 +59,8 @@ FGameplayTag UMCore_SettingsWidget_Base::GetSettingTag() const
 }
 
 // ============================================================================
-// POLYMORPHIC VALUE INTERFACE (defaults)
+// VALUE INTERFACE (defaults)
 // ============================================================================
-
-void UMCore_SettingsWidget_Base::ApplySettingValue_Implementation()
-{
-	UE_LOG(LogModulusUI, Warning,
-		TEXT("[%s] ApplySettingValue not overridden — value will not persist"),
-		*GetName());
-}
-
-void UMCore_SettingsWidget_Base::RevertToSaved_Implementation()
-{
-	UE_LOG(LogModulusUI, Warning,
-		TEXT("[%s] RevertToSaved not overridden — widget will not refresh"),
-		*GetName());
-}
 
 void UMCore_SettingsWidget_Base::ResetToDefault_Implementation()
 {
@@ -84,14 +69,17 @@ void UMCore_SettingsWidget_Base::ResetToDefault_Implementation()
 		*GetName());
 }
 
-bool UMCore_SettingsWidget_Base::IsDirty_Implementation() const
-{
-	return bIsDirty;
-}
-
 FString UMCore_SettingsWidget_Base::GetValueAsString_Implementation() const
 {
 	return TEXT("(not implemented)");
+}
+
+void UMCore_SettingsWidget_Base::StepLeft_Implementation()
+{
+}
+
+void UMCore_SettingsWidget_Base::StepRight_Implementation()
+{
 }
 
 // ============================================================================
@@ -106,8 +94,6 @@ void UMCore_SettingsWidget_Base::OnDefinitionSet_Implementation(
 
 void UMCore_SettingsWidget_Base::BroadcastValueChanged()
 {
-	bIsDirty = true;
-
 	if (SettingDefinition)
 	{
 		const FString ValueStr = GetValueAsString();
@@ -119,11 +105,6 @@ void UMCore_SettingsWidget_Base::BroadcastValueChanged()
 			*SettingDefinition->SettingTag.ToString(),
 			*ValueStr);
 	}
-}
-
-void UMCore_SettingsWidget_Base::ClearDirtyFlag()
-{
-	bIsDirty = false;
 }
 
 // ============================================================================
@@ -138,13 +119,30 @@ void UMCore_SettingsWidget_Base::ApplyTheme_Implementation(UMCore_PDA_UITheme_Ba
 		{
 			Txt_SettingName->SetStyle(NewTheme->BodyTextStyle);
 		}
-		
-		if (Txt_SettingDescription && NewTheme->CaptionTextStyle)
+
+		if (Txt_SettingDescription && !NewTheme->CaptionTextStyle.IsEmpty())
 		{
-			Txt_SettingDescription->SetStyle(NewTheme->CaptionTextStyle);
+			int32 SizeIndex = 0;
+			if (const ULocalPlayer* LP = GetOwningLocalPlayer())
+			{
+				if (const UMCore_UISubsystem* UI = LP->GetSubsystem<UMCore_UISubsystem>())
+				{
+					SizeIndex = UI->GetActiveTextSizeIndex();
+				}
+			}
+
+			const TSubclassOf<UCommonTextStyle> ResolvedCaptionStyle =
+				NewTheme->CaptionTextStyle.IsValidIndex(SizeIndex)
+				? NewTheme->CaptionTextStyle[SizeIndex]
+				: NewTheme->CaptionTextStyle[0];
+
+			if (ResolvedCaptionStyle)
+			{
+				Txt_SettingDescription->SetStyle(ResolvedCaptionStyle);
+			}
 		}
 	}
-	
+
 	K2_OnThemeApplied(NewTheme);
 }
 

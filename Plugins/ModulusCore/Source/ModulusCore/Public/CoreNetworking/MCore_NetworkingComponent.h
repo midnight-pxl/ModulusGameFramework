@@ -62,6 +62,11 @@ protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	//~ End UActorComponent Interface
 
+	/**
+	 * NOT YET IMPLEMENTED
+	 * For current authority validation, use ValidateAuthority() directly.
+	 * @see EModulusAuthorityLevel
+	 */
 	template<typename TOperation>
 	bool ExecuteWithAuthority(TOperation&& Operation, bool bRequireServerAuthority = true);
 

@@ -145,6 +145,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI|Theme")
 	int32 GetActiveThemeIndex() const { return ActiveThemeIndex; }
 
+	/** Get the active text size index from the Accessibility.UITextSize setting (clamped >= 0) */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Theme")
+	int32 GetActiveTextSizeIndex() const;
+
 	UFUNCTION(BlueprintCallable, Category = "UI|Theme")
 	bool SetActiveThemeByIndex(int32 ThemeIndex);
 

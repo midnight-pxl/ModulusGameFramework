@@ -12,6 +12,8 @@
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
+#include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
+#include "CoreData/Tags/MCore_SettingsTags.h"
 
 //~ Start of USubsystem Interface
 
@@ -538,6 +540,18 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 		*ThemeEntry.DisplayName.ToString(), ThemeIndex);
 
 	return true;
+}
+
+int32 UMCore_UISubsystem::GetActiveTextSizeIndex() const
+{
+	const ULocalPlayer* LP = GetLocalPlayer();
+	if (!LP)
+	{
+		return 0;
+	}
+
+	const int32 RawIndex = UMCore_GameSettingsLibrary::GetSettingIntByTag(LP, MCore_SettingsTags::MCore_Settings_Accessibility_UITextSize);
+	return FMath::Max(RawIndex, 0);
 }
 
 //~ End of Theme System

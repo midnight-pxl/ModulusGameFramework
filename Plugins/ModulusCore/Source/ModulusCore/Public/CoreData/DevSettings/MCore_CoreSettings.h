@@ -10,6 +10,7 @@
 class UMCore_PDA_UITheme_Base;
 class UMCore_PrimaryGameLayout;
 class UMCore_GameMenuHub;
+class UMCore_DA_SettingsCollection;
 
 /**
  * Core settings for the Modulus Game Framework.
@@ -96,6 +97,18 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Theme", meta=(DisplayName="Default Theme", ClampMin="0"))
 	int32 DefaultThemeIndex{0};
 	//~ End Theme Configuration
+
+	// ========================================================================
+	// Settings Collection
+	// ========================================================================
+
+	/**
+	 * The default settings collection for this project.
+	 * Used by tag-based setting accessors and bulk reset operations
+	 * when no explicit collection reference is provided.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TObjectPtr<UMCore_DA_SettingsCollection> DefaultSettingsCollection;
 
 	//~ Begin Debug Settings (Editor Only)
 #if WITH_EDITORONLY_DATA

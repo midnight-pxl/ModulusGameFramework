@@ -9,19 +9,15 @@
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
+#include "CoreData/Tags/MCore_SettingsTags.h"
+#include "CoreData/DevSettings/MCore_CoreSettings.h"
 
-#include "InputAction.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "Sound/SoundClass.h"
 #include "Engine/LocalPlayer.h"
-#include "InputMappingContext.h"
 #include "HAL/IConsoleManager.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedActionKeyMapping.h"
-#include "PlayerMappableKeySettings.h"
 #include "GameFramework/GameUserSettings.h"
-#include "UserSettings/EnhancedInputUserSettings.h"
 
 // ============================================================================
 // CONSOLE VARIABLES (registered DataAssets target)
@@ -126,32 +122,30 @@ UMCore_PlayerSettingsSave* UMCore_GameSettingsLibrary::GetPlayerSave(const UObje
 }
 
 // ============================================================================
-// TYPED GETTERS (pending → committed → DataAsset default)
+// TYPED GETTERS (committed → DataAsset default)
 // ============================================================================
 
 float UMCore_GameSettingsLibrary::GetSettingFloat(const UObject* WorldContextObject,
 	const UMCore_DA_SettingDefinition* Setting)
 {
 	if (!Setting) { return 0.0f; }
-	
+
 	if (Setting->SettingType != EMCore_SettingType::Slider)
 	{
 		UE_LOG(LogModulusSettings, Warning,
 			TEXT("GetSettingFloat: called on non-Slider setting '%s'"),
 			*Setting->SettingTag.ToString());
 	}
-	
-	const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (Save)
+
+	if (const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject))
 	{
-		const FString Key = Setting->GetSaveKey();
-		
-		if (const float* TempSetting = Save->PendingFloatSettings.Find(Key)) { return *TempSetting; }
-		
-		float CommitSetting;
-		if (Save->GetFloatSetting(Key, CommitSetting)) { return CommitSetting; }
+		float StoredValue = 0.f;
+		if (Save->GetFloatSetting(Setting->GetSaveKey(), StoredValue))
+		{
+			return StoredValue;
+		}
 	}
-	
+
 	return Setting->DefaultValue;
 }
 
@@ -159,25 +153,23 @@ int32 UMCore_GameSettingsLibrary::GetSettingInt(const UObject* WorldContextObjec
 	const UMCore_DA_SettingDefinition* Setting)
 {
 	if (!Setting) { return 0; }
-	
+
 	if (Setting->SettingType != EMCore_SettingType::Dropdown)
 	{
 		UE_LOG(LogModulusSettings, Warning,
 			TEXT("GetSettingInt: called on non-Dropdown setting '%s'"),
 			*Setting->SettingTag.ToString());
 	}
-	
-	const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (Save)
+
+	if (const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject))
 	{
-		const FString Key = Setting->GetSaveKey();
-		
-		if (const int32* TempSetting = Save->PendingIntSettings.Find(Key)) { return *TempSetting; }
-		
-		int32 CommitSetting;
-		if (Save->GetIntSetting(Key, CommitSetting)) { return CommitSetting; }
+		int32 StoredValue = 0;
+		if (Save->GetIntSetting(Setting->GetSaveKey(), StoredValue))
+		{
+			return StoredValue;
+		}
 	}
-	
+
 	return Setting->DefaultDropdownIndex;
 }
 
@@ -185,306 +177,482 @@ bool UMCore_GameSettingsLibrary::GetSettingBool(const UObject* WorldContextObjec
 	const UMCore_DA_SettingDefinition* Setting)
 {
 	if (!Setting) { return false; }
-	
+
 	if (Setting->SettingType != EMCore_SettingType::Toggle)
 	{
 		UE_LOG(LogModulusSettings, Warning,
 			TEXT("GetSettingBool: called on non-Toggle setting '%s'"),
 			*Setting->SettingTag.ToString());
 	}
-	
-	const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (Save)
+
+	if (const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject))
 	{
-		const FString Key = Setting->GetSaveKey();
-		
-		if (const bool* TempSetting = Save->PendingBoolSettings.Find(Key)) { return *TempSetting; }
-		
-		bool CommitSetting;
-		if (Save->GetBoolSetting(Key, CommitSetting)) { return CommitSetting; }
+		bool StoredValue = false;
+		if (Save->GetBoolSetting(Setting->GetSaveKey(), StoredValue))
+		{
+			return StoredValue;
+		}
 	}
-	
+
 	return Setting->DefaultToggleValue;
 }
 
 // ============================================================================
-// TYPED SETTERS (stage pending)
+// TAG-BASED GETTER (resolve via DefaultSettingsCollection)
 // ============================================================================
 
-void UMCore_GameSettingsLibrary::SetSettingFloat(const UObject* WorldContextObject,
-	const UMCore_DA_SettingDefinition* Setting, float Value)
+int32 UMCore_GameSettingsLibrary::GetSettingIntByTag(const UObject* WorldContextObject,
+	FGameplayTag SettingTag)
 {
-	if (!Setting) { return; }
-
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save) { return; }
-
-	/** Clamp to DataAsset-defined range */
-	if (Setting->SettingType == EMCore_SettingType::Slider)
+	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->DefaultSettingsCollection;
+	if (!Collection)
 	{
-		Value = FMath::Clamp(Value, Setting->MinValue, Setting->MaxValue);
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GetSettingIntByTag: DefaultSettingsCollection is null — cannot resolve tag '%s'"),
+			*SettingTag.ToString());
+		return 0;
 	}
 
-	Save->SetPendingFloat(Setting->GetSaveKey(), Value);
-}
-
-void UMCore_GameSettingsLibrary::SetSettingInt(const UObject* WorldContextObject,
-	const UMCore_DA_SettingDefinition* Setting, int32 Value)
-{
-	if (!Setting) { return; }
-
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save) { return; }
-
-	/** Clamp to valid dropdown range */
-	if (Setting->SettingType == EMCore_SettingType::Dropdown && Setting->DropdownOptions.Num() > 0)
+	const UMCore_DA_SettingDefinition* Setting = Collection->FindSettingByTag(SettingTag);
+	if (!Setting)
 	{
-		Value = FMath::Clamp(Value, 0, Setting->DropdownOptions.Num() - 1);
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GetSettingIntByTag: No setting found for tag '%s' in DefaultSettingsCollection"),
+			*SettingTag.ToString());
+		return 0;
 	}
 
-	Save->SetPendingInt(Setting->GetSaveKey(), Value);
-}
-
-void UMCore_GameSettingsLibrary::SetSettingBool(const UObject* WorldContextObject,
-	const UMCore_DA_SettingDefinition* Setting, bool Value)
-{
-	if (!Setting) { return; }
-
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save) { return; }
-
-	Save->SetPendingBool(Setting->GetSaveKey(), Value);
+	return GetSettingInt(WorldContextObject, Setting);
 }
 
 // ============================================================================
-// DEFERRED-APPLY LIFECYCLE
+// TYPED SETTERS (immediate-apply, batch)
 // ============================================================================
 
-void UMCore_GameSettingsLibrary::ApplyPendingSettings(const UObject* WorldContextObject,
-	const UMCore_DA_SettingsCollection* Collection)
+void UMCore_GameSettingsLibrary::SetSettingFloat(
+	const UObject* WorldContextObject,
+	const TArray<FMCore_FloatSettingChange>& Changes,
+	bool bBypassConfirmation)
 {
-	if (!Collection) { return; }
+	if (!WorldContextObject || Changes.IsEmpty()) { return; }
 
 	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save) { return; }
-
-	bool bSettingsDirty = false;
-
-	/** Iterate collection and apply each pending change to engine targets */
-	for (const UMCore_DA_SettingDefinition* Setting : Collection->GetAllSettings())
+	if (!Save)
 	{
-		if (!Setting) { continue; }
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SetSettingFloat: Failed to get PlayerSettingsSave"));
+		return;
+	}
 
-		const FString Key = Setting->GetSaveKey();
-		bool bApplied = false;
+	/** Confirmation tracking across the batch */
+	TArray<FString> AffectedTags;
+	TArray<FString> PreviousValues;
+	TArray<FGameplayTag> ProcessedTags;
+	float LongestRevertDelay = 0.f;
+	bool bAnyRequiresConfirmation = false;
 
-		switch (Setting->SettingType)
+	/** Pass 1: write all values to committed map and apply to engine */
+	for (const FMCore_FloatSettingChange& Change : Changes)
+	{
+		if (!Change.Setting)
 		{
-		case EMCore_SettingType::Slider:
-			if (const float* SliderValue = Save->PendingFloatSettings.Find(Key))
-			{
-				ApplySettingToEngine(Setting, *SliderValue, 0, false);
-				bApplied = true;
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
-
-		case EMCore_SettingType::Toggle:
-			if (const bool* ToggleValue = Save->PendingBoolSettings.Find(Key))
-			{
-				ApplySettingToEngine(Setting, 0.0f, 0, *ToggleValue);
-				bApplied = true;
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
-
-		case EMCore_SettingType::Dropdown:
-			if (const int32* DropValue = Save->PendingIntSettings.Find(Key))
-			{
-				ApplySettingToEngine(Setting, 0.0f, *DropValue, false);
-				bApplied = true;
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
-
-		default:
-			break;
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("SetSettingFloat: Null Setting in Changes — skipping"));
+			continue;
 		}
 
-		if (bApplied)
+		const FString Key = Change.Setting->GetSaveKey();
+		float ClampedValue = Change.Value;
+
+		/** Clamp to DataAsset-defined range */
+		if (Change.Setting->SettingType == EMCore_SettingType::Slider)
 		{
-			BroadcastSettingChanged(WorldContextObject, Setting->SettingTag);
+			ClampedValue = FMath::Clamp(ClampedValue,
+				Change.Setting->MinValue, Change.Setting->MaxValue);
+		}
+
+		/** Capture previous committed value before overwriting */
+		float PreviousFloat = Change.Setting->DefaultValue;
+		Save->GetFloatSetting(Key, PreviousFloat);
+
+		/** Write to committed map */
+		Save->SetFloatSetting(Key, ClampedValue);
+
+		/** Apply to engine */
+		ApplySettingToEngine(Change.Setting, ClampedValue, 0, false);
+
+		/** Track setting for notification or confirmation */
+		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
+		{
+			bAnyRequiresConfirmation = true;
+			AffectedTags.Add(Change.Setting->SettingTag.ToString());
+			PreviousValues.Add(FString::SanitizeFloat(PreviousFloat));
+			LongestRevertDelay = FMath::Max(
+				LongestRevertDelay,
+				Change.Setting->ConfirmationRevertDelay);
+		}
+		else
+		{
+			ProcessedTags.Add(Change.Setting->SettingTag);
 		}
 	}
 
-	/** Commit all pending to saved state */
-	Save->CommitPendingSettings();
-
-	/** Push GameUserSettings to disk if any properties were written */
-	if (bSettingsDirty)
+	/** Pass 2: single GUS flush for the entire batch */
+	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
-		if (UGameUserSettings* GameSettings = UGameUserSettings::GetGameUserSettings())
-		{
-			GameSettings->ApplySettings(false);
-		}
+		GUS->ApplySettings(false);
 	}
 
-	/** Persist to save file */
-	Save->SaveSettings();
+	/** Pass 3: save immediately or broadcast confirmation event */
+	if (bAnyRequiresConfirmation)
+	{
+		/** Do not save — UMCore_SettingsRevertCountdown decides
+		 *  whether to save (confirm) or revert (discard) */
+		TMap<FString, FString> EventParams;
+		EventParams.Add(TEXT("SettingTags"),
+			FString::Join(AffectedTags, TEXT("|")));
+		EventParams.Add(TEXT("PreviousValues"),
+			FString::Join(PreviousValues, TEXT("|")));
+		EventParams.Add(TEXT("RevertDelay"),
+			FString::SanitizeFloat(LongestRevertDelay));
 
-	UE_LOG(LogModulusSettings, Log, TEXT("Pending settings applied and saved"));
+		UMCore_EventFunctionLibrary::BroadcastEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
+			EventParams, EMCore_EventScope::Local);
+	}
+	else
+	{
+		SavePlayerSettings(WorldContextObject);
+	}
+
+	/** Pass 4: notify listeners of each changed setting (skip reset operations).
+	 *  Confirmation-required settings are intentionally excluded — their
+	 *  BroadcastSettingChanged is deferred to UMCore_SettingsRevertCountdown,
+	 *  which calls it on user confirm using the SettingTags already present
+	 *  in the ConfirmationRequired event payload. */
+	if (!bBypassConfirmation)
+	{
+		for (const FGameplayTag& Tag : ProcessedTags)
+		{
+			BroadcastSettingChanged(WorldContextObject, Tag);
+		}
+	}
 }
 
-void UMCore_GameSettingsLibrary::DiscardPendingSettings(const UObject* WorldContextObject,
-	const UMCore_DA_SettingsCollection* Collection)
+void UMCore_GameSettingsLibrary::SetSettingInt(
+	const UObject* WorldContextObject,
+	const TArray<FMCore_IntSettingChange>& Changes,
+	bool bBypassConfirmation)
 {
-	if (!Collection) { return; }
+	if (!WorldContextObject || Changes.IsEmpty()) { return; }
 
 	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save) { return; }
-
-	if (!Save->HasPendingChanges()) { return; }
-
-	bool bSettingsDirty = false;
-
-	/** Re-apply committed values to revert any previewed engine state */
-	for (const UMCore_DA_SettingDefinition* Setting : Collection->GetAllSettings())
+	if (!Save)
 	{
-		if (!Setting) { continue; }
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SetSettingInt: Failed to get PlayerSettingsSave"));
+		return;
+	}
 
-		const FString Key = Setting->GetSaveKey();
+	/** Confirmation tracking across the batch */
+	TArray<FString> AffectedTags;
+	TArray<FString> PreviousValues;
+	TArray<FGameplayTag> ProcessedTags;
+	float LongestRevertDelay = 0.f;
+	bool bAnyRequiresConfirmation = false;
 
-		switch (Setting->SettingType)
+	/** Pass 1: write all values to committed map and apply to engine */
+	for (const FMCore_IntSettingChange& Change : Changes)
+	{
+		if (!Change.Setting)
 		{
-		case EMCore_SettingType::Slider:
-			if (Save->PendingFloatSettings.Contains(Key))
-			{
-				float CommitSetting = Setting->DefaultValue;
-				Save->GetFloatSetting(Key, CommitSetting);
-				ApplySettingToEngine(Setting, CommitSetting, 0, false);
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("SetSettingInt: Null Setting in Changes — skipping"));
+			continue;
+		}
 
-		case EMCore_SettingType::Toggle:
-			if (Save->PendingBoolSettings.Contains(Key))
-			{
-				bool CommitSetting = Setting->DefaultToggleValue;
-				Save->GetBoolSetting(Key, CommitSetting);
-				ApplySettingToEngine(Setting, 0.0f, 0, CommitSetting);
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
+		const FString Key = Change.Setting->GetSaveKey();
+		int32 ClampedValue = Change.Value;
 
-		case EMCore_SettingType::Dropdown:
-			if (Save->PendingIntSettings.Contains(Key))
-			{
-				int32 CommitSetting = Setting->DefaultDropdownIndex;
-				Save->GetIntSetting(Key, CommitSetting);
-				ApplySettingToEngine(Setting, 0.0f, CommitSetting, false);
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
+		/** Clamp to valid dropdown range */
+		if (Change.Setting->SettingType == EMCore_SettingType::Dropdown
+			&& Change.Setting->DropdownOptions.Num() > 0)
+		{
+			ClampedValue = FMath::Clamp(ClampedValue,
+				0, Change.Setting->DropdownOptions.Num() - 1);
+		}
 
-		default:
-			break;
+		/** Capture previous committed value before overwriting */
+		int32 PreviousInt = Change.Setting->DefaultDropdownIndex;
+		Save->GetIntSetting(Key, PreviousInt);
+
+		/** Write to committed map */
+		Save->SetIntSetting(Key, ClampedValue);
+
+		/** Apply to engine */
+		ApplySettingToEngine(Change.Setting, 0.f, ClampedValue, false);
+
+		/** Track setting for notification or confirmation */
+		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
+		{
+			bAnyRequiresConfirmation = true;
+			AffectedTags.Add(Change.Setting->SettingTag.ToString());
+			PreviousValues.Add(FString::FromInt(PreviousInt));
+			LongestRevertDelay = FMath::Max(
+				LongestRevertDelay,
+				Change.Setting->ConfirmationRevertDelay);
+		}
+		else
+		{
+			ProcessedTags.Add(Change.Setting->SettingTag);
 		}
 	}
 
-	/** Clear pending settings */
-	Save->DiscardPendingSettings();
-
-	if (bSettingsDirty)
+	/** Pass 2: single GUS flush for the entire batch */
+	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
-		if (UGameUserSettings* GameSettings = UGameUserSettings::GetGameUserSettings())
-		{
-			GameSettings->ApplySettings(false);
-		}
+		GUS->ApplySettings(false);
 	}
 
-	UE_LOG(LogModulusSettings, Log, TEXT("Pending settings discarded"));
+	/** Pass 3: save immediately or broadcast confirmation event */
+	if (bAnyRequiresConfirmation)
+	{
+		TMap<FString, FString> EventParams;
+		EventParams.Add(TEXT("SettingTags"),
+			FString::Join(AffectedTags, TEXT("|")));
+		EventParams.Add(TEXT("PreviousValues"),
+			FString::Join(PreviousValues, TEXT("|")));
+		EventParams.Add(TEXT("RevertDelay"),
+			FString::SanitizeFloat(LongestRevertDelay));
+
+		UMCore_EventFunctionLibrary::BroadcastEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
+			EventParams, EMCore_EventScope::Local);
+	}
+	else
+	{
+		SavePlayerSettings(WorldContextObject);
+	}
+
+	/** Pass 4: notify listeners of each changed setting (skip reset operations).
+	 *  Confirmation-required settings are intentionally excluded — their
+	 *  BroadcastSettingChanged is deferred to UMCore_SettingsRevertCountdown,
+	 *  which calls it on user confirm using the SettingTags already present
+	 *  in the ConfirmationRequired event payload. */
+	if (!bBypassConfirmation)
+	{
+		for (const FGameplayTag& Tag : ProcessedTags)
+		{
+			BroadcastSettingChanged(WorldContextObject, Tag);
+		}
+	}
 }
 
-void UMCore_GameSettingsLibrary::PreviewPendingSettings(const UObject* WorldContextObject,
-	const UMCore_DA_SettingsCollection* Collection)
+void UMCore_GameSettingsLibrary::SetSettingBool(
+	const UObject* WorldContextObject,
+	const TArray<FMCore_BoolSettingChange>& Changes,
+	bool bBypassConfirmation)
 {
-	if (!Collection) { return; }
+	if (!WorldContextObject || Changes.IsEmpty()) { return; }
 
-	const UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save || !Save->HasPendingChanges()) { return; }
-
-	bool bSettingsDirty = false;
-
-	for (const UMCore_DA_SettingDefinition* Setting : Collection->GetAllSettings())
+	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
+	if (!Save)
 	{
-		if (!Setting) { continue; }
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SetSettingBool: Failed to get PlayerSettingsSave"));
+		return;
+	}
 
-		const FString Key = Setting->GetSaveKey();
+	/** Confirmation tracking across the batch */
+	TArray<FString> AffectedTags;
+	TArray<FString> PreviousValues;
+	TArray<FGameplayTag> ProcessedTags;
+	float LongestRevertDelay = 0.f;
+	bool bAnyRequiresConfirmation = false;
 
-		switch (Setting->SettingType)
+	/** Pass 1: write all values to committed map and apply to engine */
+	for (const FMCore_BoolSettingChange& Change : Changes)
+	{
+		if (!Change.Setting)
 		{
-		case EMCore_SettingType::Slider:
-			if (const float* SliderValue = Save->PendingFloatSettings.Find(Key))
-			{
-				ApplySettingToEngine(Setting, *SliderValue, 0, false);
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("SetSettingBool: Null Setting in Changes — skipping"));
+			continue;
+		}
 
-		case EMCore_SettingType::Toggle:
-			if (const bool* ToggleValue = Save->PendingBoolSettings.Find(Key))
-			{
-				ApplySettingToEngine(Setting, 0.0f, 0, *ToggleValue);
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
+		const FString Key = Change.Setting->GetSaveKey();
 
-		case EMCore_SettingType::Dropdown:
-			if (const int32* DropValue = Save->PendingIntSettings.Find(Key))
-			{
-				ApplySettingToEngine(Setting, 0.0f, *DropValue, false);
-				if (!Setting->GameUserSettingsProperty.IsNone()) { bSettingsDirty = true; }
-			}
-			break;
+		/** Capture previous committed value before overwriting */
+		bool PreviousBool = Change.Setting->DefaultToggleValue;
+		Save->GetBoolSetting(Key, PreviousBool);
 
-		default:
-			break;
+		/** Write to committed map */
+		Save->SetBoolSetting(Key, Change.Value);
+
+		/** Apply to engine */
+		ApplySettingToEngine(Change.Setting, 0.f, 0, Change.Value);
+
+		/** Track setting for notification or confirmation */
+		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
+		{
+			bAnyRequiresConfirmation = true;
+			AffectedTags.Add(Change.Setting->SettingTag.ToString());
+			PreviousValues.Add(PreviousBool ? TEXT("true") : TEXT("false"));
+			LongestRevertDelay = FMath::Max(
+				LongestRevertDelay,
+				Change.Setting->ConfirmationRevertDelay);
+		}
+		else
+		{
+			ProcessedTags.Add(Change.Setting->SettingTag);
 		}
 	}
 
-	if (bSettingsDirty)
+	/** Pass 2: single GUS flush for the entire batch */
+	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
-		if (UGameUserSettings* GameSettings = UGameUserSettings::GetGameUserSettings())
+		GUS->ApplySettings(false);
+	}
+
+	/** Pass 3: save immediately or broadcast confirmation event */
+	if (bAnyRequiresConfirmation)
+	{
+		TMap<FString, FString> EventParams;
+		EventParams.Add(TEXT("SettingTags"),
+			FString::Join(AffectedTags, TEXT("|")));
+		EventParams.Add(TEXT("PreviousValues"),
+			FString::Join(PreviousValues, TEXT("|")));
+		EventParams.Add(TEXT("RevertDelay"),
+			FString::SanitizeFloat(LongestRevertDelay));
+
+		UMCore_EventFunctionLibrary::BroadcastEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
+			EventParams, EMCore_EventScope::Local);
+	}
+	else
+	{
+		SavePlayerSettings(WorldContextObject);
+	}
+
+	/** Pass 4: notify listeners of each changed setting (skip reset operations).
+	 *  Confirmation-required settings are intentionally excluded — their
+	 *  BroadcastSettingChanged is deferred to UMCore_SettingsRevertCountdown,
+	 *  which calls it on user confirm using the SettingTags already present
+	 *  in the ConfirmationRequired event payload. */
+	if (!bBypassConfirmation)
+	{
+		for (const FGameplayTag& Tag : ProcessedTags)
 		{
-			GameSettings->ApplySettings(false);
+			BroadcastSettingChanged(WorldContextObject, Tag);
 		}
 	}
 }
+
+// ============================================================================
+// UTILITIES
+// ============================================================================
 
 void UMCore_GameSettingsLibrary::ResetSettingToDefault(const UObject* WorldContextObject,
 	const UMCore_DA_SettingDefinition* Setting)
 {
 	if (!Setting) { return; }
 
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save) { return; }
-
-	const FString Key = Setting->GetSaveKey();
+	/** const_cast is safe: Setting is a UDataAsset from the asset registry.
+	 *  The const parameter is a caller-side guarantee; the change struct
+	 *  requires a non-const TObjectPtr for UPROPERTY serialization. */
+	UMCore_DA_SettingDefinition* MutableSetting =
+		const_cast<UMCore_DA_SettingDefinition*>(Setting);
 
 	switch (Setting->SettingType)
 	{
 	case EMCore_SettingType::Slider:
-		Save->SetPendingFloat(Key, Setting->DefaultValue);
+		SetSettingFloat(WorldContextObject,
+			{ { MutableSetting, Setting->DefaultValue } }, true);
 		break;
 	case EMCore_SettingType::Toggle:
-		Save->SetPendingBool(Key, Setting->DefaultToggleValue);
+		SetSettingBool(WorldContextObject,
+			{ { MutableSetting, Setting->DefaultToggleValue } }, true);
 		break;
 	case EMCore_SettingType::Dropdown:
-		Save->SetPendingInt(Key, Setting->DefaultDropdownIndex);
+		SetSettingInt(WorldContextObject,
+			{ { MutableSetting, Setting->DefaultDropdownIndex } }, true);
 		break;
 	default:
 		break;
 	}
+}
+
+void UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(const UObject* WorldContextObject)
+{
+	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->DefaultSettingsCollection;
+	if (!Collection)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("ResetAllSettingsToDefault: DefaultSettingsCollection is null in CoreSettings"));
+		return;
+	}
+
+	/** Collect non-null definitions from the collection */
+	TArray<UMCore_DA_SettingDefinition*> Definitions;
+	for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Collection->GetAllSettings())
+	{
+		if (Setting) { Definitions.Add(Setting); }
+	}
+
+	ResetDefinitionsToDefault(WorldContextObject, Definitions);
+}
+
+void UMCore_GameSettingsLibrary::ResetCategoryToDefault(const UObject* WorldContextObject,
+	FGameplayTag CategoryTag)
+{
+	if (!CategoryTag.IsValid()) { return; }
+
+	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->DefaultSettingsCollection;
+	if (!Collection)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("ResetCategoryToDefault: DefaultSettingsCollection is null in CoreSettings"));
+		return;
+	}
+
+	ResetDefinitionsToDefault(WorldContextObject, Collection->GetSettingsInCategory(CategoryTag));
+}
+
+void UMCore_GameSettingsLibrary::ResetDefinitionsToDefault(const UObject* WorldContextObject,
+	const TArray<UMCore_DA_SettingDefinition*>& Definitions)
+{
+	if (Definitions.IsEmpty()) { return; }
+
+	TArray<FMCore_FloatSettingChange> FloatChanges;
+	TArray<FMCore_IntSettingChange> IntChanges;
+	TArray<FMCore_BoolSettingChange> BoolChanges;
+
+	for (UMCore_DA_SettingDefinition* Setting : Definitions)
+	{
+		if (!Setting) { continue; }
+
+		switch (Setting->SettingType)
+		{
+		case EMCore_SettingType::Slider:
+			FloatChanges.Add({ Setting, Setting->DefaultValue });
+			break;
+		case EMCore_SettingType::Toggle:
+			BoolChanges.Add({ Setting, Setting->DefaultToggleValue });
+			break;
+		case EMCore_SettingType::Dropdown:
+			IntChanges.Add({ Setting, Setting->DefaultDropdownIndex });
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (FloatChanges.Num() > 0) { SetSettingFloat(WorldContextObject, FloatChanges, true); }
+	if (IntChanges.Num() > 0) { SetSettingInt(WorldContextObject, IntChanges, true); }
+	if (BoolChanges.Num() > 0) { SetSettingBool(WorldContextObject, BoolChanges, true); }
 }
 
 void UMCore_GameSettingsLibrary::SavePlayerSettings(const UObject* WorldContextObject)

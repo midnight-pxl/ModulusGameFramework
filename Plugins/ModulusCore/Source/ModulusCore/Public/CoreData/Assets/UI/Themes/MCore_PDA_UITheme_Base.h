@@ -43,17 +43,37 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonButtonStyle> SecondaryButtonStyle;
 
-	/** Title/header text style */
+	/**
+	 * Ghost button style — no background fill, text and/or icon only with subtle hover state.
+	 * Used for arrow buttons, action bar secondary actions (Reset, Back),
+	 * and other de-emphasized interactive elements.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
-	TSubclassOf<UCommonTextStyle> TitleTextStyle;
+	TSubclassOf<UCommonButtonStyle> GhostButtonStyle;
+
+	/**
+	 * Title/header text styles.
+	 * Ordered by text size: index 0 = Small (default),
+	 * index 1 = Medium, index 2 = Large.
+	 * Index driven by UITextSize accessibility setting.
+	 * Falls back to index 0 if requested index is not populated.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
+	TArray<TSubclassOf<UCommonTextStyle>> TitleTextStyle;
 
 	/** Body/content text style */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonTextStyle> BodyTextStyle;
 
-	/** Small/caption text style */
+	/**
+	 * Small/caption text styles.
+	 * Ordered by text size: index 0 = Small (default),
+	 * index 1 = Medium, index 2 = Large.
+	 * Index driven by UITextSize accessibility setting.
+	 * Falls back to index 0 if requested index is not populated.
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
-	TSubclassOf<UCommonTextStyle> CaptionTextStyle;
+	TArray<TSubclassOf<UCommonTextStyle>> CaptionTextStyle;
 
 	//~ Begin ModulusCore Style DataAssets
 

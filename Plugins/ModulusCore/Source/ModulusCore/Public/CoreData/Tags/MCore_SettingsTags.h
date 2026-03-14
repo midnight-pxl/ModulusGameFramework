@@ -15,6 +15,17 @@ namespace MCore_SettingsTags
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Controls);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Accessibility);
 
+    /** Default Sub-Category tags (depth-4: Category.X.General)
+     *  Used by the settings panel to determine tab layout.
+     *  If a depth-3 category has only a single depth-4 child named General,
+     *  no sub-tab bar is created — the page renders as a flat ScrollBox.
+     *  Multiple depth-4 children under the same parent produce sub-tabs. */
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Display_General);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Graphics_General);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Audio_General);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Controls_General);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Accessibility_General);
+
     /** Display Settings */
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Display_Brightness);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Display_Resolution);
@@ -60,6 +71,10 @@ namespace MCore_SettingsTags
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Accessibility_TooltipDelay);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Accessibility_ScreenReader);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Accessibility_LargeText);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Accessibility_UITextSize);
+
+    /** Setting Events */
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Event_ConfirmationRequired);
 
     /** Utility Functions */
     MODULUSCORE_API FGameplayTag GetWidgetTypeTag(EMCore_SettingType SettingType);

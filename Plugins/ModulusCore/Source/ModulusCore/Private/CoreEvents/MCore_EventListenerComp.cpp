@@ -106,7 +106,7 @@ bool UMCore_EventListenerComp::ShouldReceiveEvent(const FMCore_EventData& EventD
 	/** Empty subscription list means receive all events */
 	if (!SubscribedEvents.IsEmpty())
 	{
-		return SubscribedEvents.HasTag(EventData.EventTag);
+		return EventData.EventTag.MatchesAny(SubscribedEvents);
 	}
 
 	return true;

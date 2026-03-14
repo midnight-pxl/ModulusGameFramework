@@ -31,17 +31,21 @@ void UMCore_NetworkingComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	Super::EndPlay(EndPlayReason);
 }
 
+/**
+ * NOT YET IMPLEMENTED
+ * Reserved extension point for cross-plugin authority delegation.
+ * Will be implemented alongside the first Modulus plugin requiring it
+ * (ModulusVault, ModulusChronicles, etc.).
+ *
+ * For current authority validation, use ValidateAuthority() directly.
+ * @see EModulusAuthorityLevel
+ */
 template <typename TOperation>
 bool UMCore_NetworkingComponent::ExecuteWithAuthority(TOperation&& Operation, bool bRequireServerAuthority)
 {
-	if (bRequireServerAuthority && !HasNetworkAuthority())
-	{
-		UE_LOG(LogModulusNetworking, Warning, TEXT("Attempted server operation without Authority: %s"),
-			*GetClass()->GetName());
-
-		return false;
-	}
-	return Operation();
+	// Scheduled for completion with first cross-plugin authority use case.
+	checkNoEntry();
+	return false;
 }
 
 void UMCore_NetworkingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

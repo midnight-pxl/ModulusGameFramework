@@ -14,6 +14,13 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls, "MCore.Settings.Category.Controls");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Accessibility, "MCore.Settings.Category.Accessibility");
 
+    /** Default Sub-Categories (depth-4: Category.X.General) */
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Display_General, "MCore.Settings.Category.Display.General");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Graphics_General, "MCore.Settings.Category.Graphics.General");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Audio_General, "MCore.Settings.Category.Audio.General");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls_General, "MCore.Settings.Category.Controls.General");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Accessibility_General, "MCore.Settings.Category.Accessibility.General");
+
     /** Display Settings */
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_Brightness, "MCore.Settings.Display.Brightness");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_Resolution, "MCore.Settings.Display.Resolution");
@@ -59,6 +66,10 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_TooltipDelay, "MCore.Settings.Accessibility.TooltipDelay");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_ScreenReader, "MCore.Settings.Accessibility.ScreenReader");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_LargeText, "MCore.Settings.Accessibility.LargeText");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_UITextSize, "MCore.Settings.Accessibility.UITextSize");
+
+    /** Setting Events */
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Event_ConfirmationRequired, "MCore.Settings.Event.ConfirmationRequired");
 
     /** Utility Functions */
     FGameplayTag GetCategoryTag(const FString& CategoryName)

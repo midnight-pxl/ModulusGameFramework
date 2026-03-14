@@ -12,8 +12,9 @@ class UMCore_PDA_UITheme_Base;
 class UCommonTextBlock;
 
 /**
- * Fired when user changes setting value (before Apply).
- * Settings panel listens to track dirty state across all widgets.
+ * Fired when user changes a setting value.
+ * Value has already been applied to engine.
+ * Settings panel listens to update display state across all widgets.
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
     FGameplayTag, SettingTag, const FString&, NewValueString);
@@ -21,11 +22,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
 /**
  * Abstract base for all setting input widgets (Slider, Toggle, Switcher).
  *
- * Provides interface so settings panel can iterate
- * collection of setting widgets and call Apply/Revert/Reset without
- * needing to know the underlying type.
+ * Immediate-apply model: every user interaction writes to engine immediately.
+ * Provides interface so settings panel can iterate setting widgets and call
+ * Reset or query values without needing to know the underlying type.
  *
  * Subclasses (Blueprint or C++) implement OnDefinitionSet to read
+ * type-specific DataAsset properties and populate UI controls.
  */
 UCLASS(Abstract, Blueprintable, ClassGroup= "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_SettingsWidget_Base : public UCommonUserWidget
@@ -53,31 +55,27 @@ public:
     // VALUE INTERFACE
     // ====================================================================
 
-    /** Write current value to engine systems via GameSettingsLibrary */
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
-    void ApplySettingValue();
-
-    /** Reload value from PlayerSettingsSave, discard unsaved changes */
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
-    void RevertToSaved();
-
     /** Reset to DataAsset default value */
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
     void ResetToDefault();
-
-    /** True if current value differs from last-applied/saved value */
-    UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "ModulusCore|Settings")
-    bool IsDirty() const;
 
     /** String representation of current value (for debug/display) */
     UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "ModulusCore|Settings")
     FString GetValueAsString() const;
 
+    /** Step the setting value left (decrement). Panel calls this for gamepad input forwarding. */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
+    void StepLeft();
+
+    /** Step the setting value right (increment). Panel calls this for gamepad input forwarding. */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
+    void StepRight();
+
     // ====================================================================
     // EVENTS
     // ====================================================================
 
-    /** Fires when the user changes the value (before Apply) */
+    /** Fires when user changes a setting value. Value has already been applied to engine. */
     UPROPERTY(BlueprintAssignable, Category = "ModulusCore|Settings")
     FOnSettingValueChanged OnSettingValueChanged;
 
@@ -90,13 +88,9 @@ protected:
     UFUNCTION(BlueprintNativeEvent, Category = "ModulusCore|Settings")
     void OnDefinitionSet(const UMCore_DA_SettingDefinition* Definition);
 
-    /** Notify base that value changed — fires delegate, marks dirty */
+    /** Notify base that value changed — fires OnSettingValueChanged delegate */
     UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
     void BroadcastValueChanged();
-    
-    /** Call after apply or revert to clear dirty flag */
-    UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-    void ClearDirtyFlag();
 
     // ====================================================================
     // BIND WIDGETS (common to all setting types)
@@ -114,12 +108,9 @@ protected:
 
     UPROPERTY(Transient, BlueprintReadOnly, Category = "ModulusCore|Settings")
     TObjectPtr<const UMCore_DA_SettingDefinition> SettingDefinition;
-    
+
     UPROPERTY(Transient, BlueprintReadOnly, Category = "ModulusCore|Settings")
     bool bIsSettingEnabled{true};
-    
-    UPROPERTY(Transient, BlueprintReadOnly, Category = "ModulusCore|Settings")
-    bool bIsDirty{false};
 
     // ====================================================================
     // THEME DATA

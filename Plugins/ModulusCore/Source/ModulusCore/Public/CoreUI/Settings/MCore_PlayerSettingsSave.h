@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "InputCoreTypes.h"
 #include "GameFramework/SaveGame.h"
 #include "MCore_PlayerSettingsSave.generated.h"
 
@@ -12,12 +11,14 @@
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnPlayerSettingsLoaded, UMCore_PlayerSettingsSave*, PlayerSettings);
 
 /**
- * Player settings save game
+ * Player settings save game (immediate-apply model)
  *
  * Stores two kinds of data:
  *   1. Framework UI state — UIScale, tooltip delay, collapsed categories, etc.
  *   2. Generic setting values — typed TMap storage keyed by SettingTag save keys,
  *      written by UMCore_GameSettingsLibrary's typed setters.
+ *
+ * All changes write directly to committed storage and are applied immediately.
  *
  * Blueprint Usage:
  *   - Access via UMCore_UISubsystem::GetPlayerSettings()
@@ -72,27 +73,6 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	UPROPERTY(SaveGame)
 	TMap<FString, bool> BoolSettings;
 
-	/** Key binding overrides (stored separately from Enhanced Input save) */
-	UPROPERTY(SaveGame)
-	TMap<FString, FKey> KeySettings;
-		
-	// ========================================================================
-	// PENDING CHANGES (Transient — never serialized to disk)
-	// ========================================================================
-
-	/** Sparse maps containing only settings modified since last Apply/Discard */
-	UPROPERTY(Transient)
-	TMap<FString, float> PendingFloatSettings;
-
-	UPROPERTY(Transient)
-	TMap<FString, int32> PendingIntSettings;
-
-	UPROPERTY(Transient)
-	TMap<FString, bool> PendingBoolSettings;
-
-	UPROPERTY(Transient)
-	TMap<FString, FKey> PendingKeySettings;
-
 	// ========================================================================
 	// GENERIC ACCESSORS
 	// ========================================================================
@@ -120,38 +100,6 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	/** Set a boolean setting. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	void SetBoolSetting(const FString& Key, bool Value);
-
-	/** Get a key binding setting. Returns true if the key exists. */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
-	bool GetKeySetting(const FString& Key, FKey& OutValue) const;
-
-	/** Set a key binding setting. */
-	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-	void SetKeySetting(const FString& Key, const FKey& Value);
-	
-	// ========================================================================
-	// PENDING CHANGE MANAGEMENT
-	// ========================================================================
-	/** Stage a float change without committing */
-	void SetPendingFloat(const FString& Key, float Value);
-	/** Stage an integer change without committing */
-	void SetPendingInt(const FString& Key, int32 Value);
-	/** Stage a boolean change without committing */
-	void SetPendingBool(const FString& Key, bool Value);
-	/** Stage a key binding change without committing */
-	void SetPendingKey(const FString& Key, const FKey& Value);
-	
-	/** Commit all pending changes to the saved settings */
-	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-	void CommitPendingSettings();
-
-	/** Discard all pending changes */
-	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-	void DiscardPendingSettings();
-
-	/** Returns true if any setting has been modified since last Apply/Discard */
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
-	bool HasPendingChanges() const;
 
 	// ========================================================================
 	// PERSISTENCE

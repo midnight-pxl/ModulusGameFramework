@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTagContainer.h"
-#include "InputCoreTypes.h"
 #include "MCore_SettingsTypes.h"
 #include "MCore_DA_SettingDefinition.generated.h"
 
@@ -98,13 +97,13 @@ public:
 
 	/** Dropdown option labels (Dropdown type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::Switcher",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
 				EditConditionHides))
 	TArray<FText> DropdownOptions;
 
 	/** Default selected index (Dropdown type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
-		meta = (EditCondition = "SettingType == EMCore_SettingType::Switcher",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
 				EditConditionHides, ClampMin = "0"))
 	int32 DefaultDropdownIndex{0};
 
@@ -120,6 +119,14 @@ public:
 	/** Sort priority within category (lower = appears first) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Category")
 	int32 SortOrder{0};
+
+	/**
+	 * Optional visual grouping label within a settings page.
+	 * Settings sharing the same SectionName under a sub-category are rendered
+	 * under a shared section header. Empty means no section header.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|Category")
+	FText SectionName;
 
 	// ========================================================================
 	// APPLY CONFIGURATION
@@ -139,6 +146,30 @@ public:
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 		        EditConditionHides))
 	TSoftObjectPtr<USoundClass> SoundClass;
+
+	// ========================================================================
+	// BEHAVIOR
+	// ========================================================================
+
+	/**
+	 * If true, applying this setting immediately shows UMCore_SettingsRevertCountdown.
+	 * Use for destructive settings (resolution, display mode) that may render
+	 * the screen unreadable. The countdown auto-reverts if not confirmed.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Behavior",
+		meta = (DisplayName = "Requires Confirmation"))
+	bool bRequiresConfirmation = false;
+
+	/**
+	 * Duration of the revert countdown in seconds.
+	 * Only relevant when bRequiresConfirmation is true.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Behavior",
+		meta = (EditCondition = "bRequiresConfirmation",
+				EditConditionHides,
+				ClampMin = "5.0", ClampMax = "30.0",
+				DisplayName = "Confirmation Revert Delay (s)"))
+	float ConfirmationRevertDelay = 10.0f;
 
 	// ========================================================================
 	// METHODS
