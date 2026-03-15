@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/Tags/MCore_SettingsTags.h"
 
@@ -6,29 +6,41 @@
 
 namespace MCore_SettingsTags
 {
-    
-    /** Setting Categories */
+
+    // ========================================================================
+    // SETTING CATEGORIES
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Display, "MCore.Settings.Category.Display");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Graphics, "MCore.Settings.Category.Graphics");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Audio, "MCore.Settings.Category.Audio");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls, "MCore.Settings.Category.Controls");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Accessibility, "MCore.Settings.Category.Accessibility");
 
-    /** Default Sub-Categories (depth-4: Category.X.General) */
+    // ========================================================================
+    // DEFAULT SUB-CATEGORIES
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Display_General, "MCore.Settings.Category.Display.General");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Graphics_General, "MCore.Settings.Category.Graphics.General");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Audio_General, "MCore.Settings.Category.Audio.General");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls_General, "MCore.Settings.Category.Controls.General");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Accessibility_General, "MCore.Settings.Category.Accessibility.General");
 
-    /** Display Settings */
+    // ========================================================================
+    // DISPLAY SETTINGS
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_Brightness, "MCore.Settings.Display.Brightness");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_Resolution, "MCore.Settings.Display.Resolution");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_WindowMode, "MCore.Settings.Display.WindowMode");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_VSync, "MCore.Settings.Display.VSync");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Display_FrameRateLimit, "MCore.Settings.Display.FrameRateLimit");
 
-    /** Graphics Settings */
+    // ========================================================================
+    // GRAPHICS SETTINGS
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Graphics_QualityPreset, "MCore.Settings.Graphics.QualityPreset");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Graphics_TextureQuality, "MCore.Settings.Graphics.TextureQuality");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Graphics_FoliageQuality, "MCore.Settings.Graphics.FoliageQuality");
@@ -37,7 +49,10 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Graphics_AntiAliasing, "MCore.Settings.Graphics.AntiAliasing");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Graphics_ViewDistance, "MCore.Settings.Graphics.ViewDistance");
 
-    /** Audio Settings */
+    // ========================================================================
+    // AUDIO SETTINGS
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_MasterVolume, "MCore.Settings.Audio.MasterVolume");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_Quality, "MCore.Settings.Audio.Quality");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_MusicVolume, "MCore.Settings.Audio.MusicVolume");
@@ -47,7 +62,10 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_UIVolume, "MCore.Settings.Audio.UIVolume");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Audio_MuteAudio, "MCore.Settings.Audio.MuteAudio");
 
-    /** Controls Settings */
+    // ========================================================================
+    // CONTROLS SETTINGS
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_MouseSensitivity, "MCore.Settings.Controls.MouseSensitivity");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_MouseSmoothing, "MCore.Settings.Controls.MouseSmoothing");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_GamepadSensitivity, "MCore.Settings.Controls.GamepadSensitivity");
@@ -57,7 +75,10 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_InvertLookY, "MCore.Settings.Controls.InvertLookY");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_Vibration, "MCore.Settings.Controls.Vibration");
 
-    /** Accessibility Settings */
+    // ========================================================================
+    // ACCESSIBILITY SETTINGS
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_Subtitles, "MCore.Settings.Accessibility.Subtitles");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_SubtitleSize, "MCore.Settings.Accessibility.SubtitleSize");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_UIScale, "MCore.Settings.Accessibility.UIScale");
@@ -68,10 +89,16 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_LargeText, "MCore.Settings.Accessibility.LargeText");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Accessibility_UITextSize, "MCore.Settings.Accessibility.UITextSize");
 
-    /** Setting Events */
+    // ========================================================================
+    // SETTING EVENTS
+    // ========================================================================
+
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Event_ConfirmationRequired, "MCore.Settings.Event.ConfirmationRequired");
 
-    /** Utility Functions */
+    // ========================================================================
+    // UTILITY FUNCTIONS
+    // ========================================================================
+
     FGameplayTag GetCategoryTag(const FString& CategoryName)
     {
         if (CategoryName.Equals(TEXT("Display"), ESearchCase::IgnoreCase))
@@ -84,7 +111,7 @@ namespace MCore_SettingsTags
             return MCore_Settings_Category_Controls;
         if (CategoryName.Equals(TEXT("Accessibility"), ESearchCase::IgnoreCase))
             return MCore_Settings_Category_Accessibility;
-        
+
         return FGameplayTag::EmptyTag;
     }
 

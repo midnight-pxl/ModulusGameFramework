@@ -1,5 +1,12 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_SettingsWidget_Slider.h
+ *
+ * Settings widget for float/slider-type settings with immediate-apply behavior.
+ * Reads range, step, and display format from the bound DataAsset.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,9 +23,16 @@ class UMCore_ButtonBase;
  * Reads MinValue, MaxValue, StepSize, SliderDisplayFormat from the
  * bound UMCore_DA_SettingDefinition.
  *
- * BindWidgets:
- *   Required: Slider_Value (USlider), Txt_ValueDisplay (UCommonTextBlock)
- *   Optional: Btn_StepLeft / Btn_StepRight (UMCore_ButtonBase, collapsed if absent)
+ * Key Features:
+ * - Value snapping to configurable step size
+ * - Three display formats (raw, percentage, whole number)
+ * - Optional step buttons for gamepad/keyboard navigation
+ * - Theme-driven slider styling via UMCore_PDA_SliderStyle
+ *
+ * Blueprint Usage:
+ *   Create a Blueprint subclass with required BindWidgets:
+ *     Slider_Value (USlider), Txt_ValueDisplay (UCommonTextBlock)
+ *   Optional: Btn_StepLeft / Btn_StepRight (UMCore_ButtonBase)
  */
 UCLASS(Abstract, Blueprintable, ClassGroup = "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_SettingsWidget_Slider : public UMCore_SettingsWidget_Base
@@ -43,7 +57,7 @@ protected:
 	TObjectPtr<UMCore_ButtonBase> Btn_StepRight;
 
 	// ====================================================================
-	// SUBCLASS HOOKS (overrides from base)
+	// OVERRIDES
 	// ====================================================================
 
 	virtual void OnDefinitionSet_Implementation(const UMCore_DA_SettingDefinition* Definition) override;
@@ -87,6 +101,6 @@ private:
 	// STATE
 	// ====================================================================
 
-	/** Re-entrancy guard — prevents HandleSliderValueChanged from firing during programmatic sets */
+	/* Re-entrancy guard -- prevents HandleSliderValueChanged from firing during programmatic sets */
 	bool bIsUpdatingSlider{false};
 };

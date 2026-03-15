@@ -15,7 +15,9 @@
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 #include "CoreData/Tags/MCore_SettingsTags.h"
 
-//~ Start of USubsystem Interface
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 
 void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -30,7 +32,7 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	LoadWidgetClasses();
 	CreatePrimaryGameLayout();
 	
-	/** Load Theming for widget creation */
+	// Load theming for widget creation
 	const UMCore_CoreSettings* DevSettings = UMCore_CoreSettings::Get();
 	if (DevSettings && DevSettings->IsValidThemeIndex(DevSettings->DefaultThemeIndex))
 	{
@@ -46,7 +48,7 @@ void UMCore_UISubsystem::Deinitialize()
 {
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize - Cleaning up"));
 	
-	/** Clear delegate handle if still bound */
+	// Clear delegate handle if still bound
 	if (PlayerControllerReadyHandle.IsValid())
 	{
 		if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
@@ -56,14 +58,14 @@ void UMCore_UISubsystem::Deinitialize()
 		PlayerControllerReadyHandle.Reset();
 	}
 	
-	/** Save and release player settings */
+	// Save and release player settings
 	if (CachedPlayerSettings)
 	{
 		CachedPlayerSettings->SaveSettings();
 		CachedPlayerSettings = nullptr;
 	}
 	
-	/** Clear layer stack map (old references) */
+	// Clear layer stack map
 	LayerStackMap.Empty();
 	
 	if (IsValid(CachedMenuHub))
@@ -72,7 +74,7 @@ void UMCore_UISubsystem::Deinitialize()
 		CachedMenuHub = nullptr;
 	}
 	
-	/** Clean up PrimaryGameLayout */
+	// Clean up PrimaryGameLayout
 	if (IsValid(PrimaryGameLayout))
 	{
 		PrimaryGameLayout->RemoveFromParent();
@@ -86,15 +88,15 @@ void UMCore_UISubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-//~ End of USubsystem Interface
-
-//~ Start of Widget Class Loading
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
 
 void UMCore_UISubsystem::LoadWidgetClasses()
 {
 	const UMCore_CoreSettings* DevSettings = UMCore_CoreSettings::Get();
 	
-	/** Load PrimaryGameLayout from DevSettings || use UISystem default */
+	// Load PrimaryGameLayout from DevSettings or use default
 	if (DevSettings && !DevSettings->PrimaryGameLayoutClass.IsNull())
 	{
 		PrimaryGameLayoutClass = DevSettings->PrimaryGameLayoutClass.LoadSynchronous();
@@ -106,7 +108,7 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Using default PrimaryGameLayoutClass"));
 	}
 	
-	/** Load MenuHubClass */
+	// Load MenuHubClass
 	if (DevSettings && !DevSettings->MenuHubClass.IsNull())
 	{
 		MenuHubClass = DevSettings->MenuHubClass.LoadSynchronous();
@@ -118,7 +120,7 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 		MenuHubClass = UMCore_GameMenuHub::StaticClass();
 	}
     
-	/** Load ZOrder */
+	// Load ZOrder
 	if (DevSettings)
 	{
 		PrimaryGameLayoutZOrder = DevSettings->PrimaryGameLayoutZOrder;
@@ -129,9 +131,9 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
 }
 
-//~ End of Widget Class Loading
-
-//~ Begin Primary Game Layout
+// ============================================================================
+// WIDGET LIFECYCLE
+// ============================================================================
 
 UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
 {
@@ -157,7 +159,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	APlayerController* PlayerController = LocalPlayer->GetPlayerController(GetWorld());
 	if (!PlayerController)
 	{
-		/** PlayerController not yet ready -- defer creation */
+		// PlayerController not yet ready — defer creation
 		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Deferring layout creation until PlayerController ready"));
 		
 		if (ULocalPlayer* ThisPlayer = GetLocalPlayer())
@@ -168,7 +170,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 		return;
 	}
 	
-	/** Create Widget */
+	// Create widget
 	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(PlayerController, PrimaryGameLayoutClass);
 	if (!IsValid(PrimaryGameLayout))
 	{
@@ -182,7 +184,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout created (ZOrder: %d)"),
 		PrimaryGameLayoutZOrder);
 	
-	/** Notify Subclasses and Listeners (BP Native Event + Multicast) */
+	// Notify subclasses and listeners
 	OnPrimaryGameLayoutCreated(PrimaryGameLayout);
 	OnPrimaryGameLayoutReady.Broadcast(PrimaryGameLayout);
 }
@@ -204,10 +206,7 @@ void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerContro
 
 void UMCore_UISubsystem::OnPrimaryGameLayoutCreated_Implementation(UMCore_PrimaryGameLayout* Layout)
 {
-	/** 
-	 * Empty by default
-	 * Blueprint or C++ subclasses can override for custom setup
-	 */
+	// Default empty — override in Blueprint or C++ subclasses
 }
 
 void UMCore_UISubsystem::BuildLayerStackMap()
@@ -246,9 +245,9 @@ void UMCore_UISubsystem::BuildLayerStackMap()
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: LayerStackMap created with %d layers"), LayerStackMap.Num());
 }
 
-//~ End of Primary Game Layout
-
-//~ Begin Player Settings
+// ============================================================================
+// PLAYER SETTINGS
+// ============================================================================
 
 UMCore_PlayerSettingsSave* UMCore_UISubsystem::GetPlayerSettings()
 {
@@ -262,9 +261,9 @@ UMCore_PlayerSettingsSave* UMCore_UISubsystem::GetPlayerSettings()
 	return CachedPlayerSettings;
 }
 
-//~ End Player Settings
-
-//~ Begin of Layer Stack Accessors
+// ============================================================================
+// LAYER STACKS
+// ============================================================================
 
 UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag LayerTag) const
 {
@@ -305,13 +304,12 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 		return nullptr;
 	}
 	
-	/** AddWidget handles creation + activation */
+	// AddWidget handles creation + activation
 	UCommonActivatableWidget* NewWidget = ThisStack->AddWidget<UCommonActivatableWidget>(WidgetClass);
 
 	if (NewWidget)
 	{
-		/** Safeguard: Ensure the stack activated the widget.
-		 *  Some engine versions may defer activation after AddWidget returns. */
+		// Safeguard: some engine versions may defer activation after AddWidget
 		if (!NewWidget->IsActivated())
 		{
 			UE_LOG(LogModulusUI, Warning, TEXT("PushWidgetToLayer: Stack did not activate '%s', activating manually"),
@@ -339,13 +337,13 @@ bool UMCore_UISubsystem::IsLayerActive(FGameplayTag LayerTag) const
 	return ThisStack->GetActiveWidget() != nullptr;
 }
 
-//~ End of Layer Stack Accessors
-
-//~ Start of Menu Hub
+// ============================================================================
+// MENU HUB
+// ============================================================================
 
 UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 {
-	/** Return cached instance if valid */
+	// Return cached instance if valid
 	if (IsValid(CachedMenuHub)) { return CachedMenuHub; }
     
 	if (!MenuHubClass)
@@ -378,7 +376,7 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 		return nullptr;
 	}
 
-	/** Create MenuHub widget */
+	// Create MenuHub widget
 	CachedMenuHub = CreateWidget<UMCore_GameMenuHub>(PlayerController, MenuHubClass);
 	if (!IsValid(CachedMenuHub))
 	{
@@ -387,7 +385,7 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 		return nullptr;
 	}
 
-	/** Build tab bar with registered screens */
+	// Build tab bar with registered screens
 	CachedMenuHub->RebuildTabBar();
     
 	UE_LOG(LogModulusUI, Log, 
@@ -415,7 +413,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 		return;
 	}
 	
-	/** Check for duplicate registration */
+	// Check for duplicate registration
 	if (RegisteredMenuScreens.ContainsByPredicate([TabID](const FMCore_MenuTab& Tab)
 	 {
 		 return Tab.TabID == TabID;
@@ -427,14 +425,14 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 		return;
 	}
 
-	/** Create registration entry */
+	// Create registration entry
 	FMCore_MenuTab NewTab;
 	NewTab.TabID = TabID;
 	NewTab.ScreenWidgetClass = ScreenWidgetClass;
 	NewTab.Priority = Priority;
 	NewTab.TabIcon = TabIcon;
     
-	/** Insert sorted by priority (lower priority = earlier in tab list) */
+	// Insert sorted by priority (lower = earlier in tab list)
 	int32 InsertIndex = 0;
 	for (; InsertIndex < RegisteredMenuScreens.Num(); ++InsertIndex)
 	{
@@ -449,7 +447,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 		TEXT("RegisterMenuScreen: %s registered at priority %d (Total: %d)"),
 		*NewTab.GetDisplayName().ToString(), Priority, RegisteredMenuScreens.Num());
 
-	/** If MenuHub already created, rebuild tab bar to show new screen */
+	// If MenuHub already created, rebuild tab bar
 	if (IsValid(CachedMenuHub))
 	{
 		CachedMenuHub->RebuildTabBar();
@@ -476,7 +474,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 			TEXT("UISubsystem::UnregisterMenuScreen: '%s' unregistered (Remaining: %d)"),
 			*TabID.ToString(), RegisteredMenuScreens.Num());
 
-		/** Rebuild MenuHub if it exists */
+		// Rebuild MenuHub if it exists
 		if (IsValid(CachedMenuHub))
 		{
 			CachedMenuHub->RebuildTabBar();
@@ -498,9 +496,9 @@ void UMCore_UISubsystem::RebuildMenuHubTabBar()
 	}
 }
 
-//~ End of Menu Hub
-
-//~ Start of Theme System
+// ============================================================================
+// THEME
+// ============================================================================
 
 const TArray<FMCore_ThemeEntry>& UMCore_UISubsystem::GetAvailableThemes() const
 {
@@ -554,4 +552,3 @@ int32 UMCore_UISubsystem::GetActiveTextSizeIndex() const
 	return FMath::Max(RawIndex, 0);
 }
 
-//~ End of Theme System

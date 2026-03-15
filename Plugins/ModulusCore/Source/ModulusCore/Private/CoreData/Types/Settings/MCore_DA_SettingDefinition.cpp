@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 
@@ -9,26 +9,26 @@
 FString UMCore_DA_SettingDefinition::GetSaveKey() const
 {
 	if (!SettingTag.IsValid()) { return FString(); }
-	/** GameplayTag Audio.SFXVolume becomes Audio_SFXVolume */
+	// GameplayTag "Audio.SFXVolume" becomes "Audio_SFXVolume"
 	return SettingTag.ToString().Replace(TEXT("."), TEXT("_"));
 }
 
 bool UMCore_DA_SettingDefinition::IsValid() const
 {
 	if (DisplayName.IsEmpty() || !SettingTag.IsValid()) { return false; }
-	
+
 	switch (SettingType)
 	{
 	case EMCore_SettingType::Slider:
 		return MinValue <= MaxValue
 		&& DefaultValue >= MinValue
 		&& DefaultValue <= MaxValue;
-		
+
 	case EMCore_SettingType::Dropdown:
 		return DropdownOptions.Num() > 0
 		&& DefaultDropdownIndex >= 0
 		&& DefaultDropdownIndex < DropdownOptions.Num();
-		
+
 	case EMCore_SettingType::Toggle:
 	default:
 		return true;
@@ -39,7 +39,7 @@ bool UMCore_DA_SettingDefinition::IsValid() const
 EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationContext& Context) const
 {
 	EDataValidationResult Result = Super::IsDataValid(Context);
-	
+
 	if (!SettingTag.IsValid())
 	{
 		Context.AddError(FText::FromString(
@@ -47,14 +47,14 @@ EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationCo
 				*GetName())));
 		Result = EDataValidationResult::Invalid;
 	}
-	
+
 	if (DisplayName.IsEmpty())
 	{
 		Context.AddError(FText::FromString(
 			FString::Printf(TEXT("DisplayName: %s is empty"), *GetName())));
 		Result = EDataValidationResult::Invalid;
 	}
-	
+
 	switch (SettingType)
 	{
 	case EMCore_SettingType::Slider:
@@ -72,7 +72,7 @@ EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationCo
 			Result = EDataValidationResult::Invalid;
 		}
 		break;
-		
+
 	case EMCore_SettingType::Dropdown:
 		if (DropdownOptions.Num() == 0)
 		{
@@ -88,11 +88,11 @@ EDataValidationResult UMCore_DA_SettingDefinition::IsDataValid(FDataValidationCo
 			Result = EDataValidationResult::Invalid;
 		}
 		break;
-		
+
 	default:
 		break;
 	}
-	
+
 	return Result;
 }
 #endif

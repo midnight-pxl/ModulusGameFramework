@@ -40,7 +40,6 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 		return false;
 	}
 
-	/** Resolve button class */
 	TSubclassOf<UCommonButtonBase> ButtonClass = TabButtonClass;
 	if (!ButtonClass)
 	{
@@ -53,7 +52,6 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 	TabList->RegisterTab(TabID, ButtonClass, PageWidget, PageWidgets.Num());
 	PageWidgets.Add(TabID, PageWidget);
 
-	/** Broadcast OnTabAdded if tab button was created */
 	if (UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabID))
 	{
 		OnTabAdded.Broadcast(TabID, TabButton);
@@ -74,7 +72,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		return false;
 	}
 
-	/** Store remaining tabs (preserving insertion order via iteration) */
+	// Store remaining tabs preserving insertion order via iteration
 	TArray<TPair<FName, TObjectPtr<UWidget>>> RemainingTabs;
 	for (auto& Pair : PageWidgets)
 	{
@@ -84,20 +82,18 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		}
 	}
 
-	/** Clear everything */
+	// Clear and rebuild to maintain correct indices
 	TabList->RemoveAllTabs();
 	PageSwitcher->ClearChildren();
 	PageWidgets.Empty();
 	SelectedTabID = NAME_None;
 
-	/** Resolve button class */
 	TSubclassOf<UCommonButtonBase> ButtonClass = TabButtonClass;
 	if (!ButtonClass)
 	{
 		ButtonClass = UCommonButtonBase::StaticClass();
 	}
 
-	/** Re-add remaining tabs */
 	for (int32 Index = 0; Index < RemainingTabs.Num(); ++Index)
 	{
 		const auto& Pair = RemainingTabs[Index];
@@ -106,7 +102,6 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		PageWidgets.Add(Pair.Key, Pair.Value);
 	}
 
-	/** Select first remaining tab if any */
 	if (RemainingTabs.Num() > 0)
 	{
 		TabList->SelectTabByID(RemainingTabs[0].Key);

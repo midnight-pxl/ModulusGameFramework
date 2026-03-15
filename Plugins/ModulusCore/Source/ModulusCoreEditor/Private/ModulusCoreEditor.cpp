@@ -12,12 +12,10 @@
 
 void FModulusCoreEditorModule::StartupModule()
 {
-	// Initialize Modulus editor style
 	FModulusEditorStyle::Initialize();
 
 	FModulusEditorCommands::Register();
 
-	// Register the Modulus Hub tab spawner
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
 		SModulusHubTab::TabId,
 		FOnSpawnTab::CreateRaw(this, &FModulusCoreEditorModule::SpawnModulusHubTab))
@@ -37,7 +35,6 @@ void FModulusCoreEditorModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SModulusHubTab::TabId);
 	UnregisterToolbarButton();
 
-	// Shutdown Modulus editor style
 	FModulusEditorStyle::Shutdown();
 
 	UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditor module shutdown"));

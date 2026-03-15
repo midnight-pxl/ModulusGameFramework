@@ -1,6 +1,5 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-
 #include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
@@ -247,7 +246,6 @@ void UMCore_SettingsWidget_Slider::ResetToDefault_Implementation()
 
 void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* NewTheme)
 {
-	/** Let base handle Txt_SettingName and Txt_SettingDescription */
 	Super::ApplyTheme_Implementation(NewTheme);
 
 	if (!NewTheme)
@@ -255,7 +253,6 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		return;
 	}
 
-	/** Resolve text size index for caption-style text */
 	int32 SizeIndex = 0;
 	if (const ULocalPlayer* LP = GetOwningLocalPlayer())
 	{
@@ -265,7 +262,6 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		}
 	}
 
-	/** Apply CaptionTextStyle array to Txt_ValueDisplay */
 	if (Txt_ValueDisplay && !NewTheme->CaptionTextStyle.IsEmpty())
 	{
 		const TSubclassOf<UCommonTextStyle> ResolvedCaptionStyle =
@@ -279,14 +275,13 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		}
 	}
 
-	/** Apply slider styling from theme DataAsset */
 	if (Slider_Value && NewTheme->SliderStyle)
 	{
 		const UMCore_PDA_SliderStyle* Style = NewTheme->SliderStyle;
 
 		FSliderStyle SliderStyle = Slider_Value->GetWidgetStyle();
 
-		/** Bar brush */
+		// Bar brush
 		FSlateBrush BarBrush;
 		if (Style->BarImage)
 		{
@@ -295,7 +290,7 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		BarBrush.TintColor = Style->BarNormalTint;
 		SliderStyle.SetNormalBarImage(BarBrush);
 
-		/** Thumb brush — normal */
+		// Thumb brush — normal
 		FSlateBrush ThumbNormal;
 		if (Style->ThumbImage)
 		{
@@ -305,7 +300,7 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		ThumbNormal.SetImageSize(Style->ThumbSize);
 		SliderStyle.SetNormalThumbImage(ThumbNormal);
 
-		/** Thumb brush — hovered */
+		// Thumb brush — hovered
 		FSlateBrush ThumbHovered;
 		if (Style->ThumbImage)
 		{
@@ -315,7 +310,7 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		ThumbHovered.SetImageSize(Style->ThumbSize);
 		SliderStyle.SetHoveredThumbImage(ThumbHovered);
 
-		/** Thumb brush — disabled (reuse normal) */
+		// Thumb brush — disabled (reuse normal)
 		SliderStyle.SetDisabledThumbImage(ThumbNormal);
 
 		Slider_Value->SetWidgetStyle(SliderStyle);

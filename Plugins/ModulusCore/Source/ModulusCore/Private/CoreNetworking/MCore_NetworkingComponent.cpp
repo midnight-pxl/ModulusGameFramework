@@ -22,7 +22,7 @@ void UMCore_NetworkingComponent::BeginPlay()
 		"(Authority: %s, Iris: %s)"), *GetClass()->GetName(),
 		HasNetworkAuthority() ? TEXT("Yes") : TEXT("No"),
 		bIrisDetected ? TEXT("Yes") : TEXT("No"));
-	
+
 }
 
 void UMCore_NetworkingComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -31,15 +31,6 @@ void UMCore_NetworkingComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 	Super::EndPlay(EndPlayReason);
 }
 
-/**
- * NOT YET IMPLEMENTED
- * Reserved extension point for cross-plugin authority delegation.
- * Will be implemented alongside the first Modulus plugin requiring it
- * (ModulusVault, ModulusChronicles, etc.).
- *
- * For current authority validation, use ValidateAuthority() directly.
- * @see EModulusAuthorityLevel
- */
 template <typename TOperation>
 bool UMCore_NetworkingComponent::ExecuteWithAuthority(TOperation&& Operation, bool bRequireServerAuthority)
 {
@@ -57,7 +48,7 @@ void UMCore_NetworkingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 void UMCore_NetworkingComponent::DetectNetworkingSystem()
 {
-	/** Iris replication detection - currently disabled. Enable when Iris is configured at project level */
+	// Iris replication detection - currently disabled. Enable when Iris is configured at project level.
 	bIrisDetected = false;
 }
 
@@ -68,7 +59,7 @@ bool UMCore_NetworkingComponent::IsUsingIrisReplication() const
 
 bool UMCore_NetworkingComponent::IsIrisAvailable() const
 {
-	/** Iris availability check - implement when Iris replication is needed */
+	// Iris availability check - implement when Iris replication is needed.
 	return false;
 }
 

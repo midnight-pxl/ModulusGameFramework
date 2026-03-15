@@ -1,5 +1,12 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_SettingsTypes.h
+ *
+ * Enums and structs supporting the DataAsset-driven settings system.
+ * Defines setting widget types and batch change payloads.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,7 +14,7 @@
 
 class UMCore_DA_SettingDefinition;
 
-/** Setting widget types for game settings menus */
+/* Setting widget types for game settings menus */
 UENUM(BlueprintType)
 enum class EMCore_SettingType : uint8
 {
@@ -16,7 +23,7 @@ enum class EMCore_SettingType : uint8
     Dropdown     UMETA(DisplayName = "Dropdown (Selection)")
 };
 
-/** A single float setting + value pair for batch setter operations */
+/* Float setting + value pair for batch setter operations */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_FloatSettingChange
 {
@@ -31,7 +38,7 @@ struct MODULUSCORE_API FMCore_FloatSettingChange
     float Value = 0.f;
 };
 
-/** A single int setting + value pair for batch setter operations */
+/* Int setting + value pair for batch setter operations */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_IntSettingChange
 {
@@ -46,7 +53,7 @@ struct MODULUSCORE_API FMCore_IntSettingChange
     int32 Value = 0;
 };
 
-/** A single bool setting + value pair for batch setter operations */
+/* Bool setting + value pair for batch setter operations */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_BoolSettingChange
 {

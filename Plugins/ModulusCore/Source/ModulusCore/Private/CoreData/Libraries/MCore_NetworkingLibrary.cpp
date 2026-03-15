@@ -1,5 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
-
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/Libraries/MCore_NetworkingLibrary.h"
 
@@ -97,6 +96,5 @@ bool UMCore_NetworkingLibrary::Subsystem_IsServer(const USubsystem* Subsystem)
 
 bool UMCore_NetworkingLibrary::Subsystem_CanExecuteServerOperation(const USubsystem* Subsystem)
 {
-	/** Just check if running on server */
 	return Subsystem_IsServer(Subsystem);
 }

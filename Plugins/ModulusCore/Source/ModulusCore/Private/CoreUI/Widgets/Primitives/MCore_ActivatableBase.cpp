@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Primitives/MCore_ActivatableBase.h"
 #include "GameplayTagAssetInterface.h"
@@ -23,12 +23,10 @@ UMCore_ActivatableBase::UMCore_ActivatableBase(const FObjectInitializer& ObjectI
 
 void UMCore_ActivatableBase::NativeConstruct()
 {
-	/**
-	 * Guard: Widget stacks manage activation via HandleActiveIndexChanged → ActivateWidget().
-	 * If bAutoActivate is true, NativeConstruct auto-activates BEFORE the stack calls
-	 * ActivateWidget, making the stack's call a no-op (bIsActive already true).
-	 * This silently prevents NativeOnActivated and BP_OnActivated from ever firing.
-	 */
+	// Widget stacks manage activation via HandleActiveIndexChanged -> ActivateWidget().
+	// If bAutoActivate is true, NativeConstruct auto-activates BEFORE the stack calls
+	// ActivateWidget, making the stack's call a no-op (bIsActive already true).
+	// This silently prevents NativeOnActivated and BP_OnActivated from ever firing.
 	if (bAutoActivate)
 	{
 		UE_LOG(LogModulusUI, Error,
@@ -53,35 +51,35 @@ void UMCore_ActivatableBase::RegisterBinding(
 			*GetName());
 		return;
 	}
-	
+
 	if (!Callback.IsBound())
 	{
 		UE_LOG(LogModulusUI, Warning, TEXT("[%s] RegisterBinding: Callback delegate not bound"),
 			*GetName());
 		return;
 	}
-	
+
 	FBindUIActionArgs BindArgs(InputAction, FSimpleDelegate::CreateLambda([InputAction, Callback]()
 	{
 		Callback.ExecuteIfBound(InputAction.RowName);
 	}));
-	
+
 	BindArgs.bDisplayInActionBar = bShouldDisplayInActionBar;
-	
+
 	if (!OverrideDisplayName.IsEmpty())
 	{
 		BindArgs.OverrideDisplayName = OverrideDisplayName;
 	}
-	
+
 	FUIActionBindingHandle NewHandle = RegisterUIActionBinding(BindArgs);
-	
+
 	IABindingHandle.CommonHandle = NewHandle;
-	
+
 	IABindingHandles.Add(NewHandle);
-	
-	UE_LOG(LogModulusUI, Log, 
+
+	UE_LOG(LogModulusUI, Log,
 	TEXT("[%s] Registered input binding for action: %s (Display in ActionBar set to %s)"),
-		*GetName(), 
+		*GetName(),
 		*InputAction.RowName.ToString(),
 		bShouldDisplayInActionBar ? TEXT("Yes") : TEXT("No"));
 }
@@ -89,17 +87,15 @@ void UMCore_ActivatableBase::RegisterBinding(
 void UMCore_ActivatableBase::UnregisterAllBindings()
 {
 	if (IABindingHandles.Num() == 0) { return; }
-	
+
 	UE_LOG(LogModulusUI, Log, TEXT("UnregisterAllBindings: Unregistering input binding(s) for %s"),
 		*GetName());
-	
-	/** Unregister all tracked input bindings */
+
 	for (FUIActionBindingHandle& Handle : IABindingHandles)
 	{
 		if (Handle.IsValid()){ Handle.Unregister(); }
 	}
 
-	/** Clear IABindingHandles array */
 	IABindingHandles.Empty();
 }
 
@@ -107,7 +103,7 @@ void UMCore_ActivatableBase::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	/** Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
+	// Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem.
 	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
 }
 
@@ -115,15 +111,12 @@ void UMCore_ActivatableBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	/**
-	 * Guard: Reset stale bIsActive from Blueprint CDO serialization.
-	 * bIsActive is a non-Transient UPROPERTY in CommonActivatableWidget.
-	 * If a Blueprint was saved while its widget preview was in an active state,
-	 * bIsActive=true gets baked into the CDO. Every new instance then starts
-	 * "already activated", causing the stack's ActivateWidget() to silently
-	 * skip InternalProcessActivation → NativeOnActivated → BP_OnActivated.
-	 * Reset() clears bIsActive so the stack can properly activate the widget.
-	 */
+	// Guard: Reset stale bIsActive from Blueprint CDO serialization.
+	// bIsActive is a non-Transient UPROPERTY in CommonActivatableWidget.
+	// If a Blueprint was saved while its widget preview was in an active state,
+	// bIsActive=true gets baked into the CDO. Every new instance then starts
+	// "already activated", causing the stack's ActivateWidget() to silently
+	// skip InternalProcessActivation -> NativeOnActivated -> BP_OnActivated.
 	if (IsActivated())
 	{
 		UE_LOG(LogModulusUI, Log,
@@ -134,7 +127,6 @@ void UMCore_ActivatableBase::NativeOnInitialized()
 
 	BindThemeDelegate();
 
-	/** Apply initial theme from UISubsystem */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -146,7 +138,6 @@ void UMCore_ActivatableBase::NativeOnInitialized()
 
 void UMCore_ActivatableBase::NativeOnActivated()
 {
-	/** Check OwningPlayer for BlockTags prior to allowing activation */
 	if (bShouldBlockActivation())
 	{
 		UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Activation blocked by BlockTags, deactivating..."));
@@ -155,29 +146,27 @@ void UMCore_ActivatableBase::NativeOnActivated()
 		return;
 	}
 
-	/** No BlockTags, activate normally */
 	Super::NativeOnActivated();
 
-	/** Autofocus target widget */
 	if (bShouldFocusOnActivation)
 	{
 		if (UWidget* WidgetToFocus = NativeGetDesiredFocusTarget())
 		{
 			WidgetToFocus->SetFocus();
-			
+
 			UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Auto focusing on widget %s"),
 				*GetName());
 			return;
 		}
 	}
-	
+
 	UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Widget %s not set to autofocus"),
 	*GetName());
 }
 
 void UMCore_ActivatableBase::NativeOnDeactivated()
 {
-	/** Cleanup own input bindings BEFORE calling Super (memory leaks) */
+	// Cleanup input bindings BEFORE calling Super to prevent memory leaks
 	UnregisterAllBindings();
 
 	Super::NativeOnDeactivated();
@@ -190,11 +179,9 @@ bool UMCore_ActivatableBase::bShouldBlockActivation() const
 {
 	if (BlockTags.IsEmpty()) { return false; }
 
-	/** Get OwningPlayerController */
 	const APlayerController* OwningPlayer = GetOwningPlayer();
 	if (!OwningPlayer)
 	{
-		/** No PlayerController found (Shouldn't Occur) - allow activation */
 		UE_LOG(LogModulusUI, Warning, TEXT("bShouldBlockActivation: No PlayerController detected...?"));
 		return false;
 	}
@@ -202,16 +189,13 @@ bool UMCore_ActivatableBase::bShouldBlockActivation() const
 	const IGameplayTagAssetInterface* BlockTagInterface = Cast<IGameplayTagAssetInterface>(OwningPlayer);
 	if (!BlockTagInterface)
 	{
-		/** IMCore_BlockingTagInterface not implemented - allow activation */
 		UE_LOG(LogModulusUI, Verbose, TEXT("bShouldBlockActivation: OwningPlayer doesn't implement the Modulus BlockTag Interface, allow"));
 		return false;
 	}
 
-	/** Get OwningPlayer's BlockTags */
 	FGameplayTagContainer OwnedTags;
 	BlockTagInterface->GetOwnedGameplayTags(OwnedTags);
 
-	/** Block activation if OwningPlayer has any matching BlockTags */
 	if (OwnedTags.HasAny(BlockTags))
 	{
 		UE_LOG(LogModulusUI, Log, TEXT("bShouldBlockActivation: Activation blocked by BlockTag: %s, PlayerTags: %s"),
@@ -220,7 +204,6 @@ bool UMCore_ActivatableBase::bShouldBlockActivation() const
 		return true;
 	}
 
-	/** No blocking tags found - allow activation */
 	return false;
 }
 
@@ -283,12 +266,12 @@ void UMCore_ActivatableBase::ValidateCompiledWidgetTree(const UWidgetTree& Bluep
 
 	if (GetClass()->ClassGeneratedBy == nullptr) { return; }
 
-	/** CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function */
+	// CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function
 	static const FName BPGetDesiredFocusTargetName = TEXT("BP_GetDesiredFocusTarget");
 
 	if (!GetClass()->IsFunctionImplementedInScript(BPGetDesiredFocusTargetName))
 	{
-		/** Only warn for direct children - intermediate C++ classes may implement it natively */
+		// Only warn for direct children - intermediate C++ classes may implement it natively
 		const UClass* ParentClass = GetClass()->GetSuperClass();
 		if (ParentClass == UMCore_ActivatableBase::StaticClass())
 		{

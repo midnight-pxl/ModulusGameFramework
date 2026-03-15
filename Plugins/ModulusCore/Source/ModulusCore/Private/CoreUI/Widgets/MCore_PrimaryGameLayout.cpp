@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 
@@ -13,10 +13,10 @@ UMCore_PrimaryGameLayout::UMCore_PrimaryGameLayout(const FObjectInitializer& Obj
 void UMCore_PrimaryGameLayout::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
-	
-	/** Validate BindWidget properties */
+
+	// Validate BindWidget properties
 	const bool bAllLayersValid = MCore_GameLayer && MCore_GameMenuLayer && MCore_MenuLayer && MCore_ModalLayer;
-	
+
 	if (bAllLayersValid)
 	{
 		UE_LOG(LogModulusUI, Log, TEXT("PrimaryGameLayout: All 4 layer stacks bound successfully"));

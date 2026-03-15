@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/MCore_UISubsystem.h"
@@ -18,9 +18,7 @@ void UMCore_ButtonBase::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	/** Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
 	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
-
 	SyncPropertiesToWidgets();
 }
 
@@ -30,7 +28,6 @@ void UMCore_ButtonBase::NativeOnInitialized()
 
 	BindThemeDelegate();
 
-	/** Apply initial theme from UISubsystem */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -78,7 +75,7 @@ FText UMCore_ButtonBase::GetButtonText() const
 void UMCore_ButtonBase::SetButtonIcon(UTexture2D* InIcon)
 {
 	ButtonIcon = InIcon;
-	
+
 	if (Img_BtnIcon)
 	{
 		if (InIcon)
@@ -101,25 +98,25 @@ void UMCore_ButtonBase::SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon)
 		return;
 	}
 
-	/** Synchronous load - for async, use StreamableManager pattern - Future Implement */
+	// Synchronous load - for async, use StreamableManager pattern
 	SetButtonIcon(InIcon.LoadSynchronous());
 }
 
 void UMCore_ButtonBase::SetDisplayMode(EMCore_ButtonDisplayMode InMode)
 {
 	DisplayMode = InMode;
-	
+
 	const bool bShowText = (DisplayMode == EMCore_ButtonDisplayMode::TextOnly
 		|| DisplayMode == EMCore_ButtonDisplayMode::TextAndIcon);
 	const bool bShowIcon = (DisplayMode == EMCore_ButtonDisplayMode::IconOnly
 		|| DisplayMode == EMCore_ButtonDisplayMode::TextAndIcon);
-	
+
 	if (Txt_BtnLabel)
 	{
 		Txt_BtnLabel->SetVisibility(bShowText ?
 			ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 	}
-	
+
 	if (Img_BtnIcon)
 	{
 		Img_BtnIcon->SetVisibility(bShowIcon ?
@@ -131,7 +128,6 @@ void UMCore_ButtonBase::SetButtonStyleOverride(TSubclassOf<UCommonButtonStyle> I
 {
 	ButtonStyleOverride = InStyle;
 
-	/** Re-apply current theme to pick up the override */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -145,7 +141,6 @@ void UMCore_ButtonBase::SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InSty
 {
 	TextStyleOverride = InStyle;
 
-	/** Re-apply current theme to pick up the override */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -157,7 +152,7 @@ void UMCore_ButtonBase::SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InSty
 
 void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
 {
-	/** Apply button style: override takes precedence, then theme default */
+	// Apply button style: override takes precedence, then theme default
 	TSubclassOf<UCommonButtonStyle> ButtonStyleToApply = ButtonStyleOverride;
 	if (!ButtonStyleToApply && Theme)
 	{
@@ -168,7 +163,7 @@ void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme
 		SetStyle(ButtonStyleToApply);
 	}
 
-	/** Apply text style: override takes precedence, then theme default */
+	// Apply text style: override takes precedence, then theme default
 	TSubclassOf<UCommonTextStyle> TextStyleToApply = TextStyleOverride;
 	if (!TextStyleToApply && Theme)
 	{
@@ -228,15 +223,14 @@ void UMCore_ButtonBase::SyncPropertiesToWidgets()
 	{
 		Txt_BtnLabel->SetText(ButtonText);
 	}
-	
+
 	if (Img_BtnIcon && ButtonIcon)
 	{
 		Img_BtnIcon->SetBrushFromTexture(ButtonIcon);
 	}
-	
+
 	SetDisplayMode(DisplayMode);
 
-	/** Sync style overrides for design-time preview */
 	if (ButtonStyleOverride)
 	{
 		SetStyle(ButtonStyleOverride);

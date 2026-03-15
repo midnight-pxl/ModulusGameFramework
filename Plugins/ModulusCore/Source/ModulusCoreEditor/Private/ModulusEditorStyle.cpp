@@ -9,33 +9,26 @@
 
 TSharedPtr<FSlateStyleSet> FModulusEditorStyle::StyleInstance = nullptr;
 
-/** Icon Names */
 const FName FModulusEditorStyle::ModulusIconName = TEXT("ModulusEditor.ModulusIcon");
 const FName FModulusEditorStyle::SettingsIconName = TEXT("ModulusEditor.SettingsIcon");
 const FName FModulusEditorStyle::EcosystemIconName = TEXT("ModulusEditor.EcosystemIcon");
 const FName FModulusEditorStyle::DocsIconName = TEXT("ModulusEditor.DocsIcon");
 
-/** Brand Colors - Modulus Game Framework themed */
 namespace ModulusColors
 {
-	/** Background colors */
 	const FLinearColor Background = FLinearColor(0.110f, 0.110f, 0.12f, 1.0f);
 	const FLinearColor SectionBackground = FLinearColor(0.145f, 0.145f, 0.15f, 1.0f);
 	const FLinearColor HeaderBackground = FLinearColor(0.227f, 0.227f, 0.235f, 1.0f);
-	
-	/** Modulus Primary/Secondary colors */
+
 	const FLinearColor Accent = FLinearColor(1.0f, 0.420f, 0.1f, 1.0f);
 	const FLinearColor Secondary = FLinearColor(0.0f, 0.75f, 1.0f, 1.0f);
-	
-	/** Status colors */
+
 	const FLinearColor Success = FLinearColor(0.2f, 0.9f, 0.4f, 1.0f);
 	const FLinearColor Warning = FLinearColor(1.0f, 0.8f, 0.2f, 1.0f);
 	const FLinearColor Error = FLinearColor(1.0f, 0.3f, 0.3f, 1.0f);
 
-	/** Interactive state colors */
 	const FLinearColor Disabled = FLinearColor(0.05f, 0.05f, 0.05f, 1.0f);
 
-	/** Text colors */
 	const FLinearColor TextPrimary = FLinearColor(0.91f, 0.91f, 0.91f, 1.0f);
 	const FLinearColor TextSecondary = FLinearColor(0.65f, 0.65f, 0.65f, 1.0f);
 	const FLinearColor TextMuted = FLinearColor(0.43f, 0.43f, 0.43f, 1.0f);
@@ -92,14 +85,14 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 	TSharedRef<FSlateStyleSet> Style = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("ModulusCore"))->GetBaseDir() / TEXT("Resources"));
 
-	/** Define color brushes */
+	// Color brushes
 	Style->Set("ModulusEditor.Background", new FSlateColorBrush(ModulusColors::Background));
 	Style->Set("ModulusEditor.HeaderBackground", new FSlateColorBrush(ModulusColors::HeaderBackground));
 	Style->Set("ModulusEditor.SectionBackground", new FSlateColorBrush(ModulusColors::SectionBackground));
 	Style->Set("ModulusEditor.AccentBrush", new FSlateColorBrush(ModulusColors::Accent));
 	Style->Set("ModulusEditor.SecondaryBrush", new FSlateColorBrush(ModulusColors::Secondary));
 
-	/** Rounded border brush for sections */
+	// Rounded border brushes
 	Style->Set("ModulusEditor.RoundedBox", new FSlateRoundedBoxBrush(
 		ModulusColors::SectionBackground,
 		4.0f
@@ -115,10 +108,10 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 		4.0f
 	));
 
-	/** Separator brush */
+	// Separator brush
 	Style->Set("ModulusEditor.Separator", new FSlateColorBrush(FLinearColor(1.0f, 1.0f, 1.0f, 0.1f)));
 
-	/** Text styles */
+	// Text styles
 	const FTextBlockStyle NormalText = FTextBlockStyle()
 		.SetFont(FCoreStyle::GetDefaultFontStyle("Regular", 10))
 		.SetColorAndOpacity(FSlateColor(ModulusColors::TextPrimary));
@@ -145,7 +138,7 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 	Style->Set("ModulusEditor.Text.SubHeader", SubHeaderText);
 	Style->Set("ModulusEditor.Text.Muted", MutedText);
 
-	/** Button style */
+	// Button style
 	const FButtonStyle ModulusButton = FButtonStyle()
 		.SetNormal(FSlateRoundedBoxBrush(ModulusColors::SectionBackground, 4.0f))
 		.SetHovered(FSlateRoundedBoxBrush(ModulusColors::Accent * 0.8f, 4.0f))
@@ -160,7 +153,7 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 
 	Style->Set("ModulusEditor.Button", ModulusButton);
 
-	/** Primary action button (accent colored) */
+	// Primary action button (accent colored)
 	const FButtonStyle PrimaryButton = FButtonStyle()
 		.SetNormal(FSlateRoundedBoxBrush(ModulusColors::Accent * 0.9f, 4.0f))
 		.SetHovered(FSlateRoundedBoxBrush(ModulusColors::Accent, 4.0f))
@@ -175,14 +168,12 @@ TSharedRef<FSlateStyleSet> FModulusEditorStyle::Create()
 
 	Style->Set("ModulusEditor.Button.Primary", PrimaryButton);
 
-	/** Register icons */
-
-	/** Main Modulus icon - used in toolbar and hub header */
+	// Icons
 	Style->Set(ModulusIconName, new FSlateImageBrush(Style->RootToContentDir(TEXT("Modulus_M_Sm"), TEXT(".png")), FVector2D(16.0, 16.0)));
 	Style->Set("ModulusEditor.ModulusIcon.Small", new FSlateImageBrush(Style->RootToContentDir(TEXT("Modulus_M_Sm"), TEXT(".png")), FVector2D(16.0, 16.0)));
 	Style->Set("ModulusEditor.ModulusIcon.Large", new FSlateImageBrush(Style->RootToContentDir(TEXT("Modulus_M_Sm"), TEXT(".png")), FVector2D(40.0, 40.0)));
 
-	/** Section icons - using colored boxes as placeholders */
+	// Section icons - placeholder colored boxes until final assets
 	Style->Set(SettingsIconName, new FSlateRoundedBoxBrush(ModulusColors::HeaderBackground, 2.0f, FVector2f(16.0f, 16.0f)));
 	Style->Set(EcosystemIconName, new FSlateRoundedBoxBrush(ModulusColors::TextPrimary, 2.0f, FVector2f(16.0f, 16.0f)));  // Monochrome logo
 	Style->Set(DocsIconName, new FSlateRoundedBoxBrush(ModulusColors::Secondary, 2.0f, FVector2f(16.0f, 16.0f)));

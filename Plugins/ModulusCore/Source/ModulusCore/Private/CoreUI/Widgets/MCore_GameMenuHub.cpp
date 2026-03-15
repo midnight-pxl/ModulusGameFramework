@@ -34,7 +34,6 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    /** Get owning player context */
     ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
     if (!LocalPlayer)
     {
@@ -42,7 +41,6 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    /** Get UI subsystem for registered screens */
     UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
     if (!UISubsystem)
     {
@@ -52,10 +50,8 @@ void UMCore_GameMenuHub::RebuildTabBar()
 
     const TArray<FMCore_MenuTab>& RegisteredScreens = UISubsystem->GetRegisteredMenuScreens();
 
-    /** Clear existing tabs */
     TabbedContainer->ClearAllTabs();
 
-    /** Empty state: No screens registered */
     if (RegisteredScreens.IsEmpty())
     {
         if (EmptyStateWidgetClass)
@@ -81,13 +77,11 @@ void UMCore_GameMenuHub::RebuildTabBar()
         return;
     }
 
-    /** Register tabs from UISubsystem's sorted screen list */
     for (int32 Index = 0; Index < RegisteredScreens.Num(); ++Index)
     {
         const FMCore_MenuTab& Tab = RegisteredScreens[Index];
         FName TabNameID = FName(*Tab.TabID.ToString());
 
-        /** Create screen widget for this tab */
         UCommonActivatableWidget* ScreenWidget = CreateWidget<UCommonActivatableWidget>(
             GetOwningPlayer(), Tab.ScreenWidgetClass);
 
@@ -100,12 +94,9 @@ void UMCore_GameMenuHub::RebuildTabBar()
         }
 
         TabbedContainer->AddTab(TabNameID, ScreenWidget);
-
-        /** Notify Blueprint(s) - page created */
         OnPageCreated(TabNameID, ScreenWidget);
     }
 
-    /** Select first tab to show initial content */
     if (!RegisteredScreens.IsEmpty())
     {
         FName FirstTabID = FName(*RegisteredScreens[0].TabID.ToString());

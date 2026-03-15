@@ -1,4 +1,11 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+/**
+ * MCore_PDA_UITheme_Base.h
+ *
+ * Master UI Theme DataAsset referencing CommonUI styles and modular style DataAssets.
+ * Create child DataAssets for each theme (Minimal, Fantasy, Sci-Fi).
+ */
 
 #pragma once
 
@@ -15,10 +22,9 @@ class UMCore_PDA_ScrollbarStyle;
 /**
  * Master UI Theme DataAsset - references CommonUI styles and modular style DataAssets.
  *
- * Create child DataAssets for each theme (Minimal, Fantasy, Sci-Fi).
- * Widgets query active theme via UISubsystem->GetActiveTheme().
+ * Widgets query the active theme via UISubsystem->GetActiveTheme().
  *
- * Usage:
+ * Blueprint Usage:
  *   1. Create CommonUI styles (BP_ButtonStyle_Primary, BP_TextStyle_Body, etc.)
  *   2. Create style DataAssets for sliders/scrollbars if needed
  *   3. Create theme DataAsset referencing all pieces
@@ -31,59 +37,49 @@ class MODULUSCORE_API UMCore_PDA_UITheme_Base : public UPrimaryDataAsset
 
 public:
 
-	/** Panel/container border style */
+	// ============================================================================
+	// COMMONUI STYLES
+	// ============================================================================
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonBorderStyle> PanelBorderStyle;
 
-	/** Primary button style (main actions: play, confirm, submit) */
+	/* Main actions: play, confirm, submit */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonButtonStyle> PrimaryButtonStyle;
 
-	/** Secondary button style (cancel, back, navigation, settings controls) */
+	/* Cancel, back, navigation, settings controls */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonButtonStyle> SecondaryButtonStyle;
 
-	/**
-	 * Ghost button style — no background fill, text and/or icon only with subtle hover state.
-	 * Used for arrow buttons, action bar secondary actions (Reset, Back),
-	 * and other de-emphasized interactive elements.
-	 */
+	/* No background fill, text/icon only with subtle hover. Used for arrow buttons and de-emphasized actions. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonButtonStyle> GhostButtonStyle;
 
-	/**
-	 * Title/header text styles.
-	 * Ordered by text size: index 0 = Small (default),
-	 * index 1 = Medium, index 2 = Large.
-	 * Index driven by UITextSize accessibility setting.
-	 * Falls back to index 0 if requested index is not populated.
+	/*
+	 * Title/header text styles ordered by size: [0]=Small (default), [1]=Medium, [2]=Large.
+	 * Index driven by UITextSize accessibility setting. Falls back to index 0.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TArray<TSubclassOf<UCommonTextStyle>> TitleTextStyle;
 
-	/** Body/content text style */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonTextStyle> BodyTextStyle;
 
-	/**
-	 * Small/caption text styles.
-	 * Ordered by text size: index 0 = Small (default),
-	 * index 1 = Medium, index 2 = Large.
-	 * Index driven by UITextSize accessibility setting.
-	 * Falls back to index 0 if requested index is not populated.
+	/*
+	 * Small/caption text styles ordered by size: [0]=Small (default), [1]=Medium, [2]=Large.
+	 * Index driven by UITextSize accessibility setting. Falls back to index 0.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TArray<TSubclassOf<UCommonTextStyle>> CaptionTextStyle;
 
-	//~ Begin ModulusCore Style DataAssets
+	// ============================================================================
+	// MODULUSCORE STYLE DATEASSETS
+	// ============================================================================
 
-	/** Slider styling */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Style DataAssets")
 	TObjectPtr<UMCore_PDA_SliderStyle> SliderStyle;
 
-	/** Scrollbar styling */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Style DataAssets")
 	TObjectPtr<UMCore_PDA_ScrollbarStyle> ScrollbarStyle;
-
-	//~ End ModulusCore Style DataAssets
 };

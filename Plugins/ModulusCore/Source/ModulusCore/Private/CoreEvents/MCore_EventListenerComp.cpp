@@ -33,7 +33,7 @@ void UMCore_EventListenerComp::BeginPlay()
 		return;
 	}
 
-	/** Register with local event subsystem */
+	// Register with local event subsystem
 	if (bReceiveLocalEvents)
 	{
 		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
@@ -50,7 +50,7 @@ void UMCore_EventListenerComp::BeginPlay()
 		}
 	}
 
-	/** Register with global event subsystem */
+	// Register with global event subsystem
 	if (bReceiveGlobalEvents)
 	{
 		if (UMCore_GlobalEventSubsystem* GlobalEventSys = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
@@ -72,7 +72,7 @@ void UMCore_EventListenerComp::BeginPlay()
 
 void UMCore_EventListenerComp::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	/** Unregister from both subsystems */
+	// Unregister from both subsystems
 	if (UMCore_LocalEventSubsystem* LocalEventSys = CachedLocalSubsystem.Get())
 	{
 		LocalEventSys->UnregisterLocalListener(this);
@@ -103,7 +103,7 @@ bool UMCore_EventListenerComp::ShouldReceiveEvent(const FMCore_EventData& EventD
 	if (bIsGlobalEvent && !bReceiveGlobalEvents) { return false; }
 	if (!bIsGlobalEvent && !bReceiveLocalEvents) { return false; }
 
-	/** Empty subscription list means receive all events */
+	// Empty subscription list means receive all events
 	if (!SubscribedEvents.IsEmpty())
 	{
 		return EventData.EventTag.MatchesAny(SubscribedEvents);

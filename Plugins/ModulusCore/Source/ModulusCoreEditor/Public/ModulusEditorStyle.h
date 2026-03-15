@@ -1,14 +1,17 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * ModulusEditorStyle.h
+ *
+ * Slate style set providing consistent styling for all Modulus
+ * editor UI elements including colors, brushes, and text styles.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Styling/SlateStyle.h"
 
-/**
- * Modulus Editor Style Set
- * Provides consistent styling for all Modulus editor UI elements.
- */
 class FModulusEditorStyle
 {
 public:
@@ -19,13 +22,11 @@ public:
 	static const ISlateStyle& Get() { return *StyleInstance; }
 	static FName GetStyleSetName();
 
-	// Icon names
 	static const FName ModulusIconName;
 	static const FName SettingsIconName;
 	static const FName EcosystemIconName;
 	static const FName DocsIconName;
 
-	// Color accessors
 	static FLinearColor GetAccentColor();
 	static FLinearColor GetSecondaryColor();
 	static FLinearColor GetBackgroundColor();

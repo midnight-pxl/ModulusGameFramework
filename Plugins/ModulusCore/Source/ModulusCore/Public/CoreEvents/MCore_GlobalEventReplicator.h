@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_GlobalEventReplicator.h
+ *
+ * Replicated ActorComponent for transporting global events across
+ * the network via Server RPCs and Multicast.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -48,23 +55,29 @@ protected:
 	//~ End UActorComponent Interface
 	
 	/**
-	 * Client -> Server: Request event broadcast
-	 * Server validates then multicasts to all clients
+	 * Client -> Server: Request event broadcast.
+	 *
+	 * Network:
+	 *   Clients      - Send event request to server
+	 *   Server       - Validates via GlobalEventSubsystem, then multicasts
 	 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerRequestBroadcast(const FMCore_EventData& EventData);
 
 	/**
-	 * Server -> All Clients: Deliver event
-	 * Executes on server and all connected clients
+	 * Server -> All Clients: Deliver validated event.
+	 *
+	 * Network:
+	 *   Clients      - Receive and deliver to local listeners
+	 *   Server       - Skips delivery (already delivered in RequestBroadcast)
 	 */
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastToClients(const FMCore_EventData& EventData);
 
 private:
-	/** Find and cache the GlobalEventSubsystem */
+	/* Find and cache the GlobalEventSubsystem */
 	UMCore_GlobalEventSubsystem* GetEventSubsystem() const;
 	
-	/** Cached reference to avoid repeated lookups */
+	/* Cached reference to avoid repeated lookups */
 	mutable TWeakObjectPtr<UMCore_GlobalEventSubsystem> CachedSubsystem;
 };

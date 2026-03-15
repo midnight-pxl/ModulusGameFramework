@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * ModulusCoreEditor.h
+ *
+ * Editor module for ModulusCore. Registers the Modulus Hub tab,
+ * toolbar button, and editor-only utilities.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"

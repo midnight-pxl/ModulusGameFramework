@@ -107,9 +107,9 @@ void SModulusHubTab::Construct(const FArguments& InArgs)
 				[
 					SNew(SVerticalBox)
 
-					// ============================================
-					// Ecosystem Section
-					// ============================================
+					// ============================================================================
+					// ECOSYSTEM
+					// ============================================================================
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					.Padding(ModulusHubLayout::SectionPadding)
@@ -177,9 +177,9 @@ void SModulusHubTab::Construct(const FArguments& InArgs)
 						]
 					]
 
-					// ============================================
-					// Settings Section
-					// ============================================
+					// ============================================================================
+					// SETTINGS
+					// ============================================================================
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					.Padding(ModulusHubLayout::SectionPadding)
@@ -317,9 +317,9 @@ void SModulusHubTab::Construct(const FArguments& InArgs)
 						]
 					]
 
-					// ============================================
-					// UI Theme Section
-					// ============================================
+					// ============================================================================
+					// UI THEME
+					// ============================================================================
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					.Padding(ModulusHubLayout::SectionPadding)
@@ -407,9 +407,9 @@ void SModulusHubTab::Construct(const FArguments& InArgs)
 						]
 					]
 
-					// ============================================
-					// Documentation Section
-					// ============================================
+					// ============================================================================
+					// DOCUMENTATION
+					// ============================================================================
 					+ SVerticalBox::Slot()
 					.AutoHeight()
 					.Padding(ModulusHubLayout::SectionPadding)

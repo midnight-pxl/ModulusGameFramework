@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CorePlayer/MCore_PlayerController.h"
 
@@ -15,22 +15,20 @@ AMCore_PlayerController::AMCore_PlayerController()
 void AMCore_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (!IsLocalController()) { return; }
-	
+
 	InitializeUISystem();
 }
 
 void AMCore_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	/** Perform cleanup */
 	if (IsValid(PrimaryWidget))
 	{
 		PrimaryWidget->DeactivateWidget();
 		PrimaryWidget = nullptr;
 	}
-	
-	/** Unbind delegate(s) */
+
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
@@ -38,22 +36,17 @@ void AMCore_PlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			UISubsystem->OnPrimaryGameLayoutReady.RemoveDynamic(this, &ThisClass::OnPrimaryGameLayoutReady);
 		}
 	}
-	
-	bUISystemInitialized = false;	
+
+	bUISystemInitialized = false;
 	Super::EndPlay(EndPlayReason);
 }
 
 void AMCore_PlayerController::OnPossess(APawn* aPawn)
 {
 	Super::OnPossess(aPawn);
-	
+
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
 	if (!IsLocalController() || !LocalPlayer) { return; }
-	
-	/**
-	 * Subclasses override this function to customize
-	 * OnPossess logic
-	 */
 }
 
 void AMCore_PlayerController::SetupInputComponent()
@@ -65,10 +58,10 @@ void AMCore_PlayerController::InitializeUISystem()
 {
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
 	if (!LocalPlayer) { return; }
-	
+
 	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
 	if (!UISubsystem) { return; }
-	
+
 	if (UISubsystem->HasPrimaryGameLayout())
 	{
 		OnUISystemReady(UISubsystem);
@@ -83,13 +76,13 @@ void AMCore_PlayerController::InitializeUISystem()
 void AMCore_PlayerController::OnPrimaryGameLayoutReady(UMCore_PrimaryGameLayout* Layout)
 {
 	if (bUISystemInitialized) { return; }
-	
+
 	ULocalPlayer* LocalPlayer = GetLocalPlayer();
 	if (!LocalPlayer) { return; }
-	
+
 	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
 	if (!UISubsystem) { return; }
-	
+
 	UISubsystem->OnPrimaryGameLayoutReady.RemoveDynamic(this, &ThisClass::OnPrimaryGameLayoutReady);
 	OnUISystemReady(UISubsystem);
 }
@@ -97,11 +90,11 @@ void AMCore_PlayerController::OnPrimaryGameLayoutReady(UMCore_PrimaryGameLayout*
 void AMCore_PlayerController::OnUISystemReady_Implementation(UMCore_UISubsystem* UISubsystem)
 {
 	if (bUISystemInitialized) { return; }
-	
+
 	if (PrimaryWidgetClass && PrimaryWidgetLayer.IsValid())
 	{
 		PrimaryWidget = UISubsystem->PushWidgetToLayer(PrimaryWidgetClass, PrimaryWidgetLayer);
-		
+
 		if (PrimaryWidget)
 		{
 			UE_LOG(LogModulusUI, Log, TEXT("PlayerController::OnUISystemReady: Pushed '%s' to layer '%s'"),
@@ -113,6 +106,6 @@ void AMCore_PlayerController::OnUISystemReady_Implementation(UMCore_UISubsystem*
 				*PrimaryWidgetClass->GetName(), *PrimaryWidgetLayer.ToString());
 		}
 	}
-	
+
 	bUISystemInitialized = true;
 }

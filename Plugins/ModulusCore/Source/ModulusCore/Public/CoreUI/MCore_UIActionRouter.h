@@ -1,5 +1,12 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_UIActionRouter.h
+ *
+ * Concrete CommonUI action router required for widget activation
+ * and input routing.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"

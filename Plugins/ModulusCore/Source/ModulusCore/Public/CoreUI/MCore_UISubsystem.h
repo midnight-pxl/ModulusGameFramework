@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_UISubsystem.h
+ *
+ * Per-player UI subsystem managing widget lifecycle, layer stacks,
+ * menu hub orchestration, and theme distribution.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -53,17 +60,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
-	/** Returns whether a valid PrimaryGameLayout is registered */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	bool HasPrimaryGameLayout() const { return IsValid(PrimaryGameLayout); }
 	
 	UPROPERTY(BlueprintAssignable, Category = "Modulus|UI|Events")
 	FOnPrimaryGameLayoutReady OnPrimaryGameLayoutReady;
 	
-	/**
-	 * Layer Stacks Access
-	 */
-	
+// ============================================================================
+// LAYER STACKS
+// ============================================================================
+
 	/** Get stack by layer tag. Returns nullptr if layout not ready or tag invalid. */
 	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
 	UCommonActivatableWidgetStack* GetLayerStack(FGameplayTag LayerTag) const;
@@ -77,19 +83,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
 	bool IsLayerActive(FGameplayTag LayerTag) const;
 	
-	/**
-	 * Player Settings
-	 */
-	
+// ============================================================================
+// PLAYER SETTINGS
+// ============================================================================
+
 	/** Get cached player settings. Loads from disk on first access. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	UMCore_PlayerSettingsSave* GetPlayerSettings();
 	
+// ============================================================================
+// MENU HUB
+// ============================================================================
+
 	/**
-	 * Menu Hub
-	 */
-	
-	/** 
 	 * Get or create the menu hub widget
 	 * Caller is responsible for pushing to appropriate stack
 	 * 
@@ -98,7 +104,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	UMCore_GameMenuHub* GetOrCreateMenuHub();
 
-	/** Menu screen registration */
+	/**
+	 * Register a menu screen tab in the MenuHub.
+	 *
+	 * Blueprint Usage: Call during initialization to add plugin screens to the shared menu.
+	 * Authority: Client-only
+	 */
 	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	void RegisterMenuScreen(
 		FGameplayTag TabID,
@@ -116,10 +127,7 @@ public:
 	bool UnregisterMenuScreen(FGameplayTag TabID);
 	
 	UFUNCTION(BlueprintPure, Category = "UI|MenuHub")
-	const TArray<FMCore_MenuTab>& GetRegisteredMenuScreens() const
-	{
-		return RegisteredMenuScreens;
-	}
+	const TArray<FMCore_MenuTab>& GetRegisteredMenuScreens() const { return RegisteredMenuScreens; }
 
 	/**
 	 * Force rebuild of MenuHub tab bar.
@@ -128,11 +136,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
 	void RebuildMenuHubTabBar();
 	
-	/**
-	 * Modulus Theme System
-	 */
-	
-	/** Get active UI theme from Dev Settings */
+// ============================================================================
+// THEME
+// ============================================================================
+
 	UFUNCTION(BlueprintPure, Category = "UI|Theme")
 	UMCore_PDA_UITheme_Base* GetActiveTheme() const { return CachedActiveTheme; }
 	
@@ -145,7 +152,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI|Theme")
 	int32 GetActiveThemeIndex() const { return ActiveThemeIndex; }
 
-	/** Get the active text size index from the Accessibility.UITextSize setting (clamped >= 0) */
+	/**
+	 * Get the active text size index from the Accessibility.UITextSize setting.
+	 *
+	 * Blueprint Usage: Use to scale UI text elements based on accessibility preference.
+	 * Authority: Client-only
+	 *
+	 * @return  Index clamped >= 0
+	 */
 	UFUNCTION(BlueprintPure, Category = "Modulus|Theme")
 	int32 GetActiveTextSizeIndex() const;
 
@@ -153,15 +167,15 @@ public:
 	bool SetActiveThemeByIndex(int32 ThemeIndex);
 
 protected:
-	/** Widget class for PrimaryGameLayout. Set in project defaults or override in Blueprint. */
+	/* Widget class for PrimaryGameLayout — set in project defaults or override in Blueprint */
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|UI")
 	TSubclassOf<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
 	
-	/** Widget class for MenuHub (loaded from settings or defaults) */
+	/* Widget class for MenuHub (loaded from settings or defaults) */
 	UPROPERTY()
 	TSubclassOf<UMCore_GameMenuHub> MenuHubClass;
 
-	/** Z-Order for layout when added to viewport. */
+	/* Z-order for layout when added to viewport */
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|UI", meta = (ClampMin = "-100", ClampMax = "100"))
 	int32 PrimaryGameLayoutZOrder = 0;
 	
@@ -179,18 +193,14 @@ private:
 	void LoadWidgetClasses();
 	void BuildLayerStackMap();
 
-	/** Creates and adds PrimaryGameLayout to viewport. Called from Initialize(). */
+	/* Creates and adds PrimaryGameLayout to viewport */
 	void CreatePrimaryGameLayout();
-	/** Creates the deferred PrimaryGameLayout once PlayerController is ready (avoid race condition) */
+	/* Deferred layout creation once PlayerController is ready */
 	void OnPlayerControllerReady(APlayerController* PlayerController);
 	
 	FDelegateHandle PlayerControllerReadyHandle;
 	
-	/**
-	 * Cached References
-	 */
-	
-	/** Strong reference - UISubsystem owns the layout lifecycle */
+	/* Strong reference — UISubsystem owns the layout lifecycle */
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PrimaryGameLayout> PrimaryGameLayout;
 	
@@ -202,26 +212,14 @@ private:
 
 	int32 ActiveThemeIndex{INDEX_NONE};
 	
-	/**
-	 * Player Settings
-	 */
-	
-	/** Cached player settings - loaded on first access, saved on Deinitialize */
+	/* Cached player settings — loaded on first access, saved on Deinitialize */
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PlayerSettingsSave> CachedPlayerSettings;
 	
-	/**
-	 * Layer Management
-	 */
-
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidgetStack>> LayerStackMap;
 	
-	/**
-	 * Hub Menu Data
-	 */
-	
-	/** Registered menu screens for this local player */
+	/* Registered menu screens for this local player */
 	UPROPERTY(Transient)
 	TArray<FMCore_MenuTab> RegisteredMenuScreens;
 };

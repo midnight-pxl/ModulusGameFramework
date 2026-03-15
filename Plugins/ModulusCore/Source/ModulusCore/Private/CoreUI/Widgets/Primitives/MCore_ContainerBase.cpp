@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Primitives/MCore_ContainerBase.h"
 #include "CoreUI/MCore_UISubsystem.h"
@@ -17,7 +17,6 @@ void UMCore_ContainerBase::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	/** Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
 	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
 }
 
@@ -27,7 +26,6 @@ void UMCore_ContainerBase::NativeOnInitialized()
 
 	BindThemeDelegate();
 
-	/** Apply initial theme from UISubsystem */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())

@@ -1,5 +1,12 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_GameMenuHub.h
+ *
+ * In-game menu hub providing a tabbed interface for plugin menu pages.
+ * Composes UMCore_TabbedContainer and rebuilds from UISubsystem's registered screens.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,18 +19,18 @@ class UMCore_TabbedContainer;
 struct FGameplayTag;
 
 /**
- * In-Game Menu Hub - Tabbed interface for plugin menu pages
+ * In-game menu hub - tabbed interface for plugin menu pages.
  *
- * Architecture:
+ * Key Features:
  * - Lives on MCore_GameMenuLayer when active
  * - Composes UMCore_TabbedContainer for tab/page management
- * - Displays active tab's page widget in stack
+ * - Rebuilds tab bar from UISubsystem's registered menu screens
+ * - Per-tab enable/disable and show/hide state control
  *
- * Usage (Open Menu):
- *   UISubsystem->GetOrCreateMenuHub() → Adds to GameMenuLayer
- *
- * Plugin Registration:
- *   UISubsystem->RegisterMenuScreen(ScreenClass, CategoryTag, Priority);
+ * Blueprint Usage:
+ * - Open: UISubsystem->GetOrCreateMenuHub() adds to GameMenuLayer
+ * - Register: UISubsystem->RegisterMenuScreen(ScreenClass, CategoryTag, Priority)
+ * - Override OnTabCreated/OnPageCreated for per-tab customization
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API UMCore_GameMenuHub : public UCommonActivatableWidget
@@ -33,9 +40,13 @@ class MODULUSCORE_API UMCore_GameMenuHub : public UCommonActivatableWidget
 public:
     UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializer);
 
+    // ============================================================================
+    // PUBLIC API
+    // ============================================================================
+
     /**
-     * Rebuild tab bar from currently registered screens
-     * Called by: GetOrCreateMenuHub() on creation, RegisterMenuScreen() on dynamic registration
+     * Rebuild tab bar from currently registered screens.
+     * Called by GetOrCreateMenuHub() on creation and RegisterMenuScreen() on dynamic registration.
      */
     UFUNCTION(BlueprintCallable, Category = "Menu Hub")
     void RebuildTabBar();
@@ -52,6 +63,10 @@ public:
     UFUNCTION(BlueprintPure, Category = "Menu Hub", meta = (Keywords = "Is Tab Hidden"))
     bool IsTabHidden(FGameplayTag TabID) const;
 
+    // ============================================================================
+    // BLUEPRINT EXTENSION POINTS
+    // ============================================================================
+
     UFUNCTION(BlueprintNativeEvent, Category = "Menu Hub")
     void OnTabCreated(FName TabID, UCommonButtonBase* TabButton);
     void OnTabCreated_Implementation(FName TabID, UCommonButtonBase* TabButton)
@@ -63,11 +78,8 @@ public:
     {}
 
 protected:
-    //~ UUserWidget Interface
     virtual void NativeOnInitialized() override;
-    //~ End UUserWidget Interface
 
-    /** Tabbed container primitive — handles tab list + page switcher */
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
     TObjectPtr<UMCore_TabbedContainer> TabbedContainer;
 
@@ -75,7 +87,6 @@ protected:
     TSubclassOf<UCommonActivatableWidget> EmptyStateWidgetClass;
 
 private:
-    /** Forwarding handler for TabbedContainer's OnTabAdded delegate */
     UFUNCTION()
     void HandleContainerTabAdded(FName TabID, UCommonButtonBase* TabButton);
 };

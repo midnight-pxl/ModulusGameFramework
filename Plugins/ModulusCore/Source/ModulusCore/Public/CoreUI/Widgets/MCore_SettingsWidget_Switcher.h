@@ -1,5 +1,12 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_SettingsWidget_Switcher.h
+ *
+ * Inline option cycling widget for Toggle and Dropdown setting types.
+ * Immediate-apply model: every cycle writes to the settings system immediately.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,13 +18,18 @@ class UMCore_ButtonBase;
 /**
  * Inline option cycling widget for Toggle and Dropdown setting types.
  *
- * Immediate-apply model: every cycle writes to the settings system immediately.
  * Toggle settings use two hardcoded options (Off/On). Dropdown settings copy
  * their option labels from the bound UMCore_DA_SettingDefinition.
  *
- * BindWidgets:
- *   Required: Btn_Previous (UMCore_ButtonBase), Btn_Next (UMCore_ButtonBase),
- *             Txt_CurrentOption (UCommonTextBlock)
+ * Key Features:
+ * - Automatic Toggle vs Dropdown mode detection
+ * - Wrapping cycle navigation (previous/next)
+ * - Theme-driven button and text styling
+ *
+ * Blueprint Usage:
+ *   Create a Blueprint subclass with required BindWidgets:
+ *     Btn_Previous (UMCore_ButtonBase), Btn_Next (UMCore_ButtonBase),
+ *     Txt_CurrentOption (UCommonTextBlock)
  */
 UCLASS(Abstract, Blueprintable, ClassGroup = "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_SettingsWidget_Switcher : public UMCore_SettingsWidget_Base
@@ -39,7 +51,7 @@ protected:
 	TObjectPtr<UCommonTextBlock> Txt_CurrentOption;
 
 	// ====================================================================
-	// SUBCLASS HOOKS (overrides from base)
+	// OVERRIDES
 	// ====================================================================
 
 	virtual void OnDefinitionSet_Implementation(const UMCore_DA_SettingDefinition* Definition) override;

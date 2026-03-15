@@ -1,4 +1,11 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+/**
+ * MCore_ThemeableInterface.h
+ *
+ * Interface for widgets that respond to theme changes. Implement OnThemeChanged
+ * to apply theme properties, and call RefreshTheme in NativeOnInitialized.
+ */
 
 #pragma once
 
@@ -21,17 +28,17 @@ class MODULUSCORE_API IMCore_ThemeableInterface
 public:
 	/**
 	 * Called when the active theme changes.
-	 * 
+	 *
 	 * Apply theme properties to your widget's visual elements here.
-	 * This is called automatically by RefreshTheme() and when the
-	 * global theme changes in Developer Settings.
-	 * 
+	 * Called automatically by RefreshTheme() and when the global theme
+	 * changes in Developer Settings.
+	 *
 	 * @param NewTheme The newly active theme data asset
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|Theme")
 	void OnThemeChanged(const UMCore_PDA_UITheme_Base* NewTheme);
 	virtual void OnThemeChanged_Implementation(const UMCore_PDA_UITheme_Base* NewTheme) {}
-    
+
 	/**
 	 * Request theme refresh from Developer Settings.
 	 * Call this in NativeOnInitialized() to apply the initial theme.
@@ -39,5 +46,5 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|Theme")
 	void RefreshTheme();
 	virtual void RefreshTheme_Implementation() {}
-	
+
 };

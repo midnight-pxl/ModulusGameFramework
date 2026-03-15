@@ -39,10 +39,9 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	/** If activation was blocked by BlockTags, Super already deactivated */
+	// If activation was blocked by BlockTags, Super already deactivated
 	if (!IsActivated()) { return; }
 
-	/** Apply default button labels */
 	if (Btn_Confirm)
 	{
 		Btn_Confirm->SetButtonText(ConfirmText);
@@ -55,7 +54,6 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 		Btn_Cancel->OnButtonClicked.AddDynamic(this, &UMCore_ConfirmationDialog::HandleCancelClicked);
 	}
 
-	/** Register Accept input binding */
 	if (!AcceptInputAction.IsNull())
 	{
 		FInputActionExecutedDelegate ConfirmDelegate;
@@ -63,7 +61,6 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 		RegisterBinding(AcceptInputAction, ConfirmDelegate, AcceptBindingHandle);
 	}
 
-	/** Register Back input binding */
 	if (!BackInputAction.IsNull())
 	{
 		FInputActionExecutedDelegate CancelDelegate;
@@ -76,7 +73,7 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 
 void UMCore_ConfirmationDialog::NativeOnDeactivated()
 {
-	/** Unbind button delegates to prevent double-binding on reactivation */
+	// Unbind button delegates to prevent double-binding on reactivation
 	if (Btn_Confirm)
 	{
 		Btn_Confirm->OnButtonClicked.RemoveDynamic(this, &UMCore_ConfirmationDialog::HandleConfirmClicked);
@@ -86,13 +83,12 @@ void UMCore_ConfirmationDialog::NativeOnDeactivated()
 		Btn_Cancel->OnButtonClicked.RemoveDynamic(this, &UMCore_ConfirmationDialog::HandleCancelClicked);
 	}
 
-	/** Parent handles input binding cleanup via UnregisterAllBindings */
 	Super::NativeOnDeactivated();
 }
 
 UWidget* UMCore_ConfirmationDialog::NativeGetDesiredFocusTarget() const
 {
-	/** Default focus to Cancel for safety (prevent accidental confirms) */
+	// Default focus to Cancel for safety (prevent accidental confirms)
 	return Btn_Cancel;
 }
 

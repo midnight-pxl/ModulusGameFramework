@@ -30,17 +30,17 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 	
 	UE_LOG(LogModulusEvent, Verbose, TEXT("BroadcastGlobalEvent: %s"), *EventData.EventTag.ToString());
 	
-	/** Route through event replicator if available */
+	// Route through event replicator if available
 	if (UMCore_GlobalEventReplicator* Replicator = EventReplicator.Get())
 	{
 		Replicator->RequestBroadcast(EventData);
 	}
 	else
 	{
-		/** No replicator: not configured or standalone */
+		// No replicator: not configured or standalone
 		if (HasGlobalEventAuthority())
 		{
-			/** Deliver locally */
+			// Deliver locally
 			DeliverToLocalListeners(EventData);
 			
 			if (IsNetworkedGame())
@@ -53,7 +53,7 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		}
 		else
 		{
-			/** Client w/o replicator: cannot request broadcast */
+			// Client w/o replicator: cannot request broadcast
 			UE_LOG(LogModulusEvent, Warning,
 				TEXT("Global event not broadcast - not authority and no replicator found; "
 					 "add UMCore_GlobalEventReplicator to GameState for network support."))
@@ -114,7 +114,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 	UE_LOG(LogModulusEvent, Verbose, TEXT("Delivering global event '%s' to %d listeners"),
 		*EventData.EventTag.ToString(), GlobalListeners.Num());
 	
-	/** Reverse traverse to remove stale entries */
+	// Reverse traverse to remove stale entries
 	for (int32 i = GlobalListeners.Num() - 1; i >= 0; --i)
 	{
 		TWeakObjectPtr<UMCore_EventListenerComp>& CurListener = GlobalListeners[i];
@@ -129,7 +129,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 		}
 		else
 		{
-			/** invalid pointer -- clean up */
+			// Invalid pointer — clean up
 			GlobalListeners.RemoveAt(i);
 		}
 	}
@@ -166,7 +166,7 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 		return false;
 	}
 	
-	/** Currently hardcoding param limits -- override ValidateEventRequest() to customize */
+	// Hardcoded param limits — override ValidateEventRequest() to customize
 	constexpr int32 MaxParams{8};
 	constexpr int32 MaxContextIDLength{64};
 	

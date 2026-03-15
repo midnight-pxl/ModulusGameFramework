@@ -8,7 +8,9 @@
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
 
-//~ Start of Broadcast Functions
+// ============================================================================
+// BROADCAST
+// ============================================================================
 
 void UMCore_EventFunctionLibrary::BroadcastSimpleEvent(const UObject* WorldContext,
 	FGameplayTag EventTag,
@@ -37,7 +39,6 @@ void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* World
 		return;
 	}
 
-	/** Create event data with context ID */
 	FMCore_EventData EventData(EventTag, ContextID);
 	RouteEventToSubsystem(WorldContext, EventData, EventScope);
 }
@@ -58,9 +59,9 @@ void UMCore_EventFunctionLibrary::BroadcastEvent(const UObject* WorldContext,
 	RouteEventToSubsystem(WorldContext, EventData, EventScope);
 }
 
-//~ End of Broadcast Functions
-
-//~ Start of Parameter Accessors
+// ============================================================================
+// PARAMETER ACCESSORS
+// ============================================================================
 
 FString UMCore_EventFunctionLibrary::GetEventContextID(const FMCore_EventData& EventData)
 {
@@ -106,9 +107,9 @@ float UMCore_EventFunctionLibrary::GetFloatParameter(const FMCore_EventData& Eve
 	return FCString::Atof(*InValue);
 }
 
-//~ End of Parameter Accessors
-
-//~ Subsystem Internal Routing
+// ============================================================================
+// INTERNAL
+// ============================================================================
 
 void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldContext,
 	const FMCore_EventData& EventData,
@@ -134,7 +135,7 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 
 	if (EventScope == EMCore_EventScope::Global)
 	{
-		/** Global event: Subsystem handles Authority, Replicator routing, and fallback */
+		// Global: subsystem handles authority, replicator routing, and fallback
 		if (UMCore_GlobalEventSubsystem* GlobalSystem = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
 		{
 			GlobalSystem->BroadcastGlobalEvent(EventData);
@@ -146,7 +147,7 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 	}
 	else
 	{
-		/** Local event: Route to LocalPlayerSubsystem */
+		// Local: route to LocalPlayerSubsystem
 		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
 		{
 			if (UMCore_LocalEventSubsystem* LocalSystem = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())

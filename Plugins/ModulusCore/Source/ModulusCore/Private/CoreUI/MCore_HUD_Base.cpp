@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/MCore_HUD_Base.h"
 
@@ -40,12 +40,11 @@ UMCore_UISubsystem* AMCore_HUD_Base::GetUISubsystem() const
 void AMCore_HUD_Base::DrawHUD()
 {
 	Super::DrawHUD();
-	
+
 	// Override in subclass for canvas-based drawing:
 	// - Debug visualization
 	// - Crosshairs that need sub-frame precision
 	// - Performance overlays
-	// 
+	//
 	// For widget-based UI, use UMCore_UISubsystem instead.
 }
-

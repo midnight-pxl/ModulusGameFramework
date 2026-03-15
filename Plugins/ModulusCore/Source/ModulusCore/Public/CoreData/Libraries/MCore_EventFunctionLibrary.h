@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_EventFunctionLibrary.h
+ *
+ * Blueprint function library for broadcasting and receiving GameplayTag-based
+ * events through Local and Global event subsystems.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -37,7 +44,9 @@ class MODULUSCORE_API UMCore_EventFunctionLibrary : public UBlueprintFunctionLib
 	GENERATED_BODY()
 
 public:
-	//~ Start of Broadcast Functions
+// ============================================================================
+// BROADCAST
+// ============================================================================
 	
 	/**
 	 * Broadcast signal-only event (90% of use cases)
@@ -89,9 +98,9 @@ public:
 		const TMap<FString, FString>& EventParams,
 		EMCore_EventScope EventScope = EMCore_EventScope::Local);
 	
-	//~ End of Broadcast Functions
-
-	//~ Start of Parameter Accessors
+// ============================================================================
+// PARAMETER ACCESSORS
+// ============================================================================
 	
 	/** Get context ID from event data (for events broadcast with BroadcastEventWithContext) */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus|Events")
@@ -122,7 +131,7 @@ public:
 		float DefaultValue = 0.0f);
 
 private:
-	// Internal routing function
+	/* Routes event data to the appropriate subsystem based on scope */
 	static void RouteEventToSubsystem(const UObject* WorldContext,
 		const FMCore_EventData& EventData, EMCore_EventScope EventScope);
 };

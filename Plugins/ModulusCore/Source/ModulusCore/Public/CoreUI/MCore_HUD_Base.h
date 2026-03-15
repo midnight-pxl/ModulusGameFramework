@@ -1,4 +1,11 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+/**
+ * MCore_HUD_Base.h
+ *
+ * Base HUD class bridging AHUD with the CommonUI-based
+ * PrimaryGameLayout and UISubsystem.
+ */
 
 #pragma once
 
@@ -12,10 +19,10 @@ class UMCore_UISubsystem;
 
 /**
  * Base HUD class for ModulusCore UI Framework.
- * 
+ *
  * Usage:
  * Set your GameMode's HUDClass to AMCore_HUD_Base (or derived BP)
- * 
+ *
  * @see UMCore_UISubsystem for menu registration and UI service APIs
  * @see UMCore_PrimaryGameLayout for layer stack architecture
  */
@@ -23,20 +30,20 @@ UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API AMCore_HUD_Base : public AHUD
 {
 	GENERATED_BODY()
-	
+
 public:
 	AMCore_HUD_Base(const FObjectInitializer& ObjectInitializer);
-	
+
 	/**
 	 * Returns the PrimaryGameLayout widget owned by this HUD.
 	 * May return nullptr if called before BeginPlay or on dedicated server.
 	 */
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
-	
+
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 	bool HasValidPrimaryGameLayout() const;
-	
+
 	/**
 	 * Returns the UISubsystem for the owning player.
 	 * Caches the result for subsequent calls.
@@ -45,8 +52,6 @@ public:
 	UMCore_UISubsystem* GetUISubsystem() const;
 
 protected:
-	//~ Begin AHUD Interface
-	/** Override for canvas-based drawing (debug viz, crosshairs, etc.) */
+	/* Override for canvas-based drawing (debug viz, crosshairs, etc.) */
 	virtual void DrawHUD() override;
-	//~ End AHUD Interface
 };

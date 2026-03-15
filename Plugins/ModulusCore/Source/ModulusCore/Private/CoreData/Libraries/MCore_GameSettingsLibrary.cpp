@@ -1,5 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
-
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 
@@ -20,7 +19,7 @@
 #include "GameFramework/GameUserSettings.h"
 
 // ============================================================================
-// CONSOLE VARIABLES (registered DataAssets target)
+// CONSOLE VARIABLES
 // ============================================================================
 
 static TAutoConsoleVariable<float> CVarMouseSensitivity(
@@ -87,9 +86,9 @@ static TAutoConsoleVariable<int32> CVarSubtitles(
 	);
 
 static TAutoConsoleVariable<int32> CVarScreenReader(
-	TEXT("Modulus.Accessibility.ScreenReader"), 
+	TEXT("Modulus.Accessibility.ScreenReader"),
 	0,
-	TEXT("Screen reader support (0=off, 1=on)"), 
+	TEXT("Screen reader support (0=off, 1=on)"),
 	ECVF_Default
 	);
 
@@ -107,22 +106,22 @@ static TAutoConsoleVariable<int32> CVarLargeText(
 UMCore_PlayerSettingsSave* UMCore_GameSettingsLibrary::GetPlayerSave(const UObject* WorldContextObject)
 {
 	if (!WorldContextObject) { return nullptr; }
-	
+
 	const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject,
 		EGetWorldErrorMode::LogAndReturnNull);
 	if (!World) { return nullptr; }
-	
+
 	const ULocalPlayer* LocalPlayer = World->GetFirstLocalPlayerFromController();
 	if (!LocalPlayer) { return nullptr; }
-	
+
 	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
 	if (!UISubsystem) { return nullptr; }
-	
+
 	return UISubsystem->GetPlayerSettings();
 }
 
 // ============================================================================
-// TYPED GETTERS (committed → DataAsset default)
+// TYPED GETTERS
 // ============================================================================
 
 float UMCore_GameSettingsLibrary::GetSettingFloat(const UObject* WorldContextObject,
@@ -198,7 +197,7 @@ bool UMCore_GameSettingsLibrary::GetSettingBool(const UObject* WorldContextObjec
 }
 
 // ============================================================================
-// TAG-BASED GETTER (resolve via DefaultSettingsCollection)
+// TAG-BASED GETTER
 // ============================================================================
 
 int32 UMCore_GameSettingsLibrary::GetSettingIntByTag(const UObject* WorldContextObject,
@@ -226,7 +225,7 @@ int32 UMCore_GameSettingsLibrary::GetSettingIntByTag(const UObject* WorldContext
 }
 
 // ============================================================================
-// TYPED SETTERS (immediate-apply, batch)
+// TYPED SETTERS
 // ============================================================================
 
 void UMCore_GameSettingsLibrary::SetSettingFloat(
@@ -244,14 +243,12 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 		return;
 	}
 
-	/** Confirmation tracking across the batch */
 	TArray<FString> AffectedTags;
 	TArray<FString> PreviousValues;
 	TArray<FGameplayTag> ProcessedTags;
 	float LongestRevertDelay = 0.f;
 	bool bAnyRequiresConfirmation = false;
 
-	/** Pass 1: write all values to committed map and apply to engine */
 	for (const FMCore_FloatSettingChange& Change : Changes)
 	{
 		if (!Change.Setting)
@@ -264,24 +261,19 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 		const FString Key = Change.Setting->GetSaveKey();
 		float ClampedValue = Change.Value;
 
-		/** Clamp to DataAsset-defined range */
 		if (Change.Setting->SettingType == EMCore_SettingType::Slider)
 		{
 			ClampedValue = FMath::Clamp(ClampedValue,
 				Change.Setting->MinValue, Change.Setting->MaxValue);
 		}
 
-		/** Capture previous committed value before overwriting */
+		// Capture previous committed value before overwriting
 		float PreviousFloat = Change.Setting->DefaultValue;
 		Save->GetFloatSetting(Key, PreviousFloat);
 
-		/** Write to committed map */
 		Save->SetFloatSetting(Key, ClampedValue);
-
-		/** Apply to engine */
 		ApplySettingToEngine(Change.Setting, ClampedValue, 0, false);
 
-		/** Track setting for notification or confirmation */
 		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
 		{
 			bAnyRequiresConfirmation = true;
@@ -297,17 +289,15 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 		}
 	}
 
-	/** Pass 2: single GUS flush for the entire batch */
 	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
 		GUS->ApplySettings(false);
 	}
 
-	/** Pass 3: save immediately or broadcast confirmation event */
 	if (bAnyRequiresConfirmation)
 	{
-		/** Do not save — UMCore_SettingsRevertCountdown decides
-		 *  whether to save (confirm) or revert (discard) */
+		// Do not save — UMCore_SettingsRevertCountdown decides
+		// whether to save (confirm) or revert (discard)
 		TMap<FString, FString> EventParams;
 		EventParams.Add(TEXT("SettingTags"),
 			FString::Join(AffectedTags, TEXT("|")));
@@ -326,11 +316,8 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 		SavePlayerSettings(WorldContextObject);
 	}
 
-	/** Pass 4: notify listeners of each changed setting (skip reset operations).
-	 *  Confirmation-required settings are intentionally excluded — their
-	 *  BroadcastSettingChanged is deferred to UMCore_SettingsRevertCountdown,
-	 *  which calls it on user confirm using the SettingTags already present
-	 *  in the ConfirmationRequired event payload. */
+	/* Confirmation-required settings excluded — their BroadcastSettingChanged
+	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
 	if (!bBypassConfirmation)
 	{
 		for (const FGameplayTag& Tag : ProcessedTags)
@@ -355,14 +342,12 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 		return;
 	}
 
-	/** Confirmation tracking across the batch */
 	TArray<FString> AffectedTags;
 	TArray<FString> PreviousValues;
 	TArray<FGameplayTag> ProcessedTags;
 	float LongestRevertDelay = 0.f;
 	bool bAnyRequiresConfirmation = false;
 
-	/** Pass 1: write all values to committed map and apply to engine */
 	for (const FMCore_IntSettingChange& Change : Changes)
 	{
 		if (!Change.Setting)
@@ -375,7 +360,6 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 		const FString Key = Change.Setting->GetSaveKey();
 		int32 ClampedValue = Change.Value;
 
-		/** Clamp to valid dropdown range */
 		if (Change.Setting->SettingType == EMCore_SettingType::Dropdown
 			&& Change.Setting->DropdownOptions.Num() > 0)
 		{
@@ -383,17 +367,13 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 				0, Change.Setting->DropdownOptions.Num() - 1);
 		}
 
-		/** Capture previous committed value before overwriting */
+		// Capture previous committed value before overwriting
 		int32 PreviousInt = Change.Setting->DefaultDropdownIndex;
 		Save->GetIntSetting(Key, PreviousInt);
 
-		/** Write to committed map */
 		Save->SetIntSetting(Key, ClampedValue);
-
-		/** Apply to engine */
 		ApplySettingToEngine(Change.Setting, 0.f, ClampedValue, false);
 
-		/** Track setting for notification or confirmation */
 		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
 		{
 			bAnyRequiresConfirmation = true;
@@ -409,13 +389,11 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 		}
 	}
 
-	/** Pass 2: single GUS flush for the entire batch */
 	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
 		GUS->ApplySettings(false);
 	}
 
-	/** Pass 3: save immediately or broadcast confirmation event */
 	if (bAnyRequiresConfirmation)
 	{
 		TMap<FString, FString> EventParams;
@@ -436,11 +414,8 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 		SavePlayerSettings(WorldContextObject);
 	}
 
-	/** Pass 4: notify listeners of each changed setting (skip reset operations).
-	 *  Confirmation-required settings are intentionally excluded — their
-	 *  BroadcastSettingChanged is deferred to UMCore_SettingsRevertCountdown,
-	 *  which calls it on user confirm using the SettingTags already present
-	 *  in the ConfirmationRequired event payload. */
+	/* Confirmation-required settings excluded — their BroadcastSettingChanged
+	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
 	if (!bBypassConfirmation)
 	{
 		for (const FGameplayTag& Tag : ProcessedTags)
@@ -465,14 +440,12 @@ void UMCore_GameSettingsLibrary::SetSettingBool(
 		return;
 	}
 
-	/** Confirmation tracking across the batch */
 	TArray<FString> AffectedTags;
 	TArray<FString> PreviousValues;
 	TArray<FGameplayTag> ProcessedTags;
 	float LongestRevertDelay = 0.f;
 	bool bAnyRequiresConfirmation = false;
 
-	/** Pass 1: write all values to committed map and apply to engine */
 	for (const FMCore_BoolSettingChange& Change : Changes)
 	{
 		if (!Change.Setting)
@@ -484,17 +457,13 @@ void UMCore_GameSettingsLibrary::SetSettingBool(
 
 		const FString Key = Change.Setting->GetSaveKey();
 
-		/** Capture previous committed value before overwriting */
+		// Capture previous committed value before overwriting
 		bool PreviousBool = Change.Setting->DefaultToggleValue;
 		Save->GetBoolSetting(Key, PreviousBool);
 
-		/** Write to committed map */
 		Save->SetBoolSetting(Key, Change.Value);
-
-		/** Apply to engine */
 		ApplySettingToEngine(Change.Setting, 0.f, 0, Change.Value);
 
-		/** Track setting for notification or confirmation */
 		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
 		{
 			bAnyRequiresConfirmation = true;
@@ -510,13 +479,11 @@ void UMCore_GameSettingsLibrary::SetSettingBool(
 		}
 	}
 
-	/** Pass 2: single GUS flush for the entire batch */
 	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
 		GUS->ApplySettings(false);
 	}
 
-	/** Pass 3: save immediately or broadcast confirmation event */
 	if (bAnyRequiresConfirmation)
 	{
 		TMap<FString, FString> EventParams;
@@ -537,11 +504,8 @@ void UMCore_GameSettingsLibrary::SetSettingBool(
 		SavePlayerSettings(WorldContextObject);
 	}
 
-	/** Pass 4: notify listeners of each changed setting (skip reset operations).
-	 *  Confirmation-required settings are intentionally excluded — their
-	 *  BroadcastSettingChanged is deferred to UMCore_SettingsRevertCountdown,
-	 *  which calls it on user confirm using the SettingTags already present
-	 *  in the ConfirmationRequired event payload. */
+	/* Confirmation-required settings excluded — their BroadcastSettingChanged
+	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
 	if (!bBypassConfirmation)
 	{
 		for (const FGameplayTag& Tag : ProcessedTags)
@@ -560,9 +524,8 @@ void UMCore_GameSettingsLibrary::ResetSettingToDefault(const UObject* WorldConte
 {
 	if (!Setting) { return; }
 
-	/** const_cast is safe: Setting is a UDataAsset from the asset registry.
-	 *  The const parameter is a caller-side guarantee; the change struct
-	 *  requires a non-const TObjectPtr for UPROPERTY serialization. */
+	// const_cast safe: DataAsset from asset registry; const parameter is
+	// caller-side guarantee; change struct needs non-const for UPROPERTY serialization
 	UMCore_DA_SettingDefinition* MutableSetting =
 		const_cast<UMCore_DA_SettingDefinition*>(Setting);
 
@@ -595,7 +558,6 @@ void UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(const UObject* WorldC
 		return;
 	}
 
-	/** Collect non-null definitions from the collection */
 	TArray<UMCore_DA_SettingDefinition*> Definitions;
 	for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Collection->GetAllSettings())
 	{
@@ -672,7 +634,6 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDef
 {
 	if (!Setting) { return; }
 
-	/** GameUserSettings property (FProperty reflection) */
 	if (!Setting->GameUserSettingsProperty.IsNone())
 	{
 		switch (Setting->SettingType)
@@ -691,7 +652,6 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDef
 		}
 	}
 
-	/** Console variable */
 	if (!Setting->ConsoleVariable.IsNone())
 	{
 		switch (Setting->SettingType)
@@ -710,7 +670,6 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDef
 		}
 	}
 
-	/** SoundClass volume (Slider only) */
 	if (!Setting->SoundClass.IsNull() && Setting->SettingType == EMCore_SettingType::Slider)
 	{
 		ApplyToSoundClass(Setting->SoundClass, FloatValue);
@@ -718,10 +677,9 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDef
 }
 
 // ============================================================================
-// GAME USER SETTINGS (FProperty reflection)
+// GAME USER SETTINGS (FPROPERTY REFLECTION)
 // ============================================================================
 
-/** float override */
 void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyName, float Value)
 {
 	UGameUserSettings* GameSettings = UGameUserSettings::GetGameUserSettings();
@@ -749,7 +707,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 			TEXT("GameSetting property '%s' is not float/double"), *PropertyName.ToString());
 	}
 }
-/** int override */
+
 void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyName, int32 Value)
 {
 	UGameUserSettings* GameSettings = UGameUserSettings::GetGameUserSettings();
@@ -773,7 +731,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 			TEXT("GameSetting property '%s' is not int32"), *PropertyName.ToString());
 	}
 }
-/** bool override */
+
 void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyName, bool Value)
 {
 	UGameUserSettings* GameSettings = UGameUserSettings::GetGameUserSettings();
@@ -802,7 +760,6 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 // CONSOLE VARIABLES
 // ============================================================================
 
-/** float override */
 void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, float Value)
 {
 	IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(*CVarName.ToString());
@@ -816,7 +773,7 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, f
 			TEXT("Console variable '%s' not found"), *CVarName.ToString());
 	}
 }
-/** int override */
+
 void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, int32 Value)
 {
 	IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(*CVarName.ToString());
@@ -830,7 +787,7 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, i
 			TEXT("Console variable '%s' not found"), *CVarName.ToString());
 	}
 }
-/** bool override */
+
 void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, bool Value)
 {
 	IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(*CVarName.ToString());
@@ -874,7 +831,7 @@ void UMCore_GameSettingsLibrary::BroadcastSettingChanged(const UObject* WorldCon
 	const FGameplayTag& SettingTag)
 {
 	if (!SettingTag.IsValid() || !WorldContextObject) { return; }
-	
+
 	UMCore_EventFunctionLibrary::BroadcastSimpleEvent(WorldContextObject,
 		SettingTag, EMCore_EventScope::Local);
 }

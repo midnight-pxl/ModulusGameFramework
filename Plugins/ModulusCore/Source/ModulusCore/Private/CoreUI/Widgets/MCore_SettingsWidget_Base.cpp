@@ -1,5 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
-
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/MCore_SettingsWidget_Base.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
@@ -32,7 +31,6 @@ void UMCore_SettingsWidget_Base::InitFromDefinition(const UMCore_DA_SettingDefin
 
 	SettingDefinition = InDefinition;
 
-	/** Populate common display text */
 	if (Txt_SettingName)
 	{
 		Txt_SettingName->SetText(InDefinition->DisplayName);
@@ -49,7 +47,6 @@ void UMCore_SettingsWidget_Base::InitFromDefinition(const UMCore_DA_SettingDefin
 		*InDefinition->DisplayName.ToString(),
 		*InDefinition->SettingTag.ToString());
 
-	/** Let subclass read type-specific properties */
 	OnDefinitionSet(InDefinition);
 }
 
@@ -59,7 +56,7 @@ FGameplayTag UMCore_SettingsWidget_Base::GetSettingTag() const
 }
 
 // ============================================================================
-// VALUE INTERFACE (defaults)
+// VALUE INTERFACE (DEFAULTS)
 // ============================================================================
 
 void UMCore_SettingsWidget_Base::ResetToDefault_Implementation()
@@ -89,7 +86,6 @@ void UMCore_SettingsWidget_Base::StepRight_Implementation()
 void UMCore_SettingsWidget_Base::OnDefinitionSet_Implementation(
 	const UMCore_DA_SettingDefinition* Definition)
 {
-	/** Default no-op — subclass reads type-specific DataAsset properties here */
 }
 
 void UMCore_SettingsWidget_Base::BroadcastValueChanged()
@@ -202,7 +198,6 @@ void UMCore_SettingsWidget_Base::NativeOnInitialized()
 
 	BindThemeDelegate();
 
-	/** Apply initial theme */
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
 		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())

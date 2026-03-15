@@ -16,7 +16,7 @@ void UMCore_GlobalEventReplicator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	/** Register w/ GlobalEventSubsystem */
+	// Register w/ GlobalEventSubsystem
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 	{
 		Subsystem->RegisterEventReplicator(this);
@@ -30,7 +30,7 @@ void UMCore_GlobalEventReplicator::BeginPlay()
 
 void UMCore_GlobalEventReplicator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	/** Unregister from the GlobalEventSubsystem */
+	// Unregister from the GlobalEventSubsystem
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 	{
 		Subsystem->UnregisterEventReplicator(this);
@@ -52,7 +52,7 @@ void UMCore_GlobalEventReplicator::RequestBroadcast(const FMCore_EventData& Even
 	
 	if (Owner->HasAuthority())
 	{
-		/** Server/Standalone: Deliver locally + multicast to Clients */
+		// Server/Standalone: deliver locally + multicast to clients
 		if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 		{
 			Subsystem->DeliverToLocalListeners(EventData);
@@ -70,7 +70,7 @@ void UMCore_GlobalEventReplicator::ServerRequestBroadcast_Implementation(const F
 	UE_LOG(LogModulusEvent, Verbose, TEXT("Server received Broadcast request: %s"),
 		*EventData.EventTag.ToString());
 	
-	/** Server has authority -- deliver locally and multicast */
+	// Server has authority — deliver locally and multicast
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 	{
 		Subsystem->DeliverToLocalListeners(EventData);
@@ -84,7 +84,7 @@ bool UMCore_GlobalEventReplicator::ServerRequestBroadcast_Validate(const FMCore_
 	{
 		return Subsystem->ValidateEventRequest(EventData);
 	}
-	/** No Subsystem Active -- reject */
+	// No subsystem active — reject
 	return false;
 }
 
@@ -92,7 +92,7 @@ void UMCore_GlobalEventReplicator::MulticastToClients_Implementation(const FMCor
 {
 	AActor* Owner = GetOwner();
 	
-	/** Skip on Server -- Delivered earlier in Broadcast flow */
+	// Skip on server — already delivered in RequestBroadcast
 	if (Owner && Owner->HasAuthority()) { return; }
 	
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
@@ -107,7 +107,7 @@ UMCore_GlobalEventSubsystem* UMCore_GlobalEventReplicator::GetEventSubsystem() c
 {
 	if (CachedSubsystem.IsValid()) { return CachedSubsystem.Get(); }
 	
-	/** Find subsystem + cache */
+	// Find subsystem + cache
 	UWorld* World = GetWorld();
 	if (!World) { return nullptr; }
 	

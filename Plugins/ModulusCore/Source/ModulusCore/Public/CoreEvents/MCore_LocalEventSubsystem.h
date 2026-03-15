@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_LocalEventSubsystem.h
+ *
+ * Per-LocalPlayer subsystem for broadcasting and receiving client-only
+ * GameplayTag events with zero network overhead.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -50,7 +57,7 @@ protected:
 	virtual void Deinitialize() override;
 	
 private:
-	/** Registered local listener components */
+	/* Registered local listener components */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> LocalListeners;
 };

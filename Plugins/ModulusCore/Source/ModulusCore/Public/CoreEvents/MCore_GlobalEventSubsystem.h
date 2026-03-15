@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_GlobalEventSubsystem.h
+ *
+ * GameInstance subsystem for server-authoritative event broadcasting
+ * across all connected clients via the GlobalEventReplicator.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -47,9 +54,9 @@ public:
 	void BroadcastGlobalEvent(const FMCore_EventData& EventData);
 	
 	/**
-	* Register the network replicator component.
-	* Called by GlobalEventReplicator::BeginPlay().
-	*/
+	 * Register the network replicator component.
+	 * Called by GlobalEventReplicator::BeginPlay().
+	 */
 	void RegisterEventReplicator(UMCore_GlobalEventReplicator* Replicator);
 
 	/**
@@ -93,13 +100,13 @@ protected:
 	virtual void Deinitialize() override;
 
 private:
-	/** Registered global listener components */
+	/* Registered global listener components */
 	UPROPERTY()
 	TArray<TWeakObjectPtr<UMCore_EventListenerComp>> GlobalListeners;
 	
-	/** Cached reference to the network replicator on GameState */
+	/* Cached reference to the network replicator on GameState */
 	TWeakObjectPtr<UMCore_GlobalEventReplicator> EventReplicator;
 
-	/** Check if we're in a networked game (not standalone) */
+	/* Check if we're in a networked game (not standalone) */
 	bool IsNetworkedGame() const;
 };

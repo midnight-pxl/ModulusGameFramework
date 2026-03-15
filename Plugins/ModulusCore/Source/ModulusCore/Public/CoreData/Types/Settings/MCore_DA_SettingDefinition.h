@@ -1,4 +1,12 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+/**
+ * MCore_DA_SettingDefinition.h
+ *
+ * DataAsset defining a single game setting: type, value range, defaults,
+ * category, and how it applies to engine systems (GameUserSettings, CVars,
+ * SoundClasses).
+ */
 
 #pragma once
 
@@ -12,111 +20,113 @@ class UInputAction;
 class UInputMappingContext;
 class USoundClass;
 
-/** How slider values display in the UI */
+/* How slider values display in the UI */
 UENUM(BlueprintType)
 enum class EMCore_SliderDisplayFormat : uint8
 {
-	/** Show raw value: 0.75 */
+	/* Show raw value: 0.75 */
 	RawValue,
-	/** Show percentage: 75% */
+	/* Show percentage: 75% */
 	Percentage,
-	/** Show integer: 75 */
+	/* Show integer: 75 */
 	WholeNumber
 };
 
 /**
- * Data Asset for defining a single game setting.
+ * DataAsset defining a single game setting.
  *
- * Each asset describes one setting: type, value range, defaults,
- * category, how it applies to engine systems (UGameUserSettings, CVars,
- * SoundClasses), etc
+ * Key Features:
+ * - Supports Toggle, Slider, and Dropdown setting types
+ * - GameplayTag-based identity and categorization
+ * - Configurable engine apply targets (GameUserSettings, CVars, SoundClasses)
+ * - Optional confirmation countdown for destructive settings
+ * - Editor-time data validation
+ *
+ * Blueprint Usage:
+ *   Create as a DataAsset in the Content Browser. Reference from
+ *   UMCore_DA_SettingsCollection and pass to UMCore_GameSettingsLibrary.
  */
 UCLASS(BlueprintType, Const)
 class MODULUSCORE_API UMCore_DA_SettingDefinition : public UDataAsset
 {
 	GENERATED_BODY()
-	
+
 public:
-	
-	/** Unique gameplay tag identifying this setting (e.g. Settings.Graphics.ShadowQuality) */
+
+	// ============================================================================
+	// IDENTITY
+	// ============================================================================
+
+	/* Unique gameplay tag identifying this setting (e.g. Settings.Graphics.ShadowQuality) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Identity",
 		meta = (Categories = "Settings"))
 	FGameplayTag SettingTag;
 
-	/** Display name shown in settings UI */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Identity")
 	FText DisplayName;
 
-	/** Optional tooltip/description */
+	/* Optional tooltip/description */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Identity")
 	FText Description;
-	
-	// ========================================================================
-	// TYPE & VALUES
-	// ========================================================================
 
-	/** What kind of control this setting uses */
+	// ============================================================================
+	// TYPE & VALUES
+	// ============================================================================
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Type")
 	EMCore_SettingType SettingType = EMCore_SettingType::Toggle;
-	
-	/** How this slider value displays in the UI (Slider type) */
+
+	/* How this slider value displays in the UI */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 				EditConditionHides))
 	EMCore_SliderDisplayFormat SliderDisplayFormat = EMCore_SliderDisplayFormat::RawValue;
 
-	/** Minimum value (Slider type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 				EditConditionHides, ClampMin = "0.0"))
 	float MinValue{0.0f};
 
-	/** Maximum value (Slider type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 				EditConditionHides, ClampMin = "0.0"))
 	float MaxValue{1.0f};
 
-	/** Step increment (Slider type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 				EditConditionHides))
 	float StepSize{0.02f};
 
-	/** Default float value (Slider type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Slider",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 				EditConditionHides))
 	float DefaultValue{0.5f};
 
-	/** Default bool value (Toggle type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Toggle",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Toggle",
 				EditConditionHides))
 	bool DefaultToggleValue{false};
 
-	/** Dropdown option labels (Dropdown type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
 				EditConditionHides))
 	TArray<FText> DropdownOptions;
 
-	/** Default selected index (Dropdown type) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
 				EditConditionHides, ClampMin = "0"))
 	int32 DefaultDropdownIndex{0};
 
-	// ========================================================================
+	// ============================================================================
 	// CATEGORIZATION
-	// ========================================================================
+	// ============================================================================
 
-	/** Category tag for grouping (e.g. Settings.Category.Graphics) */
+	/* Category tag for grouping (e.g. Settings.Category.Graphics) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Category",
 		meta = (Categories = "Settings.Category"))
 	FGameplayTag CategoryTag;
 
-	/** Sort priority within category (lower = appears first) */
+	/* Sort priority within category (lower = appears first) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Category")
 	int32 SortOrder{0};
 
@@ -128,31 +138,31 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|Category")
 	FText SectionName;
 
-	// ========================================================================
+	// ============================================================================
 	// APPLY CONFIGURATION
-	// ========================================================================
+	// ============================================================================
 
-	/** UGameUserSettings property name to write to (empty = custom handling only) */
+	/* UGameUserSettings property name to write to (empty = custom handling only) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
 		meta = (DisplayName = "GameUserSettings Property"))
 	FName GameUserSettingsProperty;
 
-	/** Console variable to write to (empty = none) */
+	/* Console variable to write to (empty = none) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply")
 	FName ConsoleVariable;
 
-	/** Sound class to adjust volume on (Audio settings) */
+	/* Sound class to adjust volume on (Audio settings) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 		        EditConditionHides))
 	TSoftObjectPtr<USoundClass> SoundClass;
 
-	// ========================================================================
+	// ============================================================================
 	// BEHAVIOR
-	// ========================================================================
+	// ============================================================================
 
 	/**
-	 * If true, applying this setting immediately shows UMCore_SettingsRevertCountdown.
+	 * If true, applying this setting shows UMCore_SettingsRevertCountdown.
 	 * Use for destructive settings (resolution, display mode) that may render
 	 * the screen unreadable. The countdown auto-reverts if not confirmed.
 	 */
@@ -160,10 +170,7 @@ public:
 		meta = (DisplayName = "Requires Confirmation"))
 	bool bRequiresConfirmation = false;
 
-	/**
-	 * Duration of the revert countdown in seconds.
-	 * Only relevant when bRequiresConfirmation is true.
-	 */
+	/* Duration of the revert countdown in seconds (only when bRequiresConfirmation is true) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Behavior",
 		meta = (EditCondition = "bRequiresConfirmation",
 				EditConditionHides,
@@ -171,15 +178,25 @@ public:
 				DisplayName = "Confirmation Revert Delay (s)"))
 	float ConfirmationRevertDelay = 10.0f;
 
-	// ========================================================================
+	// ============================================================================
 	// METHODS
-	// ========================================================================
+	// ============================================================================
 
-	/** Get the save key derived from SettingTag (dots replaced with underscores) */
+	/**
+	 * Get the save key derived from SettingTag (dots replaced with underscores).
+	 *
+	 * Blueprint Usage:
+	 *   Returns the string key used in UMCore_PlayerSettingsSave typed maps.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	FString GetSaveKey() const;
 
-	/** Validate this setting definition */
+	/**
+	 * Validate this setting definition.
+	 *
+	 * Blueprint Usage:
+	 *   Returns false if SettingTag/DisplayName is missing or values are out of range.
+	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	bool IsValid() const;
 

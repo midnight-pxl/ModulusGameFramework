@@ -1,12 +1,22 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC.
 
+/**
+ * MCore_EventData.h
+ *
+ * Event data structures for the Modulus tag-based event system,
+ * including scope enumeration, parameter storage, and RPC-safe payload.
+ */
+
 #pragma once
 
 #include "GameplayTagContainer.h"
 #include "MCore_EventData.generated.h"
 
 /**
- * Event scope enumeration - determines routing behavior
+ * Determines how an event is routed through the system.
+ *
+ * Blueprint Usage: Select scope when calling BroadcastSimpleEvent or similar.
+ * Authority: Local requires no authority; Global requires server validation.
  */
 UENUM(BlueprintType)
 enum class EMCore_EventScope : uint8
@@ -15,9 +25,7 @@ enum class EMCore_EventScope : uint8
 	Global	UMETA(DisplayName="Global (All Players)", ToolTip = "All players - Player actions, gameplay state, multiplayer events, etc.")
 };
 
-/**
- * Single parameter entry - keeps key and value together (RPC-safe)
- */
+/* Single key-value parameter entry, RPC-safe */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_EventParameter
 {
@@ -36,8 +44,12 @@ struct MODULUSCORE_API FMCore_EventParameter
 };
 
 /**
- * Event data structure - RPC-compatible with fast lookup helpers
- * Optimized for <10 parameters (95% of use cases)
+ * RPC-compatible event payload with GameplayTag identifier and optional parameters.
+ *
+ * Key Features:
+ * - Tag-based identification for decoupled listener matching
+ * - Optional ContextID for single-identifier events
+ * - TArray-based parameters optimized for <10 entries (95% of use cases)
  */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_EventData
@@ -64,7 +76,7 @@ struct MODULUSCORE_API FMCore_EventData
 		EventParams.Reserve(InEventParams.Num());
 		for (const auto& Pair : InEventParams)
 		{
-			/** Skip invalid entries */
+			// Skip invalid entries
 			if (!Pair.Key.IsEmpty())
 			{
 				EventParams.Emplace(Pair.Key, Pair.Value);
@@ -74,10 +86,10 @@ struct MODULUSCORE_API FMCore_EventData
 
 	bool IsValid() const { return EventTag.IsValid(); }
 
-	/** Simple parameter lookup for rare complex events */
+	/* Parameter lookup by key, returns DefaultValue if not found */
 	FString GetParameter(const FString& Key, const FString& DefaultValue = TEXT("")) const
 	{
-		/** Linear search is optimal for typical 1-8 parameters */
+		// Linear search is optimal for typical 1-8 parameters
 		for (const FMCore_EventParameter& Param : EventParams)
 		{
 			if (Param.Key == Key)

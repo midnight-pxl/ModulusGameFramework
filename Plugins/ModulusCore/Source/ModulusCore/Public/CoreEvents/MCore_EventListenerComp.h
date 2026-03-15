@@ -1,5 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
+/**
+ * MCore_EventListenerComp.h
+ *
+ * Drop-in ActorComponent for receiving Local and Global GameplayTag events
+ * with automatic subsystem registration and tag-based filtering.
+ */
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -59,10 +66,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Event Handling")
 	void OnEventReceived(const FMCore_EventData& EventData, bool bWasGlobalEvent);
 	
-	/** Internal - called by subsystems to deliver events. Do not call directly */
+	/* Called by subsystems to deliver events — do not call directly */
 	void DeliverEvent(const FMCore_EventData& EventData, bool bWasGlobalEvent);
 
-	/** Internal - check if this component should receive a specific event based on filters */
+	/* Check if this component should receive a specific event based on tag filters */
 	bool ShouldReceiveEvent(const FMCore_EventData& EventData, bool bIsGlobalEvent) const;
 
 protected:
@@ -70,11 +77,11 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
-	/** Cached reference to local event subsystem */
+	/* Cached reference to local event subsystem */
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_LocalEventSubsystem> CachedLocalSubsystem;
 
-	/** Cached reference to global event subsystem */
+	/* Cached reference to global event subsystem */
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_GlobalEventSubsystem> CachedGlobalSubsystem;
 };

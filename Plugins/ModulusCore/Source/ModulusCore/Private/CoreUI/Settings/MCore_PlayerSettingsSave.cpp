@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved.
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved.
 
 #include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
 #include "Kismet/GameplayStatics.h"
@@ -81,7 +81,6 @@ UMCore_PlayerSettingsSave* UMCore_PlayerSettingsSave::LoadPlayerSettings()
 		}
 	}
 
-	/** No save found or cast failed — create fresh defaults */
 	return Cast<UMCore_PlayerSettingsSave>(
 		UGameplayStatics::CreateSaveGameObject(UMCore_PlayerSettingsSave::StaticClass()));
 }
@@ -90,7 +89,6 @@ void UMCore_PlayerSettingsSave::LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded 
 {
 	if (!UGameplayStatics::DoesSaveGameExist(GetSaveSlotName(), GetUserIndex()))
 	{
-		/** No save on disk — create defaults synchronously and fire callback */
 		UMCore_PlayerSettingsSave* NewSettings = Cast<UMCore_PlayerSettingsSave>(
 			UGameplayStatics::CreateSaveGameObject(UMCore_PlayerSettingsSave::StaticClass()));
 		OnLoaded.ExecuteIfBound(NewSettings);
@@ -175,7 +173,7 @@ void UMCore_PlayerSettingsSave::ValidateSettings()
 void UMCore_PlayerSettingsSave::ApplyUIScale()
 {
 	if (!GEngine) { return; }
-	
+
 	UUserInterfaceSettings* UISettings = GetMutableDefault<UUserInterfaceSettings>();
 	if (!UISettings) { return; }
 

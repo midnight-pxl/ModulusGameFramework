@@ -1,4 +1,11 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+/**
+ * MCore_NetworkingInterface.h
+ *
+ * Networking interface providing authority validation and network lifecycle hooks.
+ * Implemented by UMCore_NetworkingComponent for actor components.
+ */
 
 #pragma once
 
@@ -6,7 +13,6 @@
 #include "UObject/Interface.h"
 #include "MCore_NetworkingInterface.generated.h"
 
-// This class does not need to be modified.
 UINTERFACE(BlueprintType, Blueprintable)
 class UMCore_NetworkingInterface : public UInterface
 {
@@ -14,12 +20,12 @@ class UMCore_NetworkingInterface : public UInterface
 };
 
 /**
- * Networking interface for ModulusCore components
+ * Networking interface for ModulusCore components.
  *
- * Provides common networking contract for components that need authority validation
- * and network lifecycle hooks. Implemented by UMCore_NetworkingComponent.
+ * Provides a common networking contract for components that need authority validation
+ * and network lifecycle hooks.
  *
- * Derived Classes:
+ * Key Implementors:
  * - UMCore_NetworkingComponent (base implementation)
  * - UMCore_EventListenerComp (uses networking base)
  */
@@ -29,19 +35,17 @@ class MODULUSCORE_API IMCore_NetworkingInterface
 
 public:
 
-	/** Check if this component/actor has network authority (pure virtual - must implement) */
+	/* Pure virtual - must be implemented by derived classes */
 	virtual bool HasNetworkAuthority() const = 0;
 
-	/** Called when network system initializes (override for custom initialization) */
 	virtual void OnNetworkInitialized() {}
 
-	/** Called when network system shuts down (override for custom cleanup) */
 	virtual void OnNetworkShutdown() {}
 
 	/**
-	 * Called when authority state changes
+	 * Called when authority state changes.
 	 *
-	 * @param bHasAuthority - True if component gained authority, false if lost
+	 * @param bHasAuthority True if component gained authority, false if lost
 	 */
 	virtual void OnAuthorityChanged(bool bHasAuthority) {}
 };
