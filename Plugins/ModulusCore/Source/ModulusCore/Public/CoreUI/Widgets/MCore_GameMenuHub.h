@@ -1,4 +1,4 @@
-﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #pragma once
 
@@ -7,21 +7,21 @@
 #include "MCore_GameMenuHub.generated.h"
 
 class UCommonButtonBase;
-class UCommonAnimatedSwitcher;
-class UCommonTabListWidgetBase;
+class UCommonActivatableWidget;
+class UMCore_TabbedContainer;
 struct FGameplayTag;
 
 /**
  * In-Game Menu Hub - Tabbed interface for plugin menu pages
- * 
+ *
  * Architecture:
  * - Lives on MCore_GameMenuLayer when active
- * - Uses CommonUI's UCommonTabListWidgetBase for tab management
+ * - Composes UMCore_TabbedContainer for tab/page management
  * - Displays active tab's page widget in stack
- * 
+ *
  * Usage (Open Menu):
  *   UISubsystem->GetOrCreateMenuHub() → Adds to GameMenuLayer
- * 
+ *
  * Plugin Registration:
  *   UISubsystem->RegisterMenuScreen(ScreenClass, CategoryTag, Priority);
  */
@@ -33,22 +33,22 @@ class MODULUSCORE_API UMCore_GameMenuHub : public UCommonActivatableWidget
 public:
     UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializer);
 
-    /** 
+    /**
      * Rebuild tab bar from currently registered screens
      * Called by: GetOrCreateMenuHub() on creation, RegisterMenuScreen() on dynamic registration
      */
     UFUNCTION(BlueprintCallable, Category = "Menu Hub")
     void RebuildTabBar();
-    
+
     UFUNCTION(BlueprintCallable, Category = "Menu Hub", meta = (Keywords = "Toggle Lock Tab Button"))
     bool SetTabEnabled(FGameplayTag TabID, bool bEnabled);
-    
+
     UFUNCTION(BlueprintCallable, Category = "Menu Hub", meta = (Keywords = "Toggle Tab Visibility"))
     bool SetTabHidden(FGameplayTag TabID, bool bIsHidden);
-    
+
     UFUNCTION(BlueprintPure, Category = "Menu Hub", meta = (Keywords = "Is Tab Enabled"))
     bool IsTabEnabled(FGameplayTag TabID) const;
-    
+
     UFUNCTION(BlueprintPure, Category = "Menu Hub", meta = (Keywords = "Is Tab Hidden"))
     bool IsTabHidden(FGameplayTag TabID) const;
 
@@ -62,35 +62,20 @@ public:
     void OnPageCreated_Implementation(FName TabID, UCommonActivatableWidget* PageWidget)
     {}
 
-
 protected:
-    /** Handles button creation, clicks, visual states, gamepad nav */
-    UPROPERTY(BlueprintReadOnly, meta=(BindWidgetOptional))
-    TObjectPtr<UCommonTabListWidgetBase> TabList;
+    //~ UUserWidget Interface
+    virtual void NativeOnInitialized() override;
+    //~ End UUserWidget Interface
 
-    /** Widget switcher for displaying active tab's page */
+    /** Tabbed container primitive — handles tab list + page switcher */
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-    TObjectPtr<UCommonAnimatedSwitcher> PageSwitcher;
-
-    /** Tab button class UMCore_ButtonBase for text and icon integration */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu Hub")
-    TSubclassOf<UCommonButtonBase> TabButtonClass;
+    TObjectPtr<UMCore_TabbedContainer> TabbedContainer;
 
     UPROPERTY(EditDefaultsOnly, Category = "Menu Hub")
     TSubclassOf<UCommonActivatableWidget> EmptyStateWidgetClass;
 
 private:
-    /** 
-     * CommonUI delegate - called when user selects tab
-     * Loads corresponding screen widget into PageSwitcher
-     */
+    /** Forwarding handler for TabbedContainer's OnTabAdded delegate */
     UFUNCTION()
-    void HandleTabSelected(FName TabNameID);
-
-    /** 
-     * Cached screen widgets (keyed by tab ID)
-     * Prevents recreation on tab switch (~0.1ms savings per switch)
-     */
-    UPROPERTY(Transient)
-    TMap<FName, TObjectPtr<UCommonActivatableWidget>> ScreenWidgets;
+    void HandleContainerTabAdded(FName TabID, UCommonButtonBase* TabButton);
 };
