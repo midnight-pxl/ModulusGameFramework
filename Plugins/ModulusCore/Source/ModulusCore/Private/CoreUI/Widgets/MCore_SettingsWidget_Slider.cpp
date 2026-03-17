@@ -290,7 +290,7 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		BarBrush.TintColor = Style->BarNormalTint;
 		SliderStyle.SetNormalBarImage(BarBrush);
 
-		// Thumb brush — normal
+		// Thumb brush (normal)
 		FSlateBrush ThumbNormal;
 		if (Style->ThumbImage)
 		{
@@ -300,7 +300,7 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		ThumbNormal.SetImageSize(Style->ThumbSize);
 		SliderStyle.SetNormalThumbImage(ThumbNormal);
 
-		// Thumb brush — hovered
+		// Thumb brush (hovered)
 		FSlateBrush ThumbHovered;
 		if (Style->ThumbImage)
 		{
@@ -310,7 +310,7 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		ThumbHovered.SetImageSize(Style->ThumbSize);
 		SliderStyle.SetHoveredThumbImage(ThumbHovered);
 
-		// Thumb brush — disabled (reuse normal)
+		// Thumb brush (disabled, reuse normal)
 		SliderStyle.SetDisabledThumbImage(ThumbNormal);
 
 		Slider_Value->SetWidgetStyle(SliderStyle);

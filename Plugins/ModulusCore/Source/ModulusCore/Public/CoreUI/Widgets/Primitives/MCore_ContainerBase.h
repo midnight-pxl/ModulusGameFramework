@@ -19,23 +19,10 @@ class UImage;
 class UNamedSlot;
 
 /**
- * Base container widget with theme system integration.
+ * Base container widget with theme integration and optional background styling.
+ * Binds automatically to UISubsystem::OnThemeChanged.
  *
- * Key Features:
- * - Automatic theme binding via UISubsystem::OnThemeChanged
- * - Background color, brush, and image setters
- * - Content padding control
- *
- * Optional child widget bindings (BindWidgetOptional):
- * - Border_Background: Primary border for background color/brush
- * - Image_Background: Alternative image-based background
- * - Slot_Content: Named slot for child content
- *
- * Blueprint Usage:
- * 1. Create Blueprint extending this class
- * 2. Add Border_Background or Image_Background for themed background
- * 3. Add Slot_Content as NamedSlot for child widgets
- * 4. Override ApplyTheme or handle via OnThemeApplied
+ * Optional BindWidgetOptional children: Border_Background, Image_Background, Slot_Content (NamedSlot).
  */
 UCLASS(Abstract, Blueprintable, meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ContainerBase : public UCommonUserWidget
@@ -49,35 +36,19 @@ public:
 	// PUBLIC API
 	// ============================================================================
 
-	/**
-	 * Set background color (applies to Border_Background).
-	 *
-	 * @param InColor - Color to apply
-	 */
+	/** Set background color on Border_Background. */
 	UFUNCTION(BlueprintCallable, Category = "Container")
 	void SetBackgroundColor(FLinearColor InColor);
 
-	/**
-	 * Set background brush (applies to Border_Background).
-	 *
-	 * @param InBrush - Brush to apply
-	 */
+	/** Set background brush on Border_Background. */
 	UFUNCTION(BlueprintCallable, Category = "Container")
 	void SetBackgroundBrush(const FSlateBrush& InBrush);
 
-	/**
-	 * Set background image (applies to Image_Background).
-	 *
-	 * @param InTexture - Texture to display, or nullptr to hide
-	 */
+	/** Set background image on Image_Background. Pass nullptr to hide. */
 	UFUNCTION(BlueprintCallable, Category = "Container")
 	void SetBackgroundImage(UTexture2D* InTexture);
 
-	/**
-	 * Set padding on Border_Background.
-	 *
-	 * @param InPadding - Padding margins to apply
-	 */
+	/** Set padding on Border_Background. */
 	UFUNCTION(BlueprintCallable, Category = "Container")
 	void SetContentPadding(FMargin InPadding);
 
@@ -94,12 +65,7 @@ protected:
 	// THEME
 	// ============================================================================
 
-	/**
-	 * Apply theme to this container. Called on init and when theme change occurs.
-	 * Override in derived classes for custom theme handling.
-	 *
-	 * @param Theme - Active theme, may be nullptr if no theme configured
-	 */
+	/** Apply theme to container. Called on init and on theme change. Override for custom handling. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Theme")
 	void ApplyTheme(UMCore_PDA_UITheme_Base* Theme);
 	virtual void ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme);

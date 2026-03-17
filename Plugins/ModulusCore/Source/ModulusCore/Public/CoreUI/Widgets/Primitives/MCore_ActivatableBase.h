@@ -33,25 +33,15 @@ struct MODULUSCORE_API FInputActionBindingHandle
 
 /**
  * Dynamic delegate signature for input action callbacks.
- *
- * @param ActionName - The row name from the input action data table
  */
 DECLARE_DYNAMIC_DELEGATE_OneParam(FInputActionExecutedDelegate, FName, ActionName);
 
 /**
  * Base activatable widget with theme integration, input binding management, and BlockTag support.
+ * Automatically cleans up input bindings on deactivation to prevent memory leaks.
  *
- * Key Features:
- * - Automatic input binding cleanup on deactivation (prevents memory leaks)
- * - Theme system integration via UISubsystem::OnThemeChanged
- * - BlockTag support to conditionally prevent activation
- * - Compile-time validation for GetDesiredFocusTarget implementation
- *
- * Blueprint Usage:
- * 1. Create Blueprint extending this class
- * 2. Use RegisterBinding() to bind input actions with automatic cleanup
- * 3. Override ApplyTheme or bind OnThemeApplied for theme changes
- * 4. Set BlockTags to prevent activation under specific game states
+ * Derive in Blueprint: use RegisterBinding() for input actions with auto-cleanup,
+ * override ApplyTheme for theme changes, and set BlockTags to conditionally prevent activation.
  */
 UCLASS(Abstract, Blueprintable, ClassGroup="ModulusUI", meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ActivatableBase : public UCommonActivatableWidget
@@ -65,15 +55,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="UI|Activation", meta=(Categories = "State"))
 	FGameplayTagContainer BlockTags;
 
-	/**
-	 * Register an input action binding with automatic cleanup on deactivation.
-	 *
-	 * @param InputAction - DataTable row reference to the input action
-	 * @param Callback - Delegate called when action triggers
-	 * @param IABindingHandle - Output handle for manual unregistration if needed
-	 * @param OverrideDisplayName - Optional display name override for action bar
-	 * @param bShouldDisplayInActionBar - Whether to show in CommonUI action bar
-	 */
+	/** Register an input action binding with automatic cleanup on deactivation. */
 	UFUNCTION(BlueprintCallable, Category="UI|Input", meta=(AutoCreateRefTerm = "OverrideDisplayName"))
 	void RegisterBinding(
 		FDataTableRowHandle InputAction,
@@ -118,11 +100,7 @@ protected:
 	// THEME
 	// ============================================================================
 
-	/**
-	 * Apply theme styling to this widget. Override for custom theme handling.
-	 *
-	 * @param NewTheme - Theme to apply, may be nullptr
-	 */
+	/** Apply theme styling to this widget. Override for custom theme handling. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Theme")
 	void ApplyTheme(UMCore_PDA_UITheme_Base* NewTheme);
 	virtual void ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* NewTheme);

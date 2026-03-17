@@ -21,21 +21,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTabbedContainerTabAdded, FName, 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTabbedContainerTabSelected, FName, TabID);
 
 /**
- * Reusable tabbed container primitive providing a tab bar + page switcher pattern.
+ * Reusable tabbed container wrapping CommonUI's tab list and animated switcher.
+ * Caller owns page widget creation and lifecycle.
  *
- * Key Features:
- * - Manages CommonUI tab list and animated switcher as a coordinated unit
- * - Caller owns page widget creation and lifecycle
- * - Tab enable/disable and show/hide state control
- *
- * Required widget bindings (BindWidget):
- * - TabList: UCommonTabListWidgetBase for button creation and navigation
- * - PageSwitcher: UCommonAnimatedSwitcher for page display
- *
- * Blueprint Usage:
- * 1. Create Blueprint extending this class with the two required widgets
- * 2. Set TabButtonClass to your tab button Blueprint class
- * 3. Call AddTab() to populate tabs with pre-created page widgets
+ * Requires BindWidget: TabList (UCommonTabListWidgetBase), PageSwitcher (UCommonAnimatedSwitcher).
+ * Set TabButtonClass to your tab button Blueprint, then call AddTab() to populate.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_TabbedContainer : public UCommonUserWidget
@@ -49,24 +39,11 @@ public:
 	// CORE API
 	// ============================================================================
 
-	/**
-	 * Add a tab with a pre-created page widget.
-	 * Tabs display in insertion order. Caller owns widget creation and lifecycle.
-	 *
-	 * @param TabID - Unique FName identifier for this tab
-	 * @param PageWidget - Pre-created widget to display when tab is selected
-	 * @return true if tab was added successfully
-	 */
+	/** Add a tab with a pre-created page widget. Tabs display in insertion order. Returns true on success. */
 	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
 	bool AddTab(FName TabID, UWidget* PageWidget);
 
-	/**
-	 * Remove a tab and its page from the container.
-	 * Does NOT destroy the page widget (caller owns lifecycle).
-	 *
-	 * @param TabID - Tab to remove
-	 * @return true if tab was found and removed
-	 */
+	/** Remove a tab and its page. Does NOT destroy the page widget. Returns true if found. */
 	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
 	bool RemoveTab(FName TabID);
 
@@ -76,12 +53,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
 	void ClearAllTabs();
 
-	/**
-	 * Select a tab by ID, switching the page switcher to its page.
-	 *
-	 * @param TabID - Tab to select
-	 * @return true if tab was found and selected
-	 */
+	/** Select a tab by ID, switching to its page. Returns true if found. */
 	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
 	bool SelectTab(FName TabID);
 
@@ -98,21 +70,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Tabbed Container")
 	bool HasTab(FName TabID) const { return PageWidgets.Contains(TabID); }
 
-	/**
-	 * Get the page widget for a given tab.
-	 *
-	 * @param TabID - Tab to look up
-	 * @return Page widget, or nullptr if not found
-	 */
+	/** Returns the page widget for a tab, or nullptr if not found. */
 	UFUNCTION(BlueprintPure, Category = "Tabbed Container")
 	UWidget* GetPageWidget(FName TabID) const;
 
-	/**
-	 * Get the tab button for a given tab.
-	 *
-	 * @param TabID - Tab to look up
-	 * @return Tab button, or nullptr if not found
-	 */
+	/** Returns the tab button for a tab, or nullptr if not found. */
 	UFUNCTION(BlueprintPure, Category = "Tabbed Container")
 	UCommonButtonBase* GetTabButton(FName TabID) const;
 

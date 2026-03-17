@@ -18,13 +18,8 @@ class UMCore_PrimaryGameLayout;
 class UMCore_UISubsystem;
 
 /**
- * Base HUD class for ModulusCore UI Framework.
- *
- * Usage:
- * Set your GameMode's HUDClass to AMCore_HUD_Base (or derived BP)
- *
- * @see UMCore_UISubsystem for menu registration and UI service APIs
- * @see UMCore_PrimaryGameLayout for layer stack architecture
+ * Base HUD class bridging AHUD with the CommonUI-based PrimaryGameLayout and UISubsystem.
+ * Set your GameMode's HUDClass to this or a derived Blueprint.
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API AMCore_HUD_Base : public AHUD
@@ -34,20 +29,14 @@ class MODULUSCORE_API AMCore_HUD_Base : public AHUD
 public:
 	AMCore_HUD_Base(const FObjectInitializer& ObjectInitializer);
 
-	/**
-	 * Returns the PrimaryGameLayout widget owned by this HUD.
-	 * May return nullptr if called before BeginPlay or on dedicated server.
-	 */
+	/** May return nullptr if called before BeginPlay or on dedicated server. */
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 	bool HasValidPrimaryGameLayout() const;
 
-	/**
-	 * Returns the UISubsystem for the owning player.
-	 * Caches the result for subsequent calls.
-	 */
+	/** Caches the result for subsequent calls. */
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 	UMCore_UISubsystem* GetUISubsystem() const;
 

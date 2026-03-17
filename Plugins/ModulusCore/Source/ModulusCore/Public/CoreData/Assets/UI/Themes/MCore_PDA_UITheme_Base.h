@@ -20,15 +20,11 @@ class UMCore_PDA_SliderStyle;
 class UMCore_PDA_ScrollbarStyle;
 
 /**
- * Master UI Theme DataAsset - references CommonUI styles and modular style DataAssets.
- *
+ * Master UI theme DataAsset referencing CommonUI styles and modular style DataAssets.
  * Widgets query the active theme via UISubsystem->GetActiveTheme().
  *
- * Blueprint Usage:
- *   1. Create CommonUI styles (BP_ButtonStyle_Primary, BP_TextStyle_Body, etc.)
- *   2. Create style DataAssets for sliders/scrollbars if needed
- *   3. Create theme DataAsset referencing all pieces
- *   4. Set as active theme in Project Settings or via UISubsystem
+ * Create child DataAssets for each visual theme (Minimal, Fantasy, Sci-Fi).
+ * Set as active in Project Settings or via UISubsystem at runtime.
  */
 UCLASS(Abstract, Blueprintable)
 class MODULUSCORE_API UMCore_PDA_UITheme_Base : public UPrimaryDataAsset
@@ -74,7 +70,7 @@ public:
 	TArray<TSubclassOf<UCommonTextStyle>> CaptionTextStyle;
 
 	// ============================================================================
-	// MODULUSCORE STYLE DATEASSETS
+	// MODULUSCORE STYLE DATA ASSETS
 	// ============================================================================
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Style DataAssets")

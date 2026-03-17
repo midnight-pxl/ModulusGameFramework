@@ -15,18 +15,8 @@
 class UCommonActivatableWidget;
 
 /**
- * Menu tab registration data for in-game menu hub.
- *
- * Lightweight struct storing tab information for plugin screen registration.
- * Each tab displays a button in the menu hub that activates its screen widget.
- *
- * Common Priorities:
- * - 100 = Character/Inventory
- * - 200 = Abilities/Skills
- * - 300 = Quests/Journal
- * - 400 = Map/World
- * - 500 = Social/Guild
- * - 600 = System/Settings
+ * Menu tab registration data for the in-game menu hub.
+ * Stores tab identity, widget class, icon, and sort priority for plugin screen registration.
  */
 USTRUCT(BlueprintType)
 struct FMCore_MenuTab

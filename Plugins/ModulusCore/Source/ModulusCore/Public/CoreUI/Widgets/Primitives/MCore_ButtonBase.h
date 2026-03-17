@@ -31,21 +31,10 @@ enum class EMCore_ButtonDisplayMode : uint8
 };
 
 /**
- * Base button class with theme system integration.
+ * Base button with theme integration, per-instance style overrides, and text/icon display modes.
+ * Binds automatically to UISubsystem::OnThemeChanged for runtime theme switching.
  *
- * Key Features:
- * - Automatic theme binding via UISubsystem::OnThemeChanged
- * - Per-instance style overrides that take precedence over theme defaults
- * - Text/icon display mode switching
- *
- * Optional child widget bindings (BindWidgetOptional):
- * - Txt_BtnLabel: Button text display
- * - Img_BtnIcon: Button icon display
- *
- * Blueprint Usage:
- * 1. Create Blueprint extending this class
- * 2. Add child widgets matching bind names (optional)
- * 3. Override ApplyTheme in C++ or handle in Blueprint via OnThemeApplied
+ * Optional BindWidgetOptional children: Txt_BtnLabel (text), Img_BtnIcon (icon).
  */
 UCLASS(Abstract, Blueprintable, meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ButtonBase : public UCommonButtonBase
@@ -59,11 +48,6 @@ public:
 	// TEXT API
 	// ============================================================================
 
-	/**
-	 * Set button label text.
-	 *
-	 * @param InText - Text to display on the button
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Button|Text")
 	void SetButtonText(const FText& InText);
 
@@ -77,23 +61,14 @@ public:
 	// STYLE API
 	// ============================================================================
 
-	/**
-	 * Set button style override (takes precedence over theme).
-	 * Pass nullptr to revert to theme default.
-	 *
-	 * @param InStyle - Button style class to apply, or nullptr for theme default
-	 */
+	/** Set button style override. Pass nullptr to revert to theme default. */
 	UFUNCTION(BlueprintCallable, Category = "Button|Style")
 	void SetButtonStyleOverride(TSubclassOf<UCommonButtonStyle> InStyle);
 
 	UFUNCTION(BlueprintPure, Category = "Button|Style")
 	TSubclassOf<UCommonButtonStyle> GetButtonStyleOverride() const { return ButtonStyleOverride; }
 
-	/**
-	 * Set text style override (takes precedence over theme).
-	 *
-	 * @param InStyle - Text style class to apply, or nullptr for theme default
-	 */
+	/** Set text style override. Pass nullptr to revert to theme default. */
 	UFUNCTION(BlueprintCallable, Category = "Button|Style")
 	void SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InStyle);
 
@@ -107,27 +82,12 @@ public:
 	// ICON AND DISPLAY
 	// ============================================================================
 
-	/**
-	 * Set button icon from a loaded texture.
-	 *
-	 * @param InIcon - Texture to display, or nullptr to hide
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIcon(UTexture2D* InIcon);
 
-	/**
-	 * Set button icon using soft reference (loads synchronously).
-	 *
-	 * @param InIcon - Soft reference to icon texture
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon);
 
-	/**
-	 * Set button display mode (text only, icon only, or both).
-	 *
-	 * @param InMode - Display mode to apply
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Button")
 	void SetDisplayMode(EMCore_ButtonDisplayMode InMode);
 
@@ -167,12 +127,7 @@ protected:
 	// THEME
 	// ============================================================================
 
-	/**
-	 * Apply theme to button. Called on init and when theme change occurs.
-	 * Override in derived classes for custom theme handling.
-	 *
-	 * @param Theme - Active theme, may be nullptr if no theme configured
-	 */
+	/** Apply theme to button. Called on init and on theme change. Override for custom handling. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Theme")
 	void ApplyTheme(UMCore_PDA_UITheme_Base* Theme);
 	virtual void ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme);

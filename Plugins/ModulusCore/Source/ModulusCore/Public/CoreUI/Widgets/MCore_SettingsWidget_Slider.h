@@ -17,22 +17,11 @@ class USlider;
 class UMCore_ButtonBase;
 
 /**
- * Settings widget for float/slider-type settings.
+ * Settings widget for float/slider-type settings with immediate-apply semantics.
+ * Reads MinValue, MaxValue, StepSize, and display format from the bound definition.
  *
- * Immediate-apply model: slider changes write to engine and save instantly.
- * Reads MinValue, MaxValue, StepSize, SliderDisplayFormat from the
- * bound UMCore_DA_SettingDefinition.
- *
- * Key Features:
- * - Value snapping to configurable step size
- * - Three display formats (raw, percentage, whole number)
- * - Optional step buttons for gamepad/keyboard navigation
- * - Theme-driven slider styling via UMCore_PDA_SliderStyle
- *
- * Blueprint Usage:
- *   Create a Blueprint subclass with required BindWidgets:
- *     Slider_Value (USlider), Txt_ValueDisplay (UCommonTextBlock)
- *   Optional: Btn_StepLeft / Btn_StepRight (UMCore_ButtonBase)
+ * Requires BindWidget: Slider_Value (USlider), Txt_ValueDisplay (UCommonTextBlock).
+ * Optional: Btn_StepLeft/Btn_StepRight (UMCore_ButtonBase) for gamepad navigation.
  */
 UCLASS(Abstract, Blueprintable, ClassGroup = "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_SettingsWidget_Slider : public UMCore_SettingsWidget_Base

@@ -17,19 +17,10 @@ class UMCore_ButtonBase;
 
 /**
  * Inline option cycling widget for Toggle and Dropdown setting types.
+ * Toggle mode uses hardcoded Off/On options; Dropdown copies labels from the definition.
  *
- * Toggle settings use two hardcoded options (Off/On). Dropdown settings copy
- * their option labels from the bound UMCore_DA_SettingDefinition.
- *
- * Key Features:
- * - Automatic Toggle vs Dropdown mode detection
- * - Wrapping cycle navigation (previous/next)
- * - Theme-driven button and text styling
- *
- * Blueprint Usage:
- *   Create a Blueprint subclass with required BindWidgets:
- *     Btn_Previous (UMCore_ButtonBase), Btn_Next (UMCore_ButtonBase),
- *     Txt_CurrentOption (UCommonTextBlock)
+ * Requires BindWidget: Btn_Previous, Btn_Next (UMCore_ButtonBase),
+ * Txt_CurrentOption (UCommonTextBlock).
  */
 UCLASS(Abstract, Blueprintable, ClassGroup = "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_SettingsWidget_Switcher : public UMCore_SettingsWidget_Base

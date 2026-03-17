@@ -19,20 +19,11 @@ class UMCore_GlobalEventSubsystem;
 struct FMCore_EventData;
 
 /**
- * Drop-in component for actors that need to receive events
+ * Drop-in component for actors that need to receive Local and Global GameplayTag events.
+ * Handles automatic subsystem registration and tag-based filtering.
  *
- * Handles automatic registration with Local and Global event subsystems.
- * Filters events by GameplayTag subscriptions. Add to any actor to receive event notifications.
- *
- * Common Uses:
- * - UI widgets listening for game state changes (quest updates, player stats)
- * - Gameplay actors responding to world events (time of day, weather changes)
- * - Cross-plugin communication without direct dependencies
- *
- * Blueprint Usage:
- * 1. Add component to actor/widget
- * 2. Set SubscribedEvents tags (or leave empty to receive all events)
- * 3. Implement OnEventReceived Blueprint event
+ * Set SubscribedEvents to filter by tag, or leave empty to receive all events.
+ * Implement OnEventReceived in Blueprint to handle notifications.
  */
 UCLASS(ClassGroup=(ModulusCore), BlueprintType, meta=(BlueprintSpawnableComponent))
 class MODULUSCORE_API UMCore_EventListenerComp : public UActorComponent
@@ -55,18 +46,15 @@ public:
 	bool bReceiveGlobalEvents{true};
 
 	/**
-	 * Called when a subscribed event is received
+	 * Called when a subscribed event is received.
 	 *
 	 * Implement in Blueprint to handle event notifications.
 	 * Use EventData.EventTag to determine event type, then query EventData.Parameters or subsystems for details.
-	 *
-	 * @param EventData - Event information (tag, parameters, timestamp)
-	 * @param bWasGlobalEvent - True if event came from Global subsystem (networked), false if Local
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Event Handling")
 	void OnEventReceived(const FMCore_EventData& EventData, bool bWasGlobalEvent);
 	
-	/* Called by subsystems to deliver events — do not call directly */
+	/* Called by subsystems to deliver events. Do not call directly. */
 	void DeliverEvent(const FMCore_EventData& EventData, bool bWasGlobalEvent);
 
 	/* Check if this component should receive a specific event based on tag filters */

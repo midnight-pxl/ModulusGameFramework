@@ -129,7 +129,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 		}
 		else
 		{
-			// Invalid pointer — clean up
+			// Invalid pointer, clean up
 			GlobalListeners.RemoveAt(i);
 		}
 	}
@@ -166,7 +166,7 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 		return false;
 	}
 	
-	// Hardcoded param limits — override ValidateEventRequest() to customize
+	// Hardcoded param limits. Override ValidateEventRequest() to customize.
 	constexpr int32 MaxParams{8};
 	constexpr int32 MaxContextIDLength{64};
 	

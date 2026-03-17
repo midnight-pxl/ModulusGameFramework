@@ -36,6 +36,12 @@ void UMCore_UIExtensionSubsystem::Deinitialize()
 // EXTENSION POINT REGISTRATION
 // ============================================================================
 
+/**
+ * @param ExtensionPointTag  GameplayTag identifying this slot. Must be valid.
+ * @param ContextObject      Per-player filtering context (LocalPlayer), or nullptr for global.
+ * @param ExtensionCallback  Called with Added/Removed action when extensions change.
+ * @return                   Handle for later unregistration. Invalid if tag was empty.
+ */
 FMCore_UIExtensionPointHandle UMCore_UIExtensionSubsystem::RegisterExtensionPoint(
 	const FGameplayTag& ExtensionPointTag,
 	UObject* ContextObject,
@@ -117,6 +123,13 @@ void UMCore_UIExtensionSubsystem::UnregisterExtensionPoint(
 // EXTENSION REGISTRATION
 // ============================================================================
 
+/**
+ * @param ExtensionPointTag  Target extension point tag. Must be valid.
+ * @param ContextObject      Per-player filtering context, or nullptr for global.
+ * @param WidgetClass        Widget class to instantiate. Must be non-null.
+ * @param Priority           Higher values sort first (default: 0).
+ * @return                   Handle for later unregistration.
+ */
 FMCore_UIExtensionHandle UMCore_UIExtensionSubsystem::RegisterExtension(
 	const FGameplayTag& ExtensionPointTag,
 	UObject* ContextObject,

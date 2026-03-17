@@ -12,12 +12,7 @@
 #include "GameplayTagContainer.h"
 #include "MCore_EventData.generated.h"
 
-/**
- * Determines how an event is routed through the system.
- *
- * Blueprint Usage: Select scope when calling BroadcastSimpleEvent or similar.
- * Authority: Local requires no authority; Global requires server validation.
- */
+/** Determines how an event is routed: Local (client-only) or Global (server-authoritative). */
 UENUM(BlueprintType)
 enum class EMCore_EventScope : uint8
 {

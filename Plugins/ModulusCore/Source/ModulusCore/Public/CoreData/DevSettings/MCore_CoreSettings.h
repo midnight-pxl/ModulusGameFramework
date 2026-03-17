@@ -21,20 +21,9 @@ class UMCore_GameMenuHub;
 class UMCore_DA_SettingsCollection;
 
 /**
- * Core settings for the Modulus Game Framework.
- *
- * Accessible via:
- * - Project Settings > Game > Modulus Core
- * - Modulus Hub editor panel
- *
- * Key Features:
- * - Theme configuration: define available themes and set defaults
- * - UI layout class overrides for PrimaryGameLayout and MenuHub
- * - Default settings collection reference for tag-based accessors
- * - Debug settings (editor-only) for event and UI layer diagnostics
- *
- * Blueprint Usage:
- *   GetDefault<UMCore_CoreSettings>() or UMCore_CoreSettings::Get()
+ * Developer settings for the Modulus Game Framework (Project Settings > Game > Modulus Core).
+ * Configures themes, UI layout class overrides, default settings collection,
+ * and editor-only debug options.
  */
 UCLASS(Config=ModulusCore, DefaultConfig, meta=(DisplayName="Modulus Core"))
 class MODULUSCORE_API UMCore_CoreSettings : public UDeveloperSettings
@@ -137,42 +126,21 @@ public:
 	// HELPERS
 	// ============================================================================
 
-	/**
-	 * Check whether event logging is enabled.
-	 * Always returns false in shipping builds.
-	 *
-	 * Blueprint Usage:
-	 *   Call to gate verbose event logging in custom subsystems.
-	 */
+	/** Returns true if event system logging is enabled. Always false in shipping builds. */
 	UFUNCTION(BlueprintPure, Category="Modulus|Debug")
 	bool IsEventLoggingEnabled() const;
 
-	/**
-	 * Check whether the UI debug overlay is enabled.
-	 * Always returns false in shipping builds.
-	 *
-	 * Blueprint Usage:
-	 *   Call to gate debug visualization in custom HUD widgets.
-	 */
+	/** Returns true if the UI debug overlay is enabled. Always false in shipping builds. */
 	UFUNCTION(BlueprintPure, Category="Modulus|Debug")
 	bool IsUIDebugOverlayEnabled() const;
 
-	/**
-	 * Get the default theme asset (loads synchronously if needed).
-	 *
-	 * Blueprint Usage:
-	 *   Returns the theme DataAsset at DefaultThemeIndex, or nullptr if invalid.
-	 */
+	/** Returns the theme DataAsset at DefaultThemeIndex (loads synchronously). Returns nullptr if index is invalid. */
 	UFUNCTION(BlueprintCallable, Category="Modulus|Theme")
 	UMCore_PDA_UITheme_Base* GetDefaultTheme() const;
 
 	/**
-	 * Get default theme for design-time preview (static, no UISubsystem needed).
-	 * Use this in NativePreConstruct() for UMG editor preview.
-	 * At runtime, prefer UISubsystem->GetActiveTheme() instead.
-	 *
-	 * Blueprint Usage:
-	 *   Call from widget PreConstruct to preview theme styling in the editor.
+	 * Returns the default theme for design-time preview (static, no UISubsystem needed).
+	 * Use in NativePreConstruct() for UMG editor preview. At runtime, prefer UISubsystem->GetActiveTheme().
 	 */
 	UFUNCTION(BlueprintPure, Category="Modulus|Theme")
 	static UMCore_PDA_UITheme_Base* GetDesignTimeTheme();

@@ -32,8 +32,6 @@ public:
 	 * Apply theme properties to your widget's visual elements here.
 	 * Called automatically by RefreshTheme() and when the global theme
 	 * changes in Developer Settings.
-	 *
-	 * @param NewTheme The newly active theme data asset
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|Theme")
 	void OnThemeChanged(const UMCore_PDA_UITheme_Base* NewTheme);

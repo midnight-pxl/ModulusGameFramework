@@ -17,22 +17,11 @@
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOnPlayerSettingsLoaded, UMCore_PlayerSettingsSave*, PlayerSettings);
 
 /**
- * Player settings save game (immediate-apply model).
+ * Player settings save game using immediate-apply model.
+ * Stores framework UI state (scale, tooltip delay) and generic typed setting values
+ * written by UMCore_GameSettingsLibrary's setters.
  *
- * Stores two kinds of data:
- *   1. Framework UI state -- UIScale, tooltip delay, collapsed categories, etc.
- *   2. Generic setting values -- typed TMap storage keyed by SettingTag save keys,
- *      written by UMCore_GameSettingsLibrary's typed setters.
- *
- * Key Features:
- * - Typed TMap storage (float, int32, bool) for DataAsset-driven settings
- * - Framework UI state persistence (scale, tooltip delay, category collapse)
- * - Sync and async load with automatic validation
- *
- * Blueprint Usage:
- *   Access via UMCore_UISubsystem::GetPlayerSettings().
- *   Modify via UMCore_GameSettingsLibrary setters (preferred) or direct property access.
- *   Call SaveSettings() to persist changes.
+ * Access via UMCore_UISubsystem::GetPlayerSettings(). Modify via GameSettingsLibrary (preferred).
  */
 UCLASS()
 class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
@@ -81,39 +70,21 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	// GENERIC ACCESSORS
 	// ========================================================================
 
-	/**
-	 * Get a float setting value.
-	 *
-	 * @param Key       Save key from the setting definition.
-	 * @param OutValue  Populated if key exists.
-	 * @return True if the key was found.
-	 */
+	/** Returns true and populates OutValue if a float value exists for the given key. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	bool GetFloatSetting(const FString& Key, float& OutValue) const;
 
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	void SetFloatSetting(const FString& Key, float Value);
 
-	/**
-	 * Get an integer setting value.
-	 *
-	 * @param Key       Save key from the setting definition.
-	 * @param OutValue  Populated if key exists.
-	 * @return True if the key was found.
-	 */
+	/** Returns true and populates OutValue if an int value exists for the given key. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	bool GetIntSetting(const FString& Key, int32& OutValue) const;
 
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	void SetIntSetting(const FString& Key, int32 Value);
 
-	/**
-	 * Get a boolean setting value.
-	 *
-	 * @param Key       Save key from the setting definition.
-	 * @param OutValue  Populated if key exists.
-	 * @return True if the key was found.
-	 */
+	/** Returns true and populates OutValue if a bool value exists for the given key. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	bool GetBoolSetting(const FString& Key, bool& OutValue) const;
 
@@ -138,8 +109,6 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	/**
 	 * Load player settings from disk (asynchronous).
 	 * Falls back to synchronous creation if no save file exists.
-	 *
-	 * @param OnLoaded  Callback fired when loading completes.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	static void LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded OnLoaded);
@@ -148,11 +117,7 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	// FRAMEWORK CONVENIENCE
 	// ========================================================================
 
-	/**
-	 * Set UI scale (clamped 0.5-3.0) and apply immediately.
-	 *
-	 * @param NewScale  Desired UI scale multiplier.
-	 */
+	/** Set UI scale (clamped 0.5-3.0) and apply immediately. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	void SetUIScale(float NewScale);
 

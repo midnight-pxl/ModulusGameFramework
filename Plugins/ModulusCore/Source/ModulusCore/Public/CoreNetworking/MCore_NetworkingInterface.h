@@ -20,14 +20,8 @@ class UMCore_NetworkingInterface : public UInterface
 };
 
 /**
- * Networking interface for ModulusCore components.
- *
- * Provides a common networking contract for components that need authority validation
- * and network lifecycle hooks.
- *
- * Key Implementors:
- * - UMCore_NetworkingComponent (base implementation)
- * - UMCore_EventListenerComp (uses networking base)
+ * Networking interface providing authority validation and network lifecycle hooks.
+ * Implemented by UMCore_NetworkingComponent for actor-based networking.
  */
 class MODULUSCORE_API IMCore_NetworkingInterface
 {
@@ -35,17 +29,12 @@ class MODULUSCORE_API IMCore_NetworkingInterface
 
 public:
 
-	/* Pure virtual - must be implemented by derived classes */
 	virtual bool HasNetworkAuthority() const = 0;
 
 	virtual void OnNetworkInitialized() {}
 
 	virtual void OnNetworkShutdown() {}
 
-	/**
-	 * Called when authority state changes.
-	 *
-	 * @param bHasAuthority True if component gained authority, false if lost
-	 */
+	/** Called when network authority state changes for this component. */
 	virtual void OnAuthorityChanged(bool bHasAuthority) {}
 };

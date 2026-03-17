@@ -19,18 +19,10 @@ class UMCore_TabbedContainer;
 struct FGameplayTag;
 
 /**
- * In-game menu hub - tabbed interface for plugin menu pages.
+ * In-game menu hub providing a tabbed interface for plugin menu pages.
+ * Composes UMCore_TabbedContainer and rebuilds tabs from UISubsystem's registered screens.
  *
- * Key Features:
- * - Lives on MCore_GameMenuLayer when active
- * - Composes UMCore_TabbedContainer for tab/page management
- * - Rebuilds tab bar from UISubsystem's registered menu screens
- * - Per-tab enable/disable and show/hide state control
- *
- * Blueprint Usage:
- * - Open: UISubsystem->GetOrCreateMenuHub() adds to GameMenuLayer
- * - Register: UISubsystem->RegisterMenuScreen(ScreenClass, CategoryTag, Priority)
- * - Override OnTabCreated/OnPageCreated for per-tab customization
+ * Open via UISubsystem->GetOrCreateMenuHub(), register screens via RegisterMenuScreen().
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API UMCore_GameMenuHub : public UCommonActivatableWidget

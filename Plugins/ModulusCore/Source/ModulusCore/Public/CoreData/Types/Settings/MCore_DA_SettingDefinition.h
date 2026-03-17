@@ -33,18 +33,10 @@ enum class EMCore_SliderDisplayFormat : uint8
 };
 
 /**
- * DataAsset defining a single game setting.
+ * DataAsset defining a single game setting with type, value range, defaults, and engine apply targets.
+ * Supports Toggle, Slider, and Dropdown types with optional confirmation countdown.
  *
- * Key Features:
- * - Supports Toggle, Slider, and Dropdown setting types
- * - GameplayTag-based identity and categorization
- * - Configurable engine apply targets (GameUserSettings, CVars, SoundClasses)
- * - Optional confirmation countdown for destructive settings
- * - Editor-time data validation
- *
- * Blueprint Usage:
- *   Create as a DataAsset in the Content Browser. Reference from
- *   UMCore_DA_SettingsCollection and pass to UMCore_GameSettingsLibrary.
+ * Create in Content Browser; reference from UMCore_DA_SettingsCollection.
  */
 UCLASS(BlueprintType, Const)
 class MODULUSCORE_API UMCore_DA_SettingDefinition : public UDataAsset
@@ -182,21 +174,11 @@ public:
 	// METHODS
 	// ============================================================================
 
-	/**
-	 * Get the save key derived from SettingTag (dots replaced with underscores).
-	 *
-	 * Blueprint Usage:
-	 *   Returns the string key used in UMCore_PlayerSettingsSave typed maps.
-	 */
+	/** Returns the save key derived from SettingTag (dots replaced with underscores). */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	FString GetSaveKey() const;
 
-	/**
-	 * Validate this setting definition.
-	 *
-	 * Blueprint Usage:
-	 *   Returns false if SettingTag/DisplayName is missing or values are out of range.
-	 */
+	/** Validates this definition. Returns false if SettingTag/DisplayName is missing or values are out of range. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	bool IsValid() const;
 

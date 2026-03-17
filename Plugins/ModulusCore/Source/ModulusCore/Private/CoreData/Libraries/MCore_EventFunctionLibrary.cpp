@@ -27,6 +27,9 @@ void UMCore_EventFunctionLibrary::BroadcastSimpleEvent(const UObject* WorldConte
 	RouteEventToSubsystem(WorldContext, EventData, EventScope);
 }
 
+/**
+ * @param ContextID  Single identifier string (quest ID, item tag, player name, etc.).
+ */
 void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* WorldContext,
 	FGameplayTag EventTag,
 	const FString& ContextID,
@@ -43,6 +46,9 @@ void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* World
 	RouteEventToSubsystem(WorldContext, EventData, EventScope);
 }
 
+/**
+ * @param EventParams  String key-value pairs (e.g., {"ItemID": "Sword_001", "Quantity": "5"}).
+ */
 void UMCore_EventFunctionLibrary::BroadcastEvent(const UObject* WorldContext,
 	FGameplayTag EventTag,
 	const TMap<FString, FString>& EventParams,

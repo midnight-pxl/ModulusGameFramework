@@ -70,7 +70,7 @@ void UMCore_GlobalEventReplicator::ServerRequestBroadcast_Implementation(const F
 	UE_LOG(LogModulusEvent, Verbose, TEXT("Server received Broadcast request: %s"),
 		*EventData.EventTag.ToString());
 	
-	// Server has authority — deliver locally and multicast
+	// Server has authority: deliver locally and multicast
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 	{
 		Subsystem->DeliverToLocalListeners(EventData);
@@ -84,7 +84,7 @@ bool UMCore_GlobalEventReplicator::ServerRequestBroadcast_Validate(const FMCore_
 	{
 		return Subsystem->ValidateEventRequest(EventData);
 	}
-	// No subsystem active — reject
+	// No subsystem active, reject
 	return false;
 }
 
@@ -92,7 +92,7 @@ void UMCore_GlobalEventReplicator::MulticastToClients_Implementation(const FMCor
 {
 	AActor* Owner = GetOwner();
 	
-	// Skip on server — already delivered in RequestBroadcast
+	// Skip on server; already delivered in RequestBroadcast
 	if (Owner && Owner->HasAuthority()) { return; }
 	
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())

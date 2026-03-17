@@ -21,17 +21,10 @@ class UInputMappingContext;
 class UCommonActivatableWidget;
 
 /**
- * Base PlayerController for ModulusCore.
+ * Base PlayerController for ModulusCore with deferred HUD widget setup.
+ * Creates and pushes PrimaryWidgetClass to the specified layer when UISubsystem is ready.
  *
- * Key Features:
- * - HUD widget creation and push to GameLayer
- * - Deferred UI setup when PrimaryGameLayout not immediately ready
- * - Input context management (DefaultModulusContext)
- *
- * Blueprint Usage:
- * 1. Create Blueprint subclass
- * 2. Set PrimaryWidgetClass to your HUD widget
- * 3. Set as default PlayerController in GameMode
+ * Set PrimaryWidgetClass and PrimaryWidgetLayer in your Blueprint subclass.
  */
 UCLASS()
 class MODULUSCORE_API AMCore_PlayerController : public APlayerController
@@ -71,8 +64,6 @@ protected:
 	 * Called when UISubsystem and PrimaryGameLayout are ready.
 	 * Default pushes PrimaryWidgetClass to PrimaryWidgetLayer.
 	 * Override for custom setup (clear layers, push additional widgets, etc.)
-	 *
-	 * @param UISubsystem The local player's UI subsystem
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "UI")
 	void OnUISystemReady(UMCore_UISubsystem* UISubsystem);

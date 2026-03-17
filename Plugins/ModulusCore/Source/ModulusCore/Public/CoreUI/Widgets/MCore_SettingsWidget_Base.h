@@ -27,20 +27,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
 
 /**
  * Abstract base for all setting input widgets (Slider, Toggle, Switcher).
- *
  * Immediate-apply model: every user interaction writes to engine immediately.
- * Provides a uniform interface so settings panels can iterate widgets and call
- * Reset or query values without knowing the underlying type.
  *
- * Key Features:
- * - DataAsset-driven initialization via InitFromDefinition
- * - Uniform value interface (ResetToDefault, GetValueAsString, StepLeft/Right)
- * - OnSettingValueChanged delegate for panel-level state coordination
- * - Automatic theme binding and cleanup
- *
- * Blueprint Usage:
- *   Subclass in Blueprint. Override OnDefinitionSet to populate type-specific UI.
- *   The settings panel calls InitFromDefinition to bind a setting at runtime.
+ * Derived classes implement type-specific value handling:
+ * - UMCore_SettingsWidget_Slider (float values: volume, brightness, sensitivity)
+ * - UMCore_SettingsWidget_Switcher (discrete options: resolution, quality presets)
  */
 UCLASS(Abstract, Blueprintable, ClassGroup= "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_SettingsWidget_Base : public UCommonUserWidget
@@ -52,12 +43,7 @@ public:
     // INITIALIZATION
     // ====================================================================
 
-    /**
-     * Bind this widget to a setting definition.
-     * Populates display text and calls OnDefinitionSet.
-     *
-     * @param InDefinition  The setting DataAsset to bind.
-     */
+    /** Bind this widget to a setting definition. Populates display name and calls OnDefinitionSet. */
     UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
     void InitFromDefinition(const UMCore_DA_SettingDefinition* InDefinition);
 
@@ -71,21 +57,11 @@ public:
     // VALUE INTERFACE
     // ====================================================================
 
-    /**
-     * Reset to DataAsset default value.
-     *
-     * Blueprint Usage:
-     *   Override in subclass to apply the default and update display.
-     */
+    /** Reset to DataAsset default value. */
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
     void ResetToDefault();
 
-    /**
-     * String representation of current value (for debug/display).
-     *
-     * Blueprint Usage:
-     *   Override in subclass to return a formatted value string.
-     */
+    /** String representation of current value (for debug/display). */
     UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "ModulusCore|Settings")
     FString GetValueAsString() const;
 

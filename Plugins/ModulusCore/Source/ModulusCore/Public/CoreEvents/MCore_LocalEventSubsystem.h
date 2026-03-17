@@ -17,19 +17,11 @@ class UMCore_EventListenerComp;
 struct FMCore_EventData;
 
 /**
- * Local event subsystem for client-only events
+ * Local event subsystem for client-only, non-networked GameplayTag events.
+ * Each LocalPlayer has its own instance (split-screen safe).
  *
- * Manages event broadcasting and listener registration for events that don't need network synchronization.
- * Each LocalPlayer has its own instance (supports split-screen).
- *
- * Common Uses:
- * - UI updates (menu opened, button clicked)
- * - Client-side visual effects
- * - Local player notifications
- *
- * Network: Client-local only
- * - Events broadcast here never reach other clients or the server
- * - Use UMCore_GlobalEventSubsystem for networked events
+ * Events broadcast here never reach other clients or the server.
+ * Use UMCore_GlobalEventSubsystem for networked events.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_LocalEventSubsystem : public ULocalPlayerSubsystem
@@ -44,11 +36,9 @@ public:
 	void UnregisterLocalListener(UMCore_EventListenerComp* ListenerComponent);
 
 	/**
-	 * Broadcast event to all registered local listeners
+	 * Broadcast event to all registered local listeners.
 	 *
 	 * Use UMCore_EventFunctionLibrary::BroadcastLocalEvent() instead of calling this directly.
-	 *
-	 * @param EventData - Event to broadcast (tag, parameters, timestamp)
 	 */
 	void BroadcastLocalEvent(const FMCore_EventData& EventData);
 	

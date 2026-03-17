@@ -160,6 +160,12 @@ bool UMCore_EnhancedInputDisplay::IsActionRemappable(APlayerController* PlayerCo
 // REBINDING OPERATIONS
 // ============================================================================
 
+/**
+ * @param InputAction   DataTable row reference to the action. Must have PlayerMappableKeySettings.
+ * @param NewKey        Key to bind. Invalid key is rejected.
+ * @param MappingSlot   Slot index (0 = primary, 1 = secondary, etc.).
+ * @return              True if rebind succeeded, false if action is not remappable or key is invalid.
+ */
 bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerController,
 	UInputAction* InputAction,
 	FKey NewKey,
@@ -218,6 +224,9 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 	return false;
 }
 
+/**
+ * @param MappingSlot  Slot index to reset (0 = primary, 1 = secondary).
+ */
 bool UMCore_EnhancedInputDisplay::ResetActionToDefault(APlayerController* PlayerController,
 	UInputAction* InputAction,
 	FText& OutError)

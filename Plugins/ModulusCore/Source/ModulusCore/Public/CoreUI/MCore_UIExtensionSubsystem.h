@@ -18,25 +18,11 @@
 class UUserWidget;
 
 /**
- * World subsystem for UI extension point and extension management.
- * 
- * Enables plugins to inject widgets into predefined UI slots without coupling.
- * Acts as centralized registry matching extension points with extensions via GameplayTags.
- * 
- * Key Features:
- * - Tag-based pub/sub (no direct plugin coupling)
- * - Priority-based ordering (higher priority created first)
- * - Context filtering (per-LocalPlayer, global, or custom scoping)
- * - Zero per-frame cost (event-driven)
- * 
- * Common Uses:
- * - Plugin adds HUD widget to core game HUD
- * - Multiple plugins extend same menu without conflicts
- * - Per-player UI in splitscreen scenarios
- * 
- * Network Behavior: Client-only, no replication
- * 
- * @see FMCore_UIExtensionHandle, FMCore_UIExtensionPointHandle
+ * World subsystem for tag-based UI widget injection between decoupled plugins.
+ *
+ * Extension points define UI slots; extensions provide widgets to fill them.
+ * Matching is by GameplayTag with optional per-LocalPlayer context filtering
+ * and priority-based ordering. Zero per-frame cost (event-driven).
  */
 UCLASS()
 class MODULUSCORE_API UMCore_UIExtensionSubsystem : public UWorldSubsystem
@@ -48,13 +34,8 @@ public:
 	virtual void Deinitialize() override;
 
 	/**
-	 * Register extension point that receives widget injections.
-	 * Callback immediately invoked for existing matching extensions (sorted by priority).
-	 * 
-	 * @param ExtensionPointTag - GameplayTag identifying this extension point
-	 * @param ContextObject - Context for filtering (LocalPlayer for per-player, nullptr for global)
-	 * @param ExtensionCallback - Invoked when extensions added/removed
-	 * @return Handle for unregistration
+	 * Register an extension point that receives widget injections.
+	 * Callback is immediately invoked for any existing matching extensions, sorted by priority.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Modulus|UI Extension", 
 		meta=(AutoCreateRefTerm="ExtensionCallback"))
@@ -71,14 +52,8 @@ public:
 	void UnregisterExtensionPoint(UPARAM(ref) FMCore_UIExtensionPointHandle& ExtensionPointHandle);
 
 	/**
-	 * Register extension (widget) to inject at matching extension points.
-	 * Immediately notifies all matching extension points.
-	 * 
-	 * @param ExtensionPointTag - GameplayTag identifying target extension point(s)
-	 * @param ContextObject - Context for filtering (LocalPlayer for per-player, nullptr for global)
-	 * @param WidgetClass - Widget class to instantiate
-	 * @param Priority - Sort order (higher created first, default: 0)
-	 * @return Handle for unregistration
+	 * Register a widget to inject at matching extension points.
+	 * Immediately notifies all matching extension points of the new extension.
 	 */
 	UFUNCTION(BlueprintCallable, Category="Modulus|UI Extension")
 	FMCore_UIExtensionHandle RegisterExtension(

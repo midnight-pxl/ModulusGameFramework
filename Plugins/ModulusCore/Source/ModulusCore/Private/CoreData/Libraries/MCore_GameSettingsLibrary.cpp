@@ -228,6 +228,10 @@ int32 UMCore_GameSettingsLibrary::GetSettingIntByTag(const UObject* WorldContext
 // TYPED SETTERS
 // ============================================================================
 
+/**
+ * @param Changes              One or more float setting/value pairs. Each is applied and flushed.
+ * @param bBypassConfirmation  When true, skips the revert countdown for confirmation-required settings.
+ */
 void UMCore_GameSettingsLibrary::SetSettingFloat(
 	const UObject* WorldContextObject,
 	const TArray<FMCore_FloatSettingChange>& Changes,
@@ -296,7 +300,7 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 
 	if (bAnyRequiresConfirmation)
 	{
-		// Do not save — UMCore_SettingsRevertCountdown decides
+		// Do not save; UMCore_SettingsRevertCountdown decides
 		// whether to save (confirm) or revert (discard)
 		TMap<FString, FString> EventParams;
 		EventParams.Add(TEXT("SettingTags"),
@@ -316,7 +320,7 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 		SavePlayerSettings(WorldContextObject);
 	}
 
-	/* Confirmation-required settings excluded — their BroadcastSettingChanged
+	/* Confirmation-required settings excluded. Their BroadcastSettingChanged
 	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
 	if (!bBypassConfirmation)
 	{
@@ -327,6 +331,10 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 	}
 }
 
+/**
+ * @param Changes              One or more int setting/value pairs. Each is applied and flushed.
+ * @param bBypassConfirmation  When true, skips the revert countdown for confirmation-required settings.
+ */
 void UMCore_GameSettingsLibrary::SetSettingInt(
 	const UObject* WorldContextObject,
 	const TArray<FMCore_IntSettingChange>& Changes,
@@ -414,7 +422,7 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 		SavePlayerSettings(WorldContextObject);
 	}
 
-	/* Confirmation-required settings excluded — their BroadcastSettingChanged
+	/* Confirmation-required settings excluded. Their BroadcastSettingChanged
 	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
 	if (!bBypassConfirmation)
 	{
@@ -425,6 +433,10 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 	}
 }
 
+/**
+ * @param Changes              One or more bool setting/value pairs. Each is applied and flushed.
+ * @param bBypassConfirmation  When true, skips the revert countdown for confirmation-required settings.
+ */
 void UMCore_GameSettingsLibrary::SetSettingBool(
 	const UObject* WorldContextObject,
 	const TArray<FMCore_BoolSettingChange>& Changes,
@@ -504,7 +516,7 @@ void UMCore_GameSettingsLibrary::SetSettingBool(
 		SavePlayerSettings(WorldContextObject);
 	}
 
-	/* Confirmation-required settings excluded — their BroadcastSettingChanged
+	/* Confirmation-required settings excluded. Their BroadcastSettingChanged
 	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
 	if (!bBypassConfirmation)
 	{
@@ -567,6 +579,9 @@ void UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(const UObject* WorldC
 	ResetDefinitionsToDefault(WorldContextObject, Definitions);
 }
 
+/**
+ * @param CategoryTag  Must match a registered category (e.g., MCore.Settings.Category.Graphics).
+ */
 void UMCore_GameSettingsLibrary::ResetCategoryToDefault(const UObject* WorldContextObject,
 	FGameplayTag CategoryTag)
 {

@@ -16,16 +16,10 @@
 class UMCore_GlobalEventReplicator;
 
 /**
- * Optional GameState base class with built-in network event support.
+ * Optional GameState base with built-in UMCore_GlobalEventReplicator for network event support.
+ * Set as your GameMode's GameStateClass for automatic global event networking.
  *
- * Blueprint Usage:
- * Set your GameMode's GameStateClass to this (or a subclass) for automatic
- * global event networking. No additional setup required.
- *
- * Alternative: Add UMCore_GlobalEventReplicator component to your own GameState.
- *
- * @see UMCore_GlobalEventReplicator
- * @see UMCore_GlobalEventSubsystem
+ * Alternative: add UMCore_GlobalEventReplicator to your own GameState instead.
  */
 UCLASS()
 class MODULUSCORE_API AMCore_GameStateBase : public AGameStateBase
@@ -34,11 +28,7 @@ class MODULUSCORE_API AMCore_GameStateBase : public AGameStateBase
 public:
 	AMCore_GameStateBase();
 
-	/**
-	 * Get the global event replicator component.
-	 *
-	 * @return The replicator component for networked event broadcasting
-	 */
+	/** Returns the global event replicator component. */
 	UFUNCTION(BlueprintPure, Category = "Modulus|Events")
 	UMCore_GlobalEventReplicator* GetCoreGlobalEventReplicator() const { return GlobalEventReplicator; }
 

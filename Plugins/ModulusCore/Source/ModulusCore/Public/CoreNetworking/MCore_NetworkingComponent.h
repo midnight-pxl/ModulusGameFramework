@@ -14,20 +14,8 @@
 #include "MCore_NetworkingComponent.generated.h"
 
 /**
- * Base networking component for ModulusCore.
- *
- * Provides authority validation, replication helpers, and Iris detection.
- * Derive from this for components that need network-aware functionality.
- *
- * Key Features:
- * - Server/client authority checks via CanExecuteServerOperation / CanExecuteClientOperation
- * - Iris replication system detection
- * - ForceNetUpdate for priority replication
- *
- * Blueprint Usage:
- * - CanExecuteServerOperation() to guard server logic
- * - CanExecuteClientOperation() to guard client logic
- * - ForceNetUpdate() to prioritize this component's replication
+ * Abstract base networking component providing authority validation and Iris detection.
+ * Derive from this for actor components that need network-aware functionality.
  */
 UCLASS(Abstract, BlueprintType, ClassGroup=(ModulusCore))
 class MODULUSCORE_API UMCore_NetworkingComponent : public UActorComponent, public IMCore_NetworkingInterface
@@ -42,30 +30,18 @@ public:
 		return GetOwner() ? GetOwner()->HasAuthority() : false;
 	};
 
-	/**
-	 * Check if this component can execute server-authoritative operations.
-	 *
-	 * @return True if this component has network authority
-	 */
+	/** Returns true if this component has network authority for server operations. */
 	UFUNCTION(BlueprintPure, Category="Networking|Authority")
 	bool CanExecuteServerOperation() const { return HasNetworkAuthority(); }
 
-	/**
-	 * Check if this component can execute client-side operations.
-	 *
-	 * @return False on dedicated server (no local player)
-	 */
+	/** Returns true if client operations are allowed. False on dedicated server. */
 	UFUNCTION(BlueprintPure, Category="Networking|Authority")
 	bool CanExecuteClientOperation() const
 	{
 		return GetOwner() ? (GetOwner()->GetNetMode() != NM_DedicatedServer) : false;
 	}
 
-	/**
-	 * Check if using Unreal Engine 5's Iris replication system vs legacy.
-	 *
-	 * @return True if Iris replication is detected
-	 */
+	/** Returns true if Iris replication system is detected. */
 	UFUNCTION(BlueprintPure, Category="Networking|Replication")
 	bool IsUsingIrisReplication() const;
 
@@ -88,7 +64,6 @@ protected:
 	/*
 	 * NOT YET IMPLEMENTED
 	 * Reserved extension point for cross-plugin authority delegation.
-	 * @see EModulusAuthorityLevel
 	 */
 	template<typename TOperation>
 	bool ExecuteWithAuthority(TOperation&& Operation, bool bRequireServerAuthority = true);

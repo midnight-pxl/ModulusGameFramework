@@ -15,19 +15,11 @@
 #include "MCore_PrimaryGameLayout.generated.h"
 
 /**
- * Primary game layout providing 4-layer CommonUI stack architecture.
+ * Primary game layout providing the 4-layer CommonUI widget stack.
+ * Visual container only; access layers via UISubsystem's GetLayerStack and PushWidgetToLayer.
  *
- * This is a visual container only - access layers via UISubsystem:
- *   UISubsystem->GetLayerStack(UI_Layers_Game)->AddWidget(WidgetClass);
- *   UISubsystem->PushWidgetToLayer(WidgetClass, TAG_UI_Layer_Menu);
- *
- * Layers are directly accessible - use standard CommonUI operations:
- *   - GameLayer: HUD and gameplay UI elements
- *   - GameMenuLayer: In-game menus (inventory, map, crafting)
- *   - MenuLayer: Full-screen menus (main menu, settings, pause)
- *   - ModalLayer: Dialogs and confirmation popups
- *
- * Registers with UISubsystem on Initialization
+ * Layers: GameLayer (HUD), GameMenuLayer (in-game menus),
+ * MenuLayer (full-screen menus), ModalLayer (dialogs).
  */
 UCLASS(BlueprintType, Blueprintable, Meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_PrimaryGameLayout : public UCommonUserWidget

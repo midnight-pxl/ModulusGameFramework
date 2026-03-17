@@ -31,19 +31,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryGameLayoutReady, UMCore_Pr
 
 
 /**
- * Central access point for ModulusCore UI systems.
+ * Central access point for ModulusCore UI systems. One instance per LocalPlayer (split-screen safe).
  *
- * Provides:
- * - Layer stack access via gameplay tags
- * - MenuHub registration for plugin screens
- * - Theme management
- *
- * One instance per LocalPlayer (supports split-screen).
- *
- * Usage:
- *   UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
- *   UI->PushWidgetToLayer(MenuClass, MCore_UISettingsTags::UI_Layers_Menu);
- *   UI->GetLayerStack(MCore_UISettingsTags::UI_Layers_Modal)->AddWidget(DialogClass);
+ * Manages PrimaryGameLayout lifecycle, 4-layer widget stack access via gameplay tags,
+ * theme distribution, menu hub orchestration, and player settings caching.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_UISubsystem : public ULocalPlayerSubsystem
@@ -56,7 +47,6 @@ public:
 	virtual void Deinitialize() override;
 	//~ End USubsystem Interface
 
-	/** Get the primary game layout widget for this local player */
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
@@ -95,21 +85,11 @@ public:
 // MENU HUB
 // ============================================================================
 
-	/**
-	 * Get or create the menu hub widget
-	 * Caller is responsible for pushing to appropriate stack
-	 * 
-	 * @return MenuHub widget (created on first call, cached for reuse)
-	 */
+	/** Returns the menu hub widget, creating it on first call. Caller pushes to appropriate stack. */
 	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	UMCore_GameMenuHub* GetOrCreateMenuHub();
 
-	/**
-	 * Register a menu screen tab in the MenuHub.
-	 *
-	 * Blueprint Usage: Call during initialization to add plugin screens to the shared menu.
-	 * Authority: Client-only
-	 */
+	/** Register a menu screen tab in the MenuHub. Duplicate TabIDs are rejected. */
 	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	void RegisterMenuScreen(
 		FGameplayTag TabID,
@@ -117,12 +97,7 @@ public:
 		int32 Priority = 100,
 		UTexture2D* TabIcon = nullptr);
 	
-	/**
-	 * Unregister a menu screen tab.
-	 * 
-	 * @param TabID Gameplay tag of the tab to remove
-	 * @return True if tab was found and removed
-	 */
+	/** Unregister a menu screen tab. Returns true if found and removed. */
 	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
 	bool UnregisterMenuScreen(FGameplayTag TabID);
 	
@@ -152,14 +127,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI|Theme")
 	int32 GetActiveThemeIndex() const { return ActiveThemeIndex; }
 
-	/**
-	 * Get the active text size index from the Accessibility.UITextSize setting.
-	 *
-	 * Blueprint Usage: Use to scale UI text elements based on accessibility preference.
-	 * Authority: Client-only
-	 *
-	 * @return  Index clamped >= 0
-	 */
+	/** Returns the active text size index from the Accessibility.UITextSize setting (clamped >= 0). */
 	UFUNCTION(BlueprintPure, Category = "Modulus|Theme")
 	int32 GetActiveTextSizeIndex() const;
 
@@ -167,7 +135,7 @@ public:
 	bool SetActiveThemeByIndex(int32 ThemeIndex);
 
 protected:
-	/* Widget class for PrimaryGameLayout — set in project defaults or override in Blueprint */
+	/* Widget class for PrimaryGameLayout. Set in project defaults or override in Blueprint. */
 	UPROPERTY(EditDefaultsOnly, Category = "Modulus|UI")
 	TSubclassOf<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
 	
@@ -182,8 +150,6 @@ protected:
 	/**
 	 * Called after PrimaryGameLayout is successfully created and added to viewport.
 	 * Override in C++ or Blueprint subclasses for custom initialization.
-	 * 
-	 * @param Layout The newly created layout widget
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Modulus|UI")
 	void OnPrimaryGameLayoutCreated(UMCore_PrimaryGameLayout* Layout);
@@ -200,7 +166,7 @@ private:
 	
 	FDelegateHandle PlayerControllerReadyHandle;
 	
-	/* Strong reference — UISubsystem owns the layout lifecycle */
+	/* Strong reference; UISubsystem owns the layout lifecycle */
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PrimaryGameLayout> PrimaryGameLayout;
 	
@@ -212,7 +178,7 @@ private:
 
 	int32 ActiveThemeIndex{INDEX_NONE};
 	
-	/* Cached player settings — loaded on first access, saved on Deinitialize */
+	/* Cached player settings, loaded on first access and saved on Deinitialize */
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PlayerSettingsSave> CachedPlayerSettings;
 	

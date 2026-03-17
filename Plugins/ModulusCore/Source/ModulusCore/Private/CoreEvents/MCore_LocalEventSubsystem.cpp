@@ -6,7 +6,7 @@
 #include "CoreEvents/MCore_EventListenerComp.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 
-/* Conditional logging macro — only logs when Event System Logging is enabled in Project Settings */
+/* Conditional logging macro. Only logs when Event System Logging is enabled in Project Settings. */
 #define MCORE_EVENT_LOG(Format, ...) \
 	do { \
 		if (const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get()) \

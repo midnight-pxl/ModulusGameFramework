@@ -24,17 +24,7 @@ enum class EMCore_UIExtensionAction : uint8
 	Removed
 };
 
-/**
- * Opaque handle referencing a UI extension.
- * Similar to FTimerHandle - contains only an ID for subsystem lookup.
- *
- * Unregistration: Call Subsystem->UnregisterExtension(Handle) explicitly.
- *
- * Usage:
- *   FMCore_UIExtensionHandle Handle = Subsystem->RegisterExtension(...);
- *   // ... later ...
- *   Subsystem->UnregisterExtension(Handle);
- */
+/** Opaque handle referencing a UI extension. Call Subsystem->UnregisterExtension(Handle) to unregister. */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_UIExtensionHandle
 {
@@ -61,17 +51,7 @@ private:
 	uint32 HandleID;
 };
 
-/**
- * Opaque handle referencing a UI extension point.
- * Similar to FTimerHandle - contains only an ID for subsystem lookup.
- *
- * Unregistration: Call Subsystem->UnregisterExtensionPoint(Handle) explicitly.
- *
- * Usage:
- *   FMCore_UIExtensionPointHandle Handle = Subsystem->RegisterExtensionPoint(...);
- *   // ... later ...
- *   Subsystem->UnregisterExtensionPoint(Handle);
- */
+/** Opaque handle referencing a UI extension point. Call Subsystem->UnregisterExtensionPoint(Handle) to unregister. */
 USTRUCT(BlueprintType)
 struct MODULUSCORE_API FMCore_UIExtensionPointHandle
 {
@@ -98,12 +78,7 @@ private:
 	uint32 HandleID;
 };
 
-/**
- * Invoked when extensions are added/removed from an extension point.
- *
- * @param Action - Whether extension was added or removed
- * @param ExtensionHandle - Handle to the extension (query widget class from subsystem)
- */
+/** Invoked when extensions are added to or removed from an extension point. */
 DECLARE_DYNAMIC_DELEGATE_TwoParams(
 	FOnUIExtensionChanged,
 	EMCore_UIExtensionAction, Action,

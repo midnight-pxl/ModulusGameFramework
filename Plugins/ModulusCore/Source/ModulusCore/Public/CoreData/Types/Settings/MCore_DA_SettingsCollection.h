@@ -18,15 +18,9 @@ class UMCore_DA_SettingDefinition;
 
 /**
  * Collection of setting definitions for a settings panel.
+ * Provides category-based filtering, tag-based lookup, and sort-order awareness.
  *
- * Key Features:
- * - Category-based filtering with sort-order awareness
- * - Tag-based setting lookup
- * - Editor data validation for null entries and duplicate tags
- *
- * Blueprint Usage:
- *   Create as a DataAsset. Assign to UMCore_CoreSettings::DefaultSettingsCollection
- *   or pass directly to settings UI widgets.
+ * Create as a DataAsset; assign to UMCore_CoreSettings::DefaultSettingsCollection.
  */
 UCLASS(BlueprintType, Const)
 class MODULUSCORE_API UMCore_DA_SettingsCollection : public UDataAsset
@@ -44,34 +38,25 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Collection")
 	TArray<TObjectPtr<UMCore_DA_SettingDefinition>> Settings;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Collection")
+	TMap<FGameplayTag, FText> CategoryDisplayName;
 
 	// ============================================================================
 	// METHODS
 	// ============================================================================
 
-	/**
-	 * Get all settings matching a category tag, sorted by SortOrder.
-	 *
-	 * @param CategoryTag  The category to filter by.
-	 */
+	/** Returns all settings matching a category tag, sorted by SortOrder. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	TArray<UMCore_DA_SettingDefinition*> GetSettingsInCategory(const FGameplayTag& CategoryTag) const;
 
-	/**
-	 * Get all unique category tags present in this collection,
-	 * sorted by lowest SortOrder in each category.
-	 */
+	/** Returns all unique category tags, sorted by lowest SortOrder in each category. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	TArray<FGameplayTag> GetAllCategories() const;
 
 	const TArray<TObjectPtr<UMCore_DA_SettingDefinition>>& GetAllSettings() const { return Settings; }
 
-	/**
-	 * Find a single setting by its tag.
-	 *
-	 * @param SettingTag  The gameplay tag to search for.
-	 * @return  The matching definition, or nullptr if not found.
-	 */
+	/** Find a single setting by its tag. Returns nullptr if not found. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
 	UMCore_DA_SettingDefinition* FindSettingByTag(const FGameplayTag& SettingTag) const;
 

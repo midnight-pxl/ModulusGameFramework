@@ -17,19 +17,10 @@ struct FMCore_EventData;
 class UMCore_GlobalEventSubsystem;
 
 /**
- * Replicated component that handles global event network transport.
+ * Replicated component handling global event network transport via Server RPCs and Multicast.
+ * Attach to GameState (or use AMCore_GameStateBase) to enable cross-network event broadcasting.
  *
- * Attach to GameState to enable cross-network event broadcasting.
- * The GlobalEventSubsystem discovers this component automatically
- * and routes RPC calls through it.
- *
- * Setup Options:
- * 1. Use AMCore_GameStateBase as your GameMode's GameStateClass (zero setup)
- * 2. Add this component to your GameState Blueprint
- * 3. CreateDefaultSubobject in your C++ GameState constructor
- *
- * Note: This component is pure network transport. All business logic
- * (listener management, validation rules) lives in GlobalEventSubsystem.
+ * Pure network transport; all business logic lives in UMCore_GlobalEventSubsystem.
  */
 UCLASS(ClassGroup=(ModulusCore), meta=(BlueprintSpawnableComponent, DisplayName="Global Event Replicator"))
 class MODULUSCORE_API UMCore_GlobalEventReplicator : public UActorComponent
@@ -43,8 +34,6 @@ public:
 	 * Request a global event broadcast.
 	 * Routes to server RPC or direct multicast based on authority.
 	 * Called by GlobalEventSubsystem - do not call directly.
-	 *
-	 * @param EventData The event to broadcast
 	 */
 	void RequestBroadcast(const FMCore_EventData& EventData);
 	

@@ -20,22 +20,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogResult, bool, bConfirmed);
 
 /**
  * Reusable confirmation dialog with Accept/Back input binding support.
+ * Auto-wires button delegates and input bindings on activation, defaults focus to Cancel.
  *
- * Key Features:
- * - Auto-wires button click delegates and input bindings on activation
- * - Defaults focus to Cancel button for safety (prevents accidental confirms)
- * - Input bindings auto-cleanup via MCore_ActivatableBase::NativeOnDeactivated
- *
- * Required widget bindings (BindWidget):
- * - Txt_DialogMessage: Prompt text
- * - Btn_Confirm: Confirm button
- * - Btn_Cancel: Cancel button
- *
- * Blueprint Usage:
- * 1. Create Blueprint extending this class with the three required widgets
- * 2. Set AcceptInputAction and BackInputAction in defaults
- * 3. Bind OnDialogResult to handle user choice
- * 4. Activate via widget stack or PushWidgetToLayer
+ * Requires BindWidget: Txt_DialogMessage, Btn_Confirm, Btn_Cancel.
  */
 UCLASS(Abstract, Blueprintable, ClassGroup="ModulusUI", meta=(DisableNativeTick))
 class MODULUSCORE_API UMCore_ConfirmationDialog : public UMCore_ActivatableBase
@@ -45,28 +32,15 @@ class MODULUSCORE_API UMCore_ConfirmationDialog : public UMCore_ActivatableBase
 public:
 	UMCore_ConfirmationDialog(const FObjectInitializer& ObjectInitializer);
 
-	/**
-	 * Set the dialog prompt text.
-	 *
-	 * @param InMessage - Text to display as the dialog prompt
-	 */
+	/** Set the dialog prompt text. */
 	UFUNCTION(BlueprintCallable, Category = "UI|Dialog")
 	void SetDialogMessage(FText InMessage);
 
-	/**
-	 * Override button labels at runtime.
-	 *
-	 * @param InConfirmText - Label for the confirm button
-	 * @param InCancelText - Label for the cancel button
-	 */
+	/** Override confirm and cancel button labels at runtime. */
 	UFUNCTION(BlueprintCallable, Category = "UI|Dialog")
 	void SetButtonLabels(FText InConfirmText, FText InCancelText);
 
-	/**
-	 * Fired when dialog resolves.
-	 *
-	 * @param bConfirmed - true if user confirmed, false if cancelled
-	 */
+	/** Fires when dialog resolves. True if confirmed, false if cancelled. */
 	UPROPERTY(BlueprintAssignable, Category = "UI|Dialog")
 	FOnDialogResult OnDialogResult;
 

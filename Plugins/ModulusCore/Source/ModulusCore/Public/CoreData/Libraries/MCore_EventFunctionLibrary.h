@@ -19,24 +19,11 @@ struct FMCore_EventData;
 enum class EMCore_EventScope : uint8;
 
 /**
- * Event broadcasting and parameter helpers
+ * Event broadcasting and parameter helpers for GameplayTag-based events.
+ * Stateless static functions routing to Local or Global event subsystems based on scope.
  *
- * Stateless functions for cross-system communication via GameplayTag-based events.
- * Routes to Local or Global event subsystems based on scope.
- *
- * Common Uses:
- * - UI updates (player died, quest completed, item acquired)
- * - Cross-plugin communication (ModulusCore → ModulusVault → ModulusChronicles)
- * - Decoupled system notifications (avoid direct dependencies)
- *
- * Blueprint Usage:
- * - BroadcastSimpleEvent() for 90% of cases (signal-only, no data)
- * - BroadcastEventWithContext() when you need 1 identifier (quest ID, player name)
- * - BroadcastEvent() rarely (only for complex multi-parameter cases)
- * 
- * Event Scope:
- * - Local  → This client only (UI updates, local effects, split-screen safe)
- * - Global → Server-authoritative, multicasts to all clients
+ * Local scope delivers to this client only (split-screen safe).
+ * Global scope is server-authoritative and multicasts to all clients.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_EventFunctionLibrary : public UBlueprintFunctionLibrary
@@ -49,16 +36,8 @@ public:
 // ============================================================================
 	
 	/**
-	 * Broadcast signal-only event (90% of use cases)
-	 *
-	 * No parameters - listeners query subsystems for current state when notified.
-	 * Use for simple notifications where data is already available elsewhere.
-	 *
-	 * Example: BroadcastSimpleEvent("MCore.Events.Player.LevelUp", Local)
-	 * Listeners get notified, then query player controller for new level/stats.
-	 *
-	 * @param EventTag - Event identifier (e.g., MCore.Events.UI.MenuOpened)
-	 * @param EventScope - Local (this client only) or Global (networked to all clients)
+	 * Broadcast signal-only event (most common). Listeners query subsystems for current state.
+	 * No parameters attached; use BroadcastEventWithContext when you need an identifier.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Events",
 			  meta = (DefaultToSelf = "WorldContext"))
@@ -67,14 +46,8 @@ public:
 		EMCore_EventScope EventScope = EMCore_EventScope::Local);
 
 	/**
-	 * Broadcast event with single context identifier (~9% of use cases)
-	 *
+	 * Broadcast event with a single context identifier.
 	 * Use when you need to include minimal context (quest ID, item name, player name).
-	 * Listeners receive the ID and can query relevant systems for details.
-	 *
-	 * Example: BroadcastEventWithContext("MCore.Events.Quest.Completed", "Quest_MainStory_01", Local)
-	 *
-	 * @param ContextID - Single identifier (quest ID, item tag, player name, etc.)
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Events",
 			  meta = (DefaultToSelf = "WorldContext"))
@@ -84,12 +57,8 @@ public:
 		EMCore_EventScope EventScope = EMCore_EventScope::Local);
 
     /**
-	 * Broadcast event with multiple parameters (~1% of use cases)
-	 *
-	 * Only use when you need to pass multiple pieces of data that aren't available elsewhere.
-	 * For most cases, use BroadcastSimpleEvent() or BroadcastEventWithContext() instead.
-	 *
-	 * @param EventParams - Key-value pairs (e.g., {"ItemID": "Sword_001", "Quantity": "5"})
+	 * Broadcast event with multiple key-value parameters.
+	 * Only use when you need to pass multiple pieces of data not available elsewhere.
 	 */
     UFUNCTION(BlueprintCallable, Category = "Modulus|Events",
               meta = (DefaultToSelf = "WorldContext"))

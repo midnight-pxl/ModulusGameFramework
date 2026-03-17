@@ -18,19 +18,11 @@ class UMCore_EventListenerComp;
 class UMCore_GlobalEventReplicator;
 
 /**
- * Global event subsystem for networked events
- *
- * Server-authoritative event broadcasting across all clients.
+ * Server-authoritative event subsystem for networked GameplayTag events.
  * One instance per GameInstance (shared by all players).
  *
- * Common Uses:
- * - Game state changes (match started, round ended)
- * - World events (boss spawned, treasure chest opened)
- * - Cross-player notifications (player joined, achievement unlocked)
- * 
- * Network Setup:
- * Add UMCore_GlobalEventReplicator component to your GameState (or use AMCore_GameStateBase).
- * Without a replicator, events broadcast locally only with a warning in networked games.
+ * Requires UMCore_GlobalEventReplicator on GameState for network transport.
+ * Without a replicator, events broadcast locally only with a warning.
  */
 UCLASS(Config=ModulusCore)
 class MODULUSCORE_API UMCore_GlobalEventSubsystem : public UGameInstanceSubsystem
@@ -83,16 +75,11 @@ public:
 	 */
 	void DeliverToLocalListeners(const FMCore_EventData& EventData);
 
-	/** Check if this instance has authority to broadcast global events (server-only) */
+	/** Returns true if this instance has authority to broadcast global events (server or standalone). */
 	UFUNCTION(BlueprintCallable, Category = "Event System")
 	bool HasGlobalEventAuthority() const;
 	
-	/**
-	 * Validate an event request from a client.
-	 * Used by GlobalEventReplicator for RPC validation.
-	 *
-	 * @return true if event is valid and should be broadcast
-	 */
+	/** Validates an inbound event request. Override to add custom validation rules. */
 	bool ValidateEventRequest(const FMCore_EventData& EventData) const;
 
 protected:

@@ -159,7 +159,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	APlayerController* PlayerController = LocalPlayer->GetPlayerController(GetWorld());
 	if (!PlayerController)
 	{
-		// PlayerController not yet ready — defer creation
+		// PlayerController not yet ready, defer creation
 		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Deferring layout creation until PlayerController ready"));
 		
 		if (ULocalPlayer* ThisPlayer = GetLocalPlayer())
@@ -206,7 +206,7 @@ void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerContro
 
 void UMCore_UISubsystem::OnPrimaryGameLayoutCreated_Implementation(UMCore_PrimaryGameLayout* Layout)
 {
-	// Default empty — override in Blueprint or C++ subclasses
+	// Default empty; override in Blueprint or C++ subclasses
 }
 
 void UMCore_UISubsystem::BuildLayerStackMap()
@@ -395,6 +395,11 @@ UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
 	return CachedMenuHub;
 }
 
+/**
+ * @param TabID              Unique tag identifying this tab. Duplicates are rejected with a warning.
+ * @param ScreenWidgetClass  Widget class to instantiate as the tab's page content. Must be non-null.
+ * @param Priority           Sort order (lower values appear first). Default: 100.
+ */
 void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass,
 	int32 Priority, UTexture2D* TabIcon)

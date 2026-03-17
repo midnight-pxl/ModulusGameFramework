@@ -38,6 +38,13 @@ void UMCore_ActivatableBase::NativeConstruct()
 	Super::NativeConstruct();
 }
 
+/**
+ * @param InputAction          DataTable row reference to the input action to bind.
+ * @param Callback             Delegate fired when the action triggers.
+ * @param IABindingHandle      Output handle for optional manual unregistration.
+ * @param OverrideDisplayName  Display name override for the CommonUI action bar. Empty uses default.
+ * @param bShouldDisplayInActionBar  Whether this binding appears in the CommonUI action bar.
+ */
 void UMCore_ActivatableBase::RegisterBinding(
 	FDataTableRowHandle InputAction,
 	const FInputActionExecutedDelegate& Callback,

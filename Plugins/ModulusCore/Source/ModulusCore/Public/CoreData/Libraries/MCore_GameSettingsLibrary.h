@@ -21,22 +21,11 @@ class UMCore_PlayerSettingsSave;
 class USoundClass;
 
 /**
- * Game settings library (immediate-apply model).
+ * Game settings library providing typed getters/setters with immediate-apply semantics.
  *
- * Each setter writes to committed storage, applies to engine systems,
- * and saves to disk immediately. Settings with bRequiresConfirmation
- * defer the save until the player confirms via a revert countdown.
- *
- * Key Features:
- * - Typed getters with committed-then-default fallback
- * - Batch setters with single GUS flush per call
- * - Confirmation-required flow with event broadcast
- * - Tag-based lookup via DefaultSettingsCollection
- * - Reset helpers (single, category, all)
- *
- * Blueprint Usage:
- *   All public functions are BlueprintCallable. Pass a WorldContextObject
- *   to resolve the local player's save data.
+ * Each setter writes to committed storage, applies to engine systems (GameUserSettings,
+ * CVars, SoundClasses), and saves to disk. Settings with bRequiresConfirmation defer
+ * the save until the player confirms via a revert countdown.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_GameSettingsLibrary : public UBlueprintFunctionLibrary
@@ -48,34 +37,19 @@ public:
 	// TYPED GETTERS
 	// ============================================================================
 
-	/**
-	 * Get effective float value for a setting (committed, then DataAsset default).
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 * @param Setting             The setting definition to query.
-	 */
+	/** Returns effective float value for a setting (committed, then DataAsset default). */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static float GetSettingFloat(const UObject* WorldContextObject,
 		const UMCore_DA_SettingDefinition* Setting);
 
-	/**
-	 * Get effective integer value for a setting (committed, then DataAsset default).
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 * @param Setting             The setting definition to query.
-	 */
+	/** Returns effective integer value for a setting (committed, then DataAsset default). */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static int32 GetSettingInt(const UObject* WorldContextObject,
 		const UMCore_DA_SettingDefinition* Setting);
 
-	/**
-	 * Get effective boolean value for a setting (committed, then DataAsset default).
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 * @param Setting             The setting definition to query.
-	 */
+	/** Returns effective boolean value for a setting (committed, then DataAsset default). */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static bool GetSettingBool(const UObject* WorldContextObject,
@@ -86,11 +60,8 @@ public:
 	// ============================================================================
 
 	/**
-	 * Get effective integer value by tag (resolved from CoreSettings::DefaultSettingsCollection).
+	 * Returns effective integer value by tag (resolved from CoreSettings::DefaultSettingsCollection).
 	 * Use when the caller has a setting tag but not a definition pointer.
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 * @param SettingTag          The gameplay tag to look up.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
@@ -105,11 +76,7 @@ public:
 	 * Set one or more float settings, apply to engine, and save.
 	 * All changes are applied in a single pass with one GUS flush at the end.
 	 * If any setting has bRequiresConfirmation and bBypassConfirmation is false,
-	 * the values are applied but not saved -- a confirmation event is broadcast instead.
-	 *
-	 * @param WorldContextObject   Object used to resolve the local player.
-	 * @param Changes              Array of setting/value pairs to apply.
-	 * @param bBypassConfirmation  Skip confirmation flow (used by reset operations).
+	 * the values are applied but not saved; a confirmation event is broadcast instead.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject",
@@ -119,13 +86,7 @@ public:
 		const TArray<FMCore_FloatSettingChange>& Changes,
 		bool bBypassConfirmation = false);
 
-	/**
-	 * Set one or more integer settings, apply to engine, and save.
-	 *
-	 * @param WorldContextObject   Object used to resolve the local player.
-	 * @param Changes              Array of setting/value pairs to apply.
-	 * @param bBypassConfirmation  Skip confirmation flow (used by reset operations).
-	 */
+	/** Set one or more integer settings, apply to engine, and save. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject",
 				DisplayName = "Set Setting Int"))
@@ -134,13 +95,7 @@ public:
 		const TArray<FMCore_IntSettingChange>& Changes,
 		bool bBypassConfirmation = false);
 
-	/**
-	 * Set one or more boolean settings, apply to engine, and save.
-	 *
-	 * @param WorldContextObject   Object used to resolve the local player.
-	 * @param Changes              Array of setting/value pairs to apply.
-	 * @param bBypassConfirmation  Skip confirmation flow (used by reset operations).
-	 */
+	/** Set one or more boolean settings, apply to engine, and save. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject",
 				DisplayName = "Set Setting Bool"))
@@ -153,12 +108,7 @@ public:
 	// UTILITIES
 	// ============================================================================
 
-	/**
-	 * Reset a single setting to its DataAsset default value (applied immediately).
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 * @param Setting             The setting definition to reset.
-	 */
+	/** Reset a single setting to its DataAsset default value (applied immediately). */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static void ResetSettingToDefault(const UObject* WorldContextObject,
@@ -167,8 +117,6 @@ public:
 	/**
 	 * Reset all settings in DefaultSettingsCollection to their DataAsset defaults.
 	 * Batched with a single GUS flush per type.
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
@@ -177,20 +125,13 @@ public:
 	/**
 	 * Reset all settings in a specific category to their DataAsset defaults.
 	 * Batched with a single GUS flush per type.
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 * @param CategoryTag         The category to reset.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static void ResetCategoryToDefault(const UObject* WorldContextObject,
 		FGameplayTag CategoryTag);
 
-	/**
-	 * Explicitly save player settings to disk.
-	 *
-	 * @param WorldContextObject  Object used to resolve the local player.
-	 */
+	/** Explicitly save player settings to disk. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static void SavePlayerSettings(const UObject* WorldContextObject);

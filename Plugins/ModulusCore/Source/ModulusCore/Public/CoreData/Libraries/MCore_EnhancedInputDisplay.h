@@ -20,16 +20,8 @@ class UInputAction;
 
 /**
  * Enhanced Input display and rebinding helpers.
- *
- * Key Features:
- * - Query current key bindings for any input action
- * - Retrieve display names and categories from PlayerMappableKeySettings
- * - Remap and reset key bindings through Enhanced Input's native system
- *
- * Blueprint Usage:
- * - GetCurrentKeyForAction to display the bound key in UI
- * - RemapActionKey to apply a new binding from a key capture widget
- * - ResetActionToDefault to restore original bindings
+ * Query current key bindings, retrieve display names, and remap keys through
+ * Enhanced Input's native PlayerMappableKeySettings system.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_EnhancedInputDisplay : public UBlueprintFunctionLibrary
@@ -42,23 +34,11 @@ public:
 	// KEY QUERIES
 	// ============================================================================
 
-	/**
-	 * Get the first/primary key currently bound to an input action.
-	 *
-	 * @param PlayerController The player whose bindings to query
-	 * @param InputAction The action to look up
-	 * @return The current primary key, or EKeys::Invalid if not found
-	 */
+	/** Returns the first bound key for the given input action, or Invalid if unbound. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
 	static FKey GetCurrentKeyForAction(APlayerController* PlayerController, UInputAction* InputAction);
 
-	/**
-	 * Get all keys bound to an action (for multiple bindings).
-	 *
-	 * @param PlayerController The player whose bindings to query
-	 * @param InputAction The action to look up
-	 * @return Array of all bound keys
-	 */
+	/** Returns all bound keys for the given input action. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
 	static TArray<FKey> GetAllKeysForAction(APlayerController* PlayerController, UInputAction* InputAction);
 
@@ -66,43 +46,19 @@ public:
 	// ACTION METADATA
 	// ============================================================================
 
-	/**
-	 * Get display name from PlayerMappableKeySettings.
-	 *
-	 * @param PlayerController The player whose bindings to query
-	 * @param InputAction The action to look up
-	 * @return The display name, or the action's object name as fallback
-	 */
+	/** Returns the display name from PlayerMappableKeySettings, or empty if not configured. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
 	static FText GetActionDisplayName(APlayerController* PlayerController, UInputAction* InputAction);
 
-	/**
-	 * Get display category from PlayerMappableKeySettings.
-	 *
-	 * @param PlayerController The player whose bindings to query
-	 * @param InputAction The action to look up
-	 * @return The display category, or "General" as fallback
-	 */
+	/** Returns the display category from PlayerMappableKeySettings, or empty if not configured. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
 	static FText GetActionDisplayCategory(APlayerController* PlayerController, UInputAction* InputAction);
 
-	/**
-	 * Check if action is player-remappable.
-	 *
-	 * @param PlayerController The player whose bindings to query
-	 * @param InputAction The action to check
-	 * @return True if the action has a mapping row in the active key profile
-	 */
+	/** Returns true if the input action has PlayerMappableKeySettings and is marked remappable. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
 	static bool IsActionRemappable(APlayerController* PlayerController, UInputAction* InputAction);
 
-	/**
-	 * Get unique mapping name from PlayerMappableKeySettings.
-	 *
-	 * @param PlayerController The player whose bindings to query
-	 * @param InputAction The action to look up
-	 * @return The mapping FName, or NAME_None if not found
-	 */
+	/** Returns the mapping name from PlayerMappableKeySettings for Data Table display. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
 	static FName GetActionMappingName(APlayerController* PlayerController, UInputAction* InputAction);
 
@@ -111,13 +67,8 @@ public:
 	// ============================================================================
 
 	/**
-	 * Remap action through Enhanced Input's native system.
-	 *
-	 * @param PlayerController The player whose bindings to modify
-	 * @param InputAction The action to remap
-	 * @param NewKey The new key to bind
-	 * @param OutError Error message on failure
-	 * @return True on success
+	 * Remap an input action to a new key. Validates that the action is remappable
+	 * and handles slot-based binding through the active key profile.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Display")
 	static bool RemapActionKey(APlayerController* PlayerController,
@@ -125,14 +76,7 @@ public:
 							  FKey NewKey,
 							  FText& OutError);
 
-	/**
-	 * Reset an input action to its default key binding(s).
-	 *
-	 * @param PlayerController The player whose bindings to modify
-	 * @param InputAction The action to reset
-	 * @param OutError Error message on failure
-	 * @return True on success
-	 */
+	/** Resets a specific mapping slot for an action to its default binding. */
 	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Display")
 	static bool ResetActionToDefault(APlayerController* PlayerController,
 									UInputAction* InputAction,
