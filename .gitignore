@@ -5,7 +5,8 @@
 /contentModel.xml
 /projectSettingsUpdater.xml
 /modules.xml
-/.idea.ModulusGameFramework.iml
+.idea/
+.vs/
 # Ignored default folder with query files
 /queries/
 # Datasource local storage ignored files
@@ -19,3 +20,4 @@ Intermediate/
 Plugins/ModulusCore/Intermediate/
 Plugins/ModulusCore/Binaries/
 Binaries/
+Saved/
