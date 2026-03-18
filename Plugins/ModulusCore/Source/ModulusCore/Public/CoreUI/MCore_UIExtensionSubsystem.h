@@ -18,7 +18,7 @@
 class UUserWidget;
 
 /**
- * World subsystem for tag-based UI widget injection between decoupled plugins.
+ * World subsystem for enabling tag-based widget injection between decoupled plugins.
  *
  * Extension points define UI slots; extensions provide widgets to fill them.
  * Matching is by GameplayTag with optional per-LocalPlayer context filtering
