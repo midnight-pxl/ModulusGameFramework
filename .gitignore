@@ -15,6 +15,7 @@
 /httpRequests/
 
 
-../Intermediate/
-../Plugins/ModulusCore/Intermediate/
-../Binaries/
+Intermediate/
+Plugins/ModulusCore/Intermediate/
+Plugins/ModulusCore/Binaries/
+Binaries/
