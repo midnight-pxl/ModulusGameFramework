@@ -36,10 +36,10 @@ protected:
 	TObjectPtr<UMCore_ButtonBase> Btn_Previous;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UMCore_ButtonBase> Btn_Next;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Txt_CurrentOption;
+	
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UMCore_ButtonBase> Btn_Next;
 
 	// ====================================================================
 	// OVERRIDES

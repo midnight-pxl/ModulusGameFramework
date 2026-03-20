@@ -51,23 +51,19 @@ public:
 	/* No background fill, text/icon only with subtle hover. Used for arrow buttons and de-emphasized actions. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
 	TSubclassOf<UCommonButtonStyle> GhostButtonStyle;
-
-	/*
-	 * Title/header text styles ordered by size: [0]=Small (default), [1]=Medium, [2]=Large.
-	 * Index driven by UITextSize accessibility setting. Falls back to index 0.
-	 */
+	
+	/* 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
-	TArray<TSubclassOf<UCommonTextStyle>> TitleTextStyle;
+	TArray<TSubclassOf<UCommonTextStyle>> HeadingTextStyle;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
-	TSubclassOf<UCommonTextStyle> BodyTextStyle;
+	TArray<TSubclassOf<UCommonTextStyle>> LabelTextStyle;
 
-	/*
-	 * Small/caption text styles ordered by size: [0]=Small (default), [1]=Medium, [2]=Large.
-	 * Index driven by UITextSize accessibility setting. Falls back to index 0.
-	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
-	TArray<TSubclassOf<UCommonTextStyle>> CaptionTextStyle;
+	TArray<TSubclassOf<UCommonTextStyle>> ValueTextStyle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CommonUI Styles")
+	TArray<TSubclassOf<UCommonTextStyle>> DescriptionTextStyle;
 
 	// ============================================================================
 	// MODULUSCORE STYLE DATA ASSETS

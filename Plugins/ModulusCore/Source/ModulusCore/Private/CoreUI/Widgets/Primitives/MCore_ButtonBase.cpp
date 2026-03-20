@@ -167,7 +167,7 @@ void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme
 	TSubclassOf<UCommonTextStyle> TextStyleToApply = TextStyleOverride;
 	if (!TextStyleToApply && Theme)
 	{
-		TextStyleToApply = Theme->BodyTextStyle;
+		TextStyleToApply = Theme->LabelTextStyle;
 	}
 	if (TextStyleToApply && Txt_BtnLabel)
 	{

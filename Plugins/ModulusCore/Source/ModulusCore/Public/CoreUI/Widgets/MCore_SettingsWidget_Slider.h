@@ -14,6 +14,7 @@
 #include "MCore_SettingsWidget_Slider.generated.h"
 
 class USlider;
+class UCommonTextBlock;
 class UMCore_ButtonBase;
 
 /**
@@ -39,12 +40,16 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Txt_ValueDisplay;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMCore_ButtonBase> Btn_StepLeft;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMCore_ButtonBase> Btn_StepRight;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings Widget")
+	bool bShowStepButtons{true};
+	
+protected:
 	// ====================================================================
 	// OVERRIDES
 	// ====================================================================
@@ -61,7 +66,7 @@ protected:
 	// ====================================================================
 
 	virtual void NativeOnInitialized() override;
-
+	
 private:
 	// ====================================================================
 	// HANDLERS
@@ -90,6 +95,6 @@ private:
 	// STATE
 	// ====================================================================
 
-	/* Re-entrancy guard -- prevents HandleSliderValueChanged from firing during programmatic sets */
+	/* Race condition guard -- prevents HandleSliderValueChanged from firing during programmatic sets */
 	bool bIsUpdatingSlider{false};
 };

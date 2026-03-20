@@ -25,6 +25,10 @@ class UCommonTextBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingValueChanged,
     FGameplayTag, SettingTag, const FString&, NewValueString);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettingFocused,
+    FGameplayTag, SettingTag,
+    FText, Description);
+
 /**
  * Abstract base for all setting input widgets (Slider, Toggle, Switcher).
  * Immediate-apply model: every user interaction writes to engine immediately.
@@ -85,6 +89,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "ModulusCore|Settings")
     FOnSettingValueChanged OnSettingValueChanged;
+    
+    UPROPERTY(BlueprintAssignable, Category = "ModulusCore|Settings")
+    FOnSettingFocused  OnSettingFocused;
 
 protected:
     // ====================================================================
@@ -105,19 +112,16 @@ protected:
     // BIND WIDGETS
     // ====================================================================
 
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UCommonTextBlock> Txt_SettingName;
-
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-    TObjectPtr<UCommonTextBlock> Txt_SettingDescription;
-
+    
     // ====================================================================
     // DATA
     // ====================================================================
 
     UPROPERTY(Transient, BlueprintReadOnly, Category = "ModulusCore|Settings")
     TObjectPtr<const UMCore_DA_SettingDefinition> SettingDefinition;
-
+    
     UPROPERTY(Transient, BlueprintReadOnly, Category = "ModulusCore|Settings")
     bool bIsSettingEnabled{true};
 

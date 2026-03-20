@@ -1,6 +1,9 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
+
+#include <rapidjson/document.h>
+
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
@@ -25,15 +28,14 @@ void UMCore_SettingsWidget_Slider::NativeOnInitialized()
 		Slider_Value->OnValueChanged.AddDynamic(this, &ThisClass::HandleSliderValueChanged);
 	}
 
-	if (Btn_StepLeft && Btn_StepLeft->IsVisible())
-	{
-		Btn_StepLeft->OnButtonClicked.AddDynamic(this, &ThisClass::HandleStepLeft);
-	}
-
-	if (Btn_StepRight && Btn_StepRight->IsVisible())
-	{
-		Btn_StepRight->OnButtonClicked.AddDynamic(this, &ThisClass::HandleStepRight);
-	}
+	const ESlateVisibility StepVisibility = bShowStepButtons ?
+		ESlateVisibility::Visible : ESlateVisibility::Collapsed;
+	
+	Btn_StepLeft->SetVisibility(StepVisibility);
+	Btn_StepLeft->OnButtonClicked.AddDynamic(this, &ThisClass::HandleStepLeft);
+	
+	Btn_StepRight->SetVisibility(StepVisibility);
+	Btn_StepRight->OnButtonClicked.AddDynamic(this, &ThisClass::HandleStepRight);
 }
 
 // ============================================================================
@@ -43,10 +45,7 @@ void UMCore_SettingsWidget_Slider::NativeOnInitialized()
 void UMCore_SettingsWidget_Slider::OnDefinitionSet_Implementation(
 	const UMCore_DA_SettingDefinition* Definition)
 {
-	if (!Definition || !Slider_Value)
-	{
-		return;
-	}
+	if (!Definition || !Slider_Value) { return; }
 
 	const float CurrentValue = UMCore_GameSettingsLibrary::GetSettingFloat(
 		GetOwningLocalPlayer(), Definition);
@@ -57,7 +56,7 @@ void UMCore_SettingsWidget_Slider::OnDefinitionSet_Implementation(
 	bIsUpdatingSlider = true;
 	Slider_Value->SetMinValue(Definition->MinValue);
 	Slider_Value->SetMaxValue(Definition->MaxValue);
-	Slider_Value->SetStepSize(Definition->StepSize);
+	Slider_Value->SetStepSize(0.0f);
 	Slider_Value->SetValue(ClampedValue);
 	bIsUpdatingSlider = false;
 
@@ -73,10 +72,7 @@ void UMCore_SettingsWidget_Slider::OnDefinitionSet_Implementation(
 
 void UMCore_SettingsWidget_Slider::HandleSliderValueChanged(float RawValue)
 {
-	if (bIsUpdatingSlider)
-	{
-		return;
-	}
+	if (bIsUpdatingSlider) { return; }
 
 	const float Snapped = SnapToStep(RawValue);
 
@@ -108,30 +104,21 @@ void UMCore_SettingsWidget_Slider::HandleStepRight()
 
 void UMCore_SettingsWidget_Slider::StepLeft_Implementation()
 {
-	if (!SettingDefinition)
-	{
-		return;
-	}
+	if (!SettingDefinition) { return; }
 
 	StepByAmount(-SettingDefinition->StepSize);
 }
 
 void UMCore_SettingsWidget_Slider::StepRight_Implementation()
 {
-	if (!SettingDefinition)
-	{
-		return;
-	}
+	if (!SettingDefinition) { return; }
 
 	StepByAmount(SettingDefinition->StepSize);
 }
 
 void UMCore_SettingsWidget_Slider::StepByAmount(float Delta)
 {
-	if (!SettingDefinition || !Slider_Value)
-	{
-		return;
-	}
+	if (!SettingDefinition || !Slider_Value) { return; }
 
 	const float Current = Slider_Value->GetValue();
 	const float NewValue = FMath::Clamp(Current + Delta,
@@ -153,10 +140,7 @@ void UMCore_SettingsWidget_Slider::StepByAmount(float Delta)
 
 float UMCore_SettingsWidget_Slider::SnapToStep(float RawValue) const
 {
-	if (!SettingDefinition || SettingDefinition->StepSize <= 0.f)
-	{
-		return RawValue;
-	}
+	if (!SettingDefinition || SettingDefinition->StepSize <= 0.f) { return RawValue; }
 
 	const float Snapped = FMath::RoundToFloat(
 		(RawValue - SettingDefinition->MinValue) / SettingDefinition->StepSize)
@@ -168,16 +152,23 @@ float UMCore_SettingsWidget_Slider::SnapToStep(float RawValue) const
 
 FText UMCore_SettingsWidget_Slider::FormatValue(float Value) const
 {
-	if (!SettingDefinition)
-	{
-		return FText::GetEmpty();
-	}
+	if (!SettingDefinition) { return FText::GetEmpty(); }
 
 	switch (SettingDefinition->SliderDisplayFormat)
 	{
 	case EMCore_SliderDisplayFormat::Percentage:
-		return FText::FromString(FString::Printf(TEXT("%d%%"),
-			FMath::RoundToInt(Value * 100.f)));
+		{
+			const float Range = SettingDefinition->MaxValue - SettingDefinition->MinValue;
+			if (FMath::IsNearlyZero(Range))
+			{
+				return FText::FromString(TEXT("0%"));
+			}
+			
+			const int32 Percent = FMath::RoundToInt(
+				(Value - SettingDefinition->MinValue) / Range * 100.0f);
+			
+			return FText::FromString(FString::Printf(TEXT("%d%%"), Percent));
+		}
 
 	case EMCore_SliderDisplayFormat::WholeNumber:
 		return FText::FromString(FString::Printf(TEXT("%d"),
@@ -191,10 +182,7 @@ FText UMCore_SettingsWidget_Slider::FormatValue(float Value) const
 
 void UMCore_SettingsWidget_Slider::ApplyValueToEngine(float SnappedValue)
 {
-	if (!SettingDefinition)
-	{
-		return;
-	}
+	if (!SettingDefinition) { return; }
 
 	TArray<FMCore_FloatSettingChange> Changes;
 	Changes.Add({const_cast<UMCore_DA_SettingDefinition*>(SettingDefinition.Get()), SnappedValue});
@@ -215,10 +203,7 @@ void UMCore_SettingsWidget_Slider::SyncSliderAndDisplay(float SnappedValue)
 
 FString UMCore_SettingsWidget_Slider::GetValueAsString_Implementation() const
 {
-	if (!Slider_Value)
-	{
-		return TEXT("0");
-	}
+	if (!Slider_Value) { return TEXT("0"); }
 
 	return FormatValue(Slider_Value->GetValue()).ToString();
 }
@@ -262,12 +247,12 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		}
 	}
 
-	if (Txt_ValueDisplay && !NewTheme->CaptionTextStyle.IsEmpty())
+	if (Txt_ValueDisplay && !NewTheme->ValueTextStyle.IsEmpty())
 	{
 		const TSubclassOf<UCommonTextStyle> ResolvedCaptionStyle =
-			NewTheme->CaptionTextStyle.IsValidIndex(SizeIndex)
-			? NewTheme->CaptionTextStyle[SizeIndex]
-			: NewTheme->CaptionTextStyle[0];
+			NewTheme->ValueTextStyle.IsValidIndex(SizeIndex)
+			? NewTheme->ValueTextStyle[SizeIndex]
+			: NewTheme->ValueTextStyle[0];
 
 		if (ResolvedCaptionStyle)
 		{

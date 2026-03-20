@@ -137,10 +137,7 @@ void UMCore_SettingsWidget_Switcher::ApplyCurrentValue()
 
 void UMCore_SettingsWidget_Switcher::ReadCurrentValue()
 {
-	if (!SettingDefinition)
-	{
-		return;
-	}
+	if (!SettingDefinition) { return; }
 
 	if (bIsToggleMode)
 	{
@@ -180,10 +177,10 @@ FString UMCore_SettingsWidget_Switcher::GetValueAsString_Implementation() const
 
 void UMCore_SettingsWidget_Switcher::ResetToDefault_Implementation()
 {
-	if (!SettingDefinition)
-	{
-		return;
-	}
+	if (!SettingDefinition) { return; }
+	
+	UMCore_GameSettingsLibrary::ResetSettingToDefault(
+		GetOwningLocalPlayer(), SettingDefinition.Get());
 
 	ReadCurrentValue();
 	UpdateDisplay();
@@ -197,10 +194,7 @@ void UMCore_SettingsWidget_Switcher::ApplyTheme_Implementation(UMCore_PDA_UIThem
 {
 	Super::ApplyTheme_Implementation(NewTheme);
 
-	if (!NewTheme)
-	{
-		return;
-	}
+	if (!NewTheme) { return; }
 
 	const TSubclassOf<UCommonButtonStyle> ArrowStyle =
 		NewTheme->GhostButtonStyle
@@ -217,8 +211,8 @@ void UMCore_SettingsWidget_Switcher::ApplyTheme_Implementation(UMCore_PDA_UIThem
 		Btn_Next->SetButtonStyleOverride(ArrowStyle);
 	}
 
-	if (Txt_CurrentOption && NewTheme->BodyTextStyle)
+	if (Txt_CurrentOption && NewTheme->LabelTextStyle)
 	{
-		Txt_CurrentOption->SetStyle(NewTheme->BodyTextStyle);
+		Txt_CurrentOption->SetStyle(NewTheme->LabelTextStyle);
 	}
 }

@@ -111,12 +111,7 @@ void UMCore_SettingsWidget_Base::ApplyTheme_Implementation(UMCore_PDA_UITheme_Ba
 {
 	if (NewTheme)
 	{
-		if (Txt_SettingName && NewTheme->BodyTextStyle)
-		{
-			Txt_SettingName->SetStyle(NewTheme->BodyTextStyle);
-		}
-
-		if (Txt_SettingDescription && !NewTheme->CaptionTextStyle.IsEmpty())
+		if (Txt_SettingName && !NewTheme->LabelTextStyle.IsEmpty())
 		{
 			int32 SizeIndex = 0;
 			if (const ULocalPlayer* LP = GetOwningLocalPlayer())
@@ -127,14 +122,14 @@ void UMCore_SettingsWidget_Base::ApplyTheme_Implementation(UMCore_PDA_UITheme_Ba
 				}
 			}
 
-			const TSubclassOf<UCommonTextStyle> ResolvedCaptionStyle =
-				NewTheme->CaptionTextStyle.IsValidIndex(SizeIndex)
-				? NewTheme->CaptionTextStyle[SizeIndex]
-				: NewTheme->CaptionTextStyle[0];
+			const TSubclassOf<UCommonTextStyle> ResolvedStyle =
+				NewTheme->LabelTextStyle.IsValidIndex(SizeIndex)
+				? NewTheme->LabelTextStyle[SizeIndex]
+				: NewTheme->LabelTextStyle[0];
 
-			if (ResolvedCaptionStyle)
+			if (ResolvedStyle)
 			{
-				Txt_SettingDescription->SetStyle(ResolvedCaptionStyle);
+				Txt_SettingName->SetStyle(ResolvedStyle);
 			}
 		}
 	}
