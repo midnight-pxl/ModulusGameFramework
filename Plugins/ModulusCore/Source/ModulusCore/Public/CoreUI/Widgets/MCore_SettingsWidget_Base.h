@@ -64,6 +64,10 @@ public:
     /** Reset to DataAsset default value. */
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
     void ResetToDefault();
+    
+    /** Re-reads the current value from the settings library and updates the widget display. */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ModulusCore|Settings")
+    void RefreshValueFromSettings();
 
     /** String representation of current value (for debug/display). */
     UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "ModulusCore|Settings")

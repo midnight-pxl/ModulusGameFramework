@@ -58,6 +58,7 @@ protected:
 	virtual void ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* NewTheme) override;
 	virtual FString GetValueAsString_Implementation() const override;
 	virtual void ResetToDefault_Implementation() override;
+	virtual void RefreshValueFromSettings_Implementation() override;
 	virtual void StepLeft_Implementation() override;
 	virtual void StepRight_Implementation() override;
 

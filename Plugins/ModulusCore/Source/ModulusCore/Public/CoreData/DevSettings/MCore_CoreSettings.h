@@ -19,6 +19,9 @@ class UMCore_PDA_UITheme_Base;
 class UMCore_PrimaryGameLayout;
 class UMCore_GameMenuHub;
 class UMCore_DA_SettingsCollection;
+class UMCore_SettingsWidget_Slider;
+class UMCore_SettingsWidget_Switcher;
+class UCommonActivatableWidget;
 
 /**
  * Developer settings for the Modulus Game Framework (Project Settings > Game > Modulus Core).
@@ -101,6 +104,18 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TObjectPtr<UMCore_DA_SettingsCollection> DefaultSettingsCollection;
+	
+	/** Widget class used to render Slider-type settings. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TSubclassOf<UMCore_SettingsWidget_Slider> SettingsSliderWidgetClass;
+
+	/** Widget class used to render Switcher-type settings (Toggle and Dropdown). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TSubclassOf<UMCore_SettingsWidget_Switcher> SettingsSwitcherWidgetClass;
+
+	/** Panel class pushed when the KeyBinding category tab is selected. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TSubclassOf<UCommonActivatableWidget> KeyBindingPanelClass;
 
 	// ============================================================================
 	// DEBUG (EDITOR ONLY)

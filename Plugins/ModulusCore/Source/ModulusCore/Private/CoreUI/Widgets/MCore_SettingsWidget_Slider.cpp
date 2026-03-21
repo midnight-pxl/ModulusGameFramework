@@ -224,6 +224,26 @@ void UMCore_SettingsWidget_Slider::ResetToDefault_Implementation()
 	SyncSliderAndDisplay(DefaultVal);
 }
 
+void UMCore_SettingsWidget_Slider::RefreshValueFromSettings_Implementation()
+{
+	if (!SettingDefinition || !Slider_Value) { return; }
+	
+	const float CurrentValue = UMCore_GameSettingsLibrary::GetSettingFloat(
+		GetOwningLocalPlayer(), SettingDefinition);
+	
+	const float ClampedValue = FMath::Clamp(CurrentValue,
+		SettingDefinition->MinValue, SettingDefinition->MaxValue);
+	
+	bIsUpdatingSlider = true;
+	Slider_Value->SetValue(ClampedValue);
+	bIsUpdatingSlider = false;
+	
+	if (Txt_ValueDisplay)
+	{
+		Txt_ValueDisplay->SetText(FormatValue(ClampedValue));
+	}
+}
+
 // ============================================================================
 // THEME
 // ============================================================================

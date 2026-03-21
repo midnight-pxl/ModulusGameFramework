@@ -62,6 +62,11 @@ void UMCore_SettingsWidget_Base::ResetToDefault_Implementation()
 		*GetName());
 }
 
+void UMCore_SettingsWidget_Base::RefreshValueFromSettings_Implementation()
+{
+	/* No-op. Derived classes fetch their values and update visuals */
+}
+
 FString UMCore_SettingsWidget_Base::GetValueAsString_Implementation() const
 {
 	return TEXT("(not implemented)");

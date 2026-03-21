@@ -187,6 +187,14 @@ void UMCore_SettingsWidget_Switcher::ResetToDefault_Implementation()
 	UpdateDisplay();
 }
 
+void UMCore_SettingsWidget_Switcher::RefreshValueFromSettings_Implementation()
+{
+	if (!SettingDefinition) { return; }
+	
+	ReadCurrentValue();
+	UpdateDisplay();
+}
+
 // ============================================================================
 // THEME
 // ============================================================================
