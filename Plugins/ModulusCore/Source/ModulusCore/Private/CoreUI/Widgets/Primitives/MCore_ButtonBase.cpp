@@ -7,6 +7,7 @@
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/Image.h"
+#include "CoreData/Libraries/MCore_ThemeLibrary.h"
 #include "Engine/Texture2D.h"
 
 UMCore_ButtonBase::UMCore_ButtonBase()
@@ -152,26 +153,23 @@ void UMCore_ButtonBase::SetTextStyleOverride(TSubclassOf<UCommonTextStyle> InSty
 
 void UMCore_ButtonBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
 {
-	// Apply button style: override takes precedence, then theme default
-	TSubclassOf<UCommonButtonStyle> ButtonStyleToApply = ButtonStyleOverride;
-	if (!ButtonStyleToApply && Theme)
+	const TSubclassOf<UCommonButtonStyle> StyleToApply =
+		UMCore_ThemeLibrary::ResolveButtonStyle(
+			ButtonStyleOverride, Theme ? Theme->PrimaryButtonStyle : nullptr);
+	
+	if (StyleToApply) { SetStyle(StyleToApply); }
+	
+	if (TextStyleOverride)
 	{
-		ButtonStyleToApply = Theme->PrimaryButtonStyle;
+		if (Txt_BtnLabel)
+		{
+			Txt_BtnLabel->SetStyle(TextStyleOverride);
+		}
 	}
-	if (ButtonStyleToApply)
+	else if (Theme)
 	{
-		SetStyle(ButtonStyleToApply);
-	}
-
-	// Apply text style: override takes precedence, then theme default
-	TSubclassOf<UCommonTextStyle> TextStyleToApply = TextStyleOverride;
-	if (!TextStyleToApply && Theme)
-	{
-		TextStyleToApply = Theme->LabelTextStyle;
-	}
-	if (TextStyleToApply && Txt_BtnLabel)
-	{
-		Txt_BtnLabel->SetStyle(TextStyleToApply);
+		UMCore_ThemeLibrary::ApplyTextStyleFromTheme(
+			GetOwningLocalPlayer(), Txt_BtnLabel, Theme->LabelTextStyle);
 	}
 
 	K2_OnThemeApplied(Theme);

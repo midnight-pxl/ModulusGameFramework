@@ -8,6 +8,7 @@
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CommonTextBlock.h"
+#include "CoreData/Libraries/MCore_ThemeLibrary.h"
 
 // ============================================================================
 // LIFECYCLE
@@ -195,24 +196,17 @@ void UMCore_SettingsWidget_Switcher::ApplyTheme_Implementation(UMCore_PDA_UIThem
 	Super::ApplyTheme_Implementation(NewTheme);
 
 	if (!NewTheme) { return; }
-
+	
+	UMCore_ThemeLibrary::ApplyTextStyleFromTheme(
+		GetOwningLocalPlayer(), Txt_CurrentOption, NewTheme->ValueTextStyle);
+	
 	const TSubclassOf<UCommonButtonStyle> ArrowStyle =
-		NewTheme->GhostButtonStyle
-		? NewTheme->GhostButtonStyle
-		: NewTheme->SecondaryButtonStyle;
+		UMCore_ThemeLibrary::ResolveButtonStyle(
+			NewTheme->GhostButtonStyle, NewTheme->SecondaryButtonStyle);
 
-	if (Btn_Previous && ArrowStyle)
+	if (ArrowStyle)
 	{
 		Btn_Previous->SetButtonStyleOverride(ArrowStyle);
-	}
-
-	if (Btn_Next && ArrowStyle)
-	{
 		Btn_Next->SetButtonStyleOverride(ArrowStyle);
-	}
-
-	if (Txt_CurrentOption && NewTheme->LabelTextStyle)
-	{
-		Txt_CurrentOption->SetStyle(NewTheme->LabelTextStyle);
 	}
 }

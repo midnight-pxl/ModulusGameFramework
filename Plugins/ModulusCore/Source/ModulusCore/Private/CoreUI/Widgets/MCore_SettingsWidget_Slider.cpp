@@ -8,12 +8,11 @@
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
-#include "CoreData/Assets/UI/Styles/MCore_PDA_SliderStyle.h"
 #include "CoreData/Logging/LogModulusUI.h"
-#include "CoreUI/MCore_UISubsystem.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CommonTextBlock.h"
 #include "Components/Slider.h"
+#include "CoreData/Libraries/MCore_ThemeLibrary.h"
 
 // ============================================================================
 // LIFECYCLE
@@ -238,66 +237,23 @@ void UMCore_SettingsWidget_Slider::ApplyTheme_Implementation(UMCore_PDA_UITheme_
 		return;
 	}
 
-	int32 SizeIndex = 0;
-	if (const ULocalPlayer* LP = GetOwningLocalPlayer())
-	{
-		if (const UMCore_UISubsystem* UI = LP->GetSubsystem<UMCore_UISubsystem>())
-		{
-			SizeIndex = UI->GetActiveTextSizeIndex();
-		}
-	}
-
-	if (Txt_ValueDisplay && !NewTheme->ValueTextStyle.IsEmpty())
-	{
-		const TSubclassOf<UCommonTextStyle> ResolvedCaptionStyle =
-			NewTheme->ValueTextStyle.IsValidIndex(SizeIndex)
-			? NewTheme->ValueTextStyle[SizeIndex]
-			: NewTheme->ValueTextStyle[0];
-
-		if (ResolvedCaptionStyle)
-		{
-			Txt_ValueDisplay->SetStyle(ResolvedCaptionStyle);
-		}
-	}
-
+	UMCore_ThemeLibrary::ApplyTextStyleFromTheme(
+		GetOwningLocalPlayer(), Txt_ValueDisplay, NewTheme->ValueTextStyle);
+	
 	if (Slider_Value && NewTheme->SliderStyle)
 	{
-		const UMCore_PDA_SliderStyle* Style = NewTheme->SliderStyle;
-
-		FSliderStyle SliderStyle = Slider_Value->GetWidgetStyle();
-
-		// Bar brush
-		FSlateBrush BarBrush;
-		if (Style->BarImage)
-		{
-			BarBrush.SetResourceObject(Style->BarImage);
-		}
-		BarBrush.TintColor = Style->BarNormalTint;
-		SliderStyle.SetNormalBarImage(BarBrush);
-
-		// Thumb brush (normal)
-		FSlateBrush ThumbNormal;
-		if (Style->ThumbImage)
-		{
-			ThumbNormal.SetResourceObject(Style->ThumbImage);
-		}
-		ThumbNormal.TintColor = Style->ThumbNormalTint;
-		ThumbNormal.SetImageSize(Style->ThumbSize);
-		SliderStyle.SetNormalThumbImage(ThumbNormal);
-
-		// Thumb brush (hovered)
-		FSlateBrush ThumbHovered;
-		if (Style->ThumbImage)
-		{
-			ThumbHovered.SetResourceObject(Style->ThumbImage);
-		}
-		ThumbHovered.TintColor = Style->ThumbHoveredTint;
-		ThumbHovered.SetImageSize(Style->ThumbSize);
-		SliderStyle.SetHoveredThumbImage(ThumbHovered);
-
-		// Thumb brush (disabled, reuse normal)
-		SliderStyle.SetDisabledThumbImage(ThumbNormal);
-
-		Slider_Value->SetWidgetStyle(SliderStyle);
+		Slider_Value->SetWidgetStyle(
+			UMCore_ThemeLibrary::BuildSliderStyle(
+				NewTheme->SliderStyle, Slider_Value->GetWidgetStyle()));
+	}
+	
+	const TSubclassOf<UCommonButtonStyle> StepButtonStyle =
+		UMCore_ThemeLibrary::ResolveButtonStyle(
+			NewTheme->GhostButtonStyle, NewTheme->SecondaryButtonStyle);
+	
+	if (StepButtonStyle)
+	{
+		Btn_StepLeft->SetButtonStyleOverride(StepButtonStyle);
+		Btn_StepRight->SetButtonStyleOverride(StepButtonStyle);
 	}
 }

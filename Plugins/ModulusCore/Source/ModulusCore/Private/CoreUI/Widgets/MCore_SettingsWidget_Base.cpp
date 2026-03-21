@@ -7,6 +7,7 @@
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CommonTextBlock.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
+#include "CoreData/Libraries/MCore_ThemeLibrary.h"
 
 // ============================================================================
 // INITIALIZATION
@@ -34,11 +35,6 @@ void UMCore_SettingsWidget_Base::InitFromDefinition(const UMCore_DA_SettingDefin
 	if (Txt_SettingName)
 	{
 		Txt_SettingName->SetText(InDefinition->DisplayName);
-	}
-
-	if (Txt_SettingDescription)
-	{
-		Txt_SettingDescription->SetText(InDefinition->Description);
 	}
 
 	UE_LOG(LogModulusUI, Verbose,
@@ -111,27 +107,8 @@ void UMCore_SettingsWidget_Base::ApplyTheme_Implementation(UMCore_PDA_UITheme_Ba
 {
 	if (NewTheme)
 	{
-		if (Txt_SettingName && !NewTheme->LabelTextStyle.IsEmpty())
-		{
-			int32 SizeIndex = 0;
-			if (const ULocalPlayer* LP = GetOwningLocalPlayer())
-			{
-				if (const UMCore_UISubsystem* UI = LP->GetSubsystem<UMCore_UISubsystem>())
-				{
-					SizeIndex = UI->GetActiveTextSizeIndex();
-				}
-			}
-
-			const TSubclassOf<UCommonTextStyle> ResolvedStyle =
-				NewTheme->LabelTextStyle.IsValidIndex(SizeIndex)
-				? NewTheme->LabelTextStyle[SizeIndex]
-				: NewTheme->LabelTextStyle[0];
-
-			if (ResolvedStyle)
-			{
-				Txt_SettingName->SetStyle(ResolvedStyle);
-			}
-		}
+		UMCore_ThemeLibrary::ApplyTextStyleFromTheme(
+			GetOwningLocalPlayer(), Txt_SettingName, NewTheme->LabelTextStyle);
 	}
 
 	K2_OnThemeApplied(NewTheme);
