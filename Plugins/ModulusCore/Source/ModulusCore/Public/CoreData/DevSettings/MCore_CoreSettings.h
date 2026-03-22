@@ -21,6 +21,7 @@ class UMCore_GameMenuHub;
 class UMCore_DA_SettingsCollection;
 class UMCore_SettingsWidget_Slider;
 class UMCore_SettingsWidget_Switcher;
+class UMCore_ConfirmationDialog;
 class UCommonActivatableWidget;
 
 /**
@@ -116,6 +117,10 @@ public:
 	/** Panel class pushed when the KeyBinding category tab is selected. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UCommonActivatableWidget> KeyBindingPanelClass;
+	
+	/** Dialog class used for destructive action confirmations (Reset All, etc). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TSubclassOf<UMCore_ConfirmationDialog> ConfirmationDialogClass;
 
 	// ============================================================================
 	// DEBUG (EDITOR ONLY)

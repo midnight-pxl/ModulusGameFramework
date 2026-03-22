@@ -57,7 +57,7 @@ UMCore_DA_SettingDefinition* UMCore_DA_SettingsCollection::FindSettingByTag(cons
 {
 	for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Settings)
 	{
-		if (Setting && Setting->CategoryTag == SettingTag) { return Setting; }
+		if (Setting && Setting->SettingTag == SettingTag) { return Setting; }
 	}
 
 	return nullptr;

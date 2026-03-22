@@ -12,7 +12,9 @@
 #include "CoreUI/Widgets/MCore_SettingsWidget_Base.h"
 #include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
 #include "CoreUI/Widgets/MCore_SettingsWidget_Switcher.h"
-
+#include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
+#include "CoreData/Logging/LogModulusUI.h"
+#include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CommonTextBlock.h"
 #include "Components/ScrollBox.h"
 #include "Components/SizeBox.h"
@@ -74,9 +76,9 @@ void UMCore_SettingsPanel::NativeOnInitialized()
 
 	TabbedContainer_Main->OnTabSelected.AddDynamic(this, &ThisClass::HandleMainTabSelected);
 
-	Btn_ResetAll->OnClicked().AddUObject(this, &ThisClass::HandleResetAllClicked);
-	Btn_ResetCategory->OnClicked().AddUObject(this, &ThisClass::HandleResetCategoryClicked);
-	Btn_Back->OnClicked().AddUObject(this, &ThisClass::HandleBackClicked);
+	Btn_ResetAll->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetAllClicked);
+	Btn_ResetCategory->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetCategoryClicked);
+	Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
 }
 
 // ============================================================================
@@ -103,9 +105,9 @@ void UMCore_SettingsPanel::BuildPanel()
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
 	if (!CoreSettings || !CoreSettings->DefaultSettingsCollection)
 	{
-		UE_LOG(LogTemp, Error,
+		UE_LOG(LogModulusUI, Error,
 			TEXT("UMCore_SettingsPanel::BuildPanel - CoreSettings or DefaultSettingsCollection is null. "
-			     "Ensure UMCore_CoreSettings has a valid DefaultSettingsCollection assigned."));
+			     "Ensure UMCore_CoreSettings has a valid default SettingsCollection assigned."));
 		return;
 	}
 
@@ -321,12 +323,9 @@ UMCore_SettingsWidget_Base* UMCore_SettingsPanel::CreateSettingWidget(
 
 void UMCore_SettingsPanel::HandleMainTabSelected(FName TabID)
 {
-	if (bIsRevertingTab)
-	{
-		return;
-	}
+	if (bIsRevertingTab) { return; }
 
-	// KeyBinding routing exception: push dedicated panel and revert tab selection
+	/* KeyBinding routing exception: push dedicated panel and revert tab selection */
 	if (TabID == KeyBindingMainTabID && !KeyBindingMainTabID.IsNone())
 	{
 		bIsRevertingTab = true;
@@ -339,11 +338,10 @@ void UMCore_SettingsPanel::HandleMainTabSelected(FName TabID)
 			if (UMCore_UISubsystem* UISubsystem =
 				GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
 			{
-				// TODO: Verify correct layer tag via codebase audit.
-				// Hardcoded GameMenu may not match the layer this panel was pushed to.
+				/* Hardcoded until Layer System update */
 				UISubsystem->PushWidgetToLayer(
-					CoreSettings->KeyBindingPanelClass,
-					FGameplayTag::RequestGameplayTag(FName("MCore.UI.Layer.GameMenu")));
+					CoreSettings->KeyBindingPanelClass, 
+					MCore_UILayerTags::MCore_UI_Layer_GameMenu);
 			}
 		}
 		return;
@@ -351,7 +349,7 @@ void UMCore_SettingsPanel::HandleMainTabSelected(FName TabID)
 
 	PreviousMainTabID = TabID;
 
-	// Resolve ActiveLeafCategory from page type
+	/* Resolve ActiveLeafCategory from page type */
 	UWidget* Page = TabbedContainer_Main->GetPageWidget(TabID);
 
 	if (UMCore_TabbedContainer* SubContainer = Cast<UMCore_TabbedContainer>(Page))
@@ -412,28 +410,84 @@ void UMCore_SettingsPanel::FocusFirstWidgetInActivePage()
 
 void UMCore_SettingsPanel::HandleResetAllClicked()
 {
-	if (!CachedCollection)
+	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
 	{
+		/* No dialog configured, reset directly as fallback */
+		UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(GetOwningLocalPlayer());
+		RefreshAllWidgets();
 		return;
 	}
+	
+	if (UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
+	{
+		UCommonActivatableWidget* CAWidget = UISubsystem->PushWidgetToLayer(
+			CoreSettings->ConfirmationDialogClass,
+			MCore_UILayerTags::MCore_UI_Layer_Modal);
+		
+		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
+		{
+			Dialog->SetDialogMessage(
+				NSLOCTEXT("ModulusCore", "ResetAllMessage", "Reset all setting to defaults?"));
+			Dialog->SetButtonLabels(
+				NSLOCTEXT("ModulusCore", "ResetConfirm", "Reset"),
+				NSLOCTEXT("ModulusCore", "ResetCancel", "Cancel"));
+			Dialog->OnDialogResult.AddDynamic(this, &ThisClass::HandleResetAllConfirmResult);
+		}
+	}
+}
 
-	// TODO: Gate behind UMCore_ConfirmationDialog before executing
-	UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(GetOwningLocalPlayer());
-
-	RefreshAllWidgets();
+void UMCore_SettingsPanel::HandleResetAllConfirmResult(bool bConfirmed)
+{
+	if (bConfirmed)
+	{
+		UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(GetOwningLocalPlayer());
+		RefreshAllWidgets();
+	}
 }
 
 void UMCore_SettingsPanel::HandleResetCategoryClicked()
 {
-	if (!CachedCollection || !ActiveLeafCategory.IsValid())
+	if (!CachedCollection || !ActiveLeafCategory.IsValid()) { return; }
+
+	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
 	{
+		UMCore_GameSettingsLibrary::ResetCategoryToDefault(
+			GetOwningLocalPlayer(), ActiveLeafCategory);
+		RefreshAllWidgets();
 		return;
 	}
+	
+	if (UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
+	{
+		UCommonActivatableWidget* CAWidget = UISubsystem->PushWidgetToLayer(
+			CoreSettings->ConfirmationDialogClass,
+			MCore_UILayerTags::MCore_UI_Layer_Modal);
+		
+		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
+		{
+			const FText CurrentCategory = GetCategoryDisplayName(
+				UMCore_CoreSettings::Get()->DefaultSettingsCollection, ActiveLeafCategory);
+			Dialog->SetDialogMessage(
+				FText::Format(NSLOCTEXT("ModulusCore", "ResetCategoryMessage",
+					"Reset {0} settings to defaults?"), CurrentCategory));
+			Dialog->SetButtonLabels(
+				NSLOCTEXT("ModulusCore", "ResetConfirm", "Reset"),
+				NSLOCTEXT("ModulusCore", "ResetCancel", "Cancel"));
+			Dialog->OnDialogResult.AddDynamic(this, &ThisClass::HandleResetCategoryConfirmResult);
+		}
+	}
+}
 
-	UMCore_GameSettingsLibrary::ResetCategoryToDefault(
-		GetOwningLocalPlayer(), ActiveLeafCategory);
-
-	RefreshAllWidgets();
+void UMCore_SettingsPanel::HandleResetCategoryConfirmResult(bool bConfirmed)
+{
+	if (bConfirmed && ActiveLeafCategory.IsValid())
+	{
+		UMCore_GameSettingsLibrary::ResetCategoryToDefault(
+			GetOwningLocalPlayer(), ActiveLeafCategory);
+		RefreshAllWidgets();
+	}
 }
 
 void UMCore_SettingsPanel::HandleBackClicked()
@@ -452,6 +506,8 @@ void UMCore_SettingsPanel::HandleSettingFocused(FGameplayTag SettingTag, FText D
 		Txt_SettingDescription->SetText(Description);
 	}
 }
+
+
 
 // ============================================================================
 // REFRESH

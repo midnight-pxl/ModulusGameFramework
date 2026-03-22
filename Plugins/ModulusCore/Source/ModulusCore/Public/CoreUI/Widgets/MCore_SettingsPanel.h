@@ -116,9 +116,15 @@ private:
  
 	UFUNCTION()
 	void HandleResetAllClicked();
+	
+	UFUNCTION()
+	void HandleResetAllConfirmResult(bool bConfirmed);
  
 	UFUNCTION()
 	void HandleResetCategoryClicked();
+	
+	UFUNCTION()
+	void HandleResetCategoryConfirmResult(bool bConfirmed);
  
 	UFUNCTION()
 	void HandleBackClicked();
