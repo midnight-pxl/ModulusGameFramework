@@ -29,6 +29,7 @@ TArray<FGameplayTag> UMCore_DA_SettingsCollection::GetAllCategories() const
 {
 	TMap<FGameplayTag, int32> CategoryMinSort;
 
+	/* Sort categories by sort order of underlying settings */
 	for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Settings)
 	{
 		if (!Setting || !Setting->CategoryTag.IsValid()) { continue; }
@@ -42,15 +43,24 @@ TArray<FGameplayTag> UMCore_DA_SettingsCollection::GetAllCategories() const
 			CategoryMinSort.Add(Setting->CategoryTag, Setting->SortOrder);
 		}
 	}
-
-	CategoryMinSort.ValueSort([](const int32& First, const int32& Second)
+	
+	/* Move map to array for reliable sort */
+	typedef TPair<FGameplayTag, int32> FSortPair;
+	TArray<FSortPair> SortedPairs;
+	SortedPairs.Reserve(CategoryMinSort.Num());
+	
+	for (const auto& [Tag, MinOrder] : CategoryMinSort) { SortedPairs.Emplace(Tag, MinOrder); }
+	
+	SortedPairs.Sort([](const FSortPair& First, const FSortPair& Second)
 	{
-		return First < Second;
+		return First.Value < Second.Value;
 	});
-
-	TArray<FGameplayTag> Result;
-	CategoryMinSort.GenerateKeyArray(Result);
-	return Result;
+	
+	TArray<FGameplayTag> ResultArray;
+	ResultArray.Reserve(SortedPairs.Num());
+	for (const FSortPair& Pair : SortedPairs) { ResultArray.Add(Pair.Key); }
+	
+	return ResultArray;
 }
 
 UMCore_DA_SettingDefinition* UMCore_DA_SettingsCollection::FindSettingByTag(const FGameplayTag& SettingTag) const

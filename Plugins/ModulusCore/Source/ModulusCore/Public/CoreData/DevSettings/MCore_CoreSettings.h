@@ -13,12 +13,12 @@
 #include "CoreMinimal.h"
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "Engine/DeveloperSettings.h"
+#include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
 #include "MCore_CoreSettings.generated.h"
 
 class UMCore_PDA_UITheme_Base;
 class UMCore_PrimaryGameLayout;
 class UMCore_GameMenuHub;
-class UMCore_DA_SettingsCollection;
 class UMCore_SettingsWidget_Slider;
 class UMCore_SettingsWidget_Switcher;
 class UMCore_ConfirmationDialog;
@@ -103,23 +103,23 @@ public:
 	 * Used by tag-based setting accessors and bulk reset operations
 	 * when no explicit collection reference is provided.
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
-	TObjectPtr<UMCore_DA_SettingsCollection> DefaultSettingsCollection;
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TSoftObjectPtr<UMCore_DA_SettingsCollection> DefaultSettingsCollection;
 	
 	/** Widget class used to render Slider-type settings. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_SettingsWidget_Slider> SettingsSliderWidgetClass;
 
 	/** Widget class used to render Switcher-type settings (Toggle and Dropdown). */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_SettingsWidget_Switcher> SettingsSwitcherWidgetClass;
 
 	/** Panel class pushed when the KeyBinding category tab is selected. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UCommonActivatableWidget> KeyBindingPanelClass;
 	
 	/** Dialog class used for destructive action confirmations (Reset All, etc). */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_ConfirmationDialog> ConfirmationDialogClass;
 
 	// ============================================================================
@@ -157,6 +157,13 @@ public:
 	/** Returns the theme DataAsset at DefaultThemeIndex (loads synchronously). Returns nullptr if index is invalid. */
 	UFUNCTION(BlueprintCallable, Category="Modulus|Theme")
 	UMCore_PDA_UITheme_Base* GetDefaultTheme() const;
+	
+	/** Returns the loaded collection, or nullptr if unset/invalid. */
+	UFUNCTION(BlueprintPure, Category = "Settings")
+	UMCore_DA_SettingsCollection* GetDefaultSettingsCollection() const
+	{
+		return DefaultSettingsCollection.LoadSynchronous();
+	}
 
 	/**
 	 * Returns the default theme for design-time preview (static, no UISubsystem needed).

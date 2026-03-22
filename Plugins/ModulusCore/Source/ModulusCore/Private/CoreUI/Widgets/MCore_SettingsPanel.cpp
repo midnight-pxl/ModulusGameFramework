@@ -81,6 +81,20 @@ void UMCore_SettingsPanel::NativeOnInitialized()
 	Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
 }
 
+void UMCore_SettingsPanel::NativeDestruct()
+{
+	if (TabbedContainer_Main)
+	{
+		TabbedContainer_Main->OnTabSelected.RemoveAll(this);
+	}
+	
+	if (Btn_ResetAll) { Btn_ResetAll->OnButtonClicked.RemoveAll(this); }
+	if (Btn_ResetCategory) { Btn_ResetCategory->OnButtonClicked.RemoveAll(this); }
+	if (Btn_Back) { Btn_Back->OnButtonClicked.RemoveAll(this); }
+	
+	Super::NativeDestruct();
+}
+
 // ============================================================================
 // BLUEPRINT EXTENSION POINTS
 // ============================================================================
@@ -102,8 +116,11 @@ void UMCore_SettingsPanel::OnPanelBuildComplete_Implementation()
 
 void UMCore_SettingsPanel::BuildPanel()
 {
+	UE_LOG(LogModulusUI, Warning, TEXT("BuildPanel: ENTERED - TabbedContainer has %d tabs"), 
+	TabbedContainer_Main->GetTabCount());
+	
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	if (!CoreSettings || !CoreSettings->DefaultSettingsCollection)
+	if (!CoreSettings || !CoreSettings->GetDefaultSettingsCollection())
 	{
 		UE_LOG(LogModulusUI, Error,
 			TEXT("UMCore_SettingsPanel::BuildPanel - CoreSettings or DefaultSettingsCollection is null. "
@@ -111,7 +128,7 @@ void UMCore_SettingsPanel::BuildPanel()
 		return;
 	}
 
-	CachedCollection = CoreSettings->DefaultSettingsCollection;
+	CachedCollection = CoreSettings->GetDefaultSettingsCollection();
 
 	TabbedContainer_Main->ClearAllTabs();
 	TabIDToLeafTag.Reset();
@@ -171,6 +188,7 @@ void UMCore_SettingsPanel::BuildPanel()
 			}
 		}
 
+		UE_LOG(LogModulusUI, Log, TEXT("BuildPanel: Adding tab [%s] order index %d"), *TabID.ToString(), MainTabOrder.IndexOfByKey(ParentTag));
 		if (PageWidget && TabbedContainer_Main->AddTab(TabID, PageWidget))
 		{
 			SetTabButtonLabel(TabbedContainer_Main, TabID, CachedCollection, ParentTag);
@@ -251,12 +269,6 @@ void UMCore_SettingsPanel::PopulatePage(
 	const FGameplayTag& CategoryTag)
 {
 	TArray<UMCore_DA_SettingDefinition*> Definitions = Collection->GetSettingsInCategory(CategoryTag);
-
-	// Sort by SortOrder (lower values first)
-	Definitions.Sort([](const UMCore_DA_SettingDefinition& A, const UMCore_DA_SettingDefinition& B)
-	{
-		return A.SortOrder < B.SortOrder;
-	});
 
 	for (const UMCore_DA_SettingDefinition* Definition : Definitions)
 	{
@@ -468,7 +480,7 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
 		{
 			const FText CurrentCategory = GetCategoryDisplayName(
-				UMCore_CoreSettings::Get()->DefaultSettingsCollection, ActiveLeafCategory);
+				UMCore_CoreSettings::Get()->GetDefaultSettingsCollection(), ActiveLeafCategory);
 			Dialog->SetDialogMessage(
 				FText::Format(NSLOCTEXT("ModulusCore", "ResetCategoryMessage",
 					"Reset {0} settings to defaults?"), CurrentCategory));

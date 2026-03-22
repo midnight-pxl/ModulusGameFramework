@@ -203,7 +203,7 @@ bool UMCore_GameSettingsLibrary::GetSettingBool(const UObject* WorldContextObjec
 int32 UMCore_GameSettingsLibrary::GetSettingIntByTag(const UObject* WorldContextObject,
 	FGameplayTag SettingTag)
 {
-	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->DefaultSettingsCollection;
+	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->GetDefaultSettingsCollection();
 	if (!Collection)
 	{
 		UE_LOG(LogModulusSettings, Warning,
@@ -562,7 +562,7 @@ void UMCore_GameSettingsLibrary::ResetSettingToDefault(const UObject* WorldConte
 
 void UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(const UObject* WorldContextObject)
 {
-	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->DefaultSettingsCollection;
+	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->GetDefaultSettingsCollection();
 	if (!Collection)
 	{
 		UE_LOG(LogModulusSettings, Warning,
@@ -587,7 +587,7 @@ void UMCore_GameSettingsLibrary::ResetCategoryToDefault(const UObject* WorldCont
 {
 	if (!CategoryTag.IsValid()) { return; }
 
-	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->DefaultSettingsCollection;
+	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->GetDefaultSettingsCollection();
 	if (!Collection)
 	{
 		UE_LOG(LogModulusSettings, Warning,

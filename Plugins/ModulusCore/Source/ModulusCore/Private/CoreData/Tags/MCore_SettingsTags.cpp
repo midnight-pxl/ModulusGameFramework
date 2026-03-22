@@ -26,8 +26,7 @@ namespace MCore_SettingsTags
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls_GeneralSettings, "MCore.Settings.Category.Controls.GeneralSettings");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls_KeyboardMouse, "MCore.Settings.Category.Controls.KeyboardMouse");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Controls_Controller, "MCore.Settings.Category.Controls.Controller");
-    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_KeyBinding_KeyboardMouse, "MCore.Settings.Category.KeyBinding.KeyboardMouse");
-    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_KeyBinding_Controller, "MCore.Settings.Category.KeyBinding.Controller");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_KeyBinding_General, "MCore.Settings.Category.KeyBinding.General");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Category_Accessibility_General, "MCore.Settings.Category.Accessibility.General");
 
     // ========================================================================
@@ -77,6 +76,8 @@ namespace MCore_SettingsTags
     // CONTROLS SETTINGS
     // ========================================================================
 
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_KeyBinding_Placeholder, "MCore.Settings.KeyBinding.Placeholder"); 
+    
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_MouseSensitivity, "MCore.Settings.Controls.MouseSensitivity");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_MouseSmoothing, "MCore.Settings.Controls.MouseSmoothing");
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Controls_GamepadSensitivity, "MCore.Settings.Controls.GamepadSensitivity");

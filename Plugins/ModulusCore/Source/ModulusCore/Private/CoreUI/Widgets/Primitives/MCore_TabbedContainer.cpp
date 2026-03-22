@@ -48,9 +48,9 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 			TEXT("TabbedContainer::AddTab: TabButtonClass not set, using framework default"));
 	}
 
-	PageSwitcher->AddChild(PageWidget);
-	TabList->RegisterTab(TabID, ButtonClass, PageWidget, PageWidgets.Num());
 	PageWidgets.Add(TabID, PageWidget);
+	PageSwitcher->AddChild(PageWidget);
+	TabList->RegisterTab(TabID, ButtonClass, PageWidget, PageWidgets.Num() - 1);
 
 	if (UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabID))
 	{

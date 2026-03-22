@@ -40,8 +40,7 @@ namespace MCore_SettingsTags
 	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Controls_GeneralSettings);
 	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Controls_KeyboardMouse);
 	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Controls_Controller);
-	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_KeyBinding_KeyboardMouse);
-	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_KeyBinding_Controller);
+	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_KeyBinding_General);
 	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Category_Accessibility_General);
 	
     // ========================================================================
@@ -90,6 +89,8 @@ namespace MCore_SettingsTags
     // ========================================================================
     // CONTROLS SETTINGS
     // ========================================================================
+	
+	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_KeyBinding_Placeholder);
 
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Controls_MouseSensitivity);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Controls_MouseSmoothing);
