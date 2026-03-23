@@ -10,7 +10,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "Primitives/MCore_ActivatableBase.h"
 #include "MCore_GameMenuHub.generated.h"
 
 class UCommonButtonBase;
@@ -25,7 +25,7 @@ struct FGameplayTag;
  * Open via UISubsystem->GetOrCreateMenuHub(), register screens via RegisterMenuScreen().
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
-class MODULUSCORE_API UMCore_GameMenuHub : public UCommonActivatableWidget
+class MODULUSCORE_API UMCore_GameMenuHub : public UMCore_ActivatableBase
 {
     GENERATED_BODY()
 
@@ -71,6 +71,7 @@ public:
 
 protected:
     virtual void NativeOnInitialized() override;
+    virtual void NativeDestruct() override;
 
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
     TObjectPtr<UMCore_TabbedContainer> TabbedContainer;

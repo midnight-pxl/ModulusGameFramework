@@ -28,6 +28,7 @@ struct FGameplayTag;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnThemeChanged, UMCore_PDA_UITheme_Base*, NewTheme);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryGameLayoutReady, UMCore_PrimaryGameLayout*, Layout);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWidgetLayerChanged, UCommonActivatableWidget*, Widget, FGameplayTag, LayerTag);
 
 
 /**
@@ -72,7 +73,15 @@ public:
 	/** Check if a layer has any active widget. */
 	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
 	bool IsLayerActive(FGameplayTag LayerTag) const;
-	
+
+	UPROPERTY(BlueprintAssignable, Category = "Modulus|UI|Events")
+	FOnWidgetLayerChanged OnWidgetPushed;
+
+	UPROPERTY(BlueprintAssignable, Category = "Modulus|UI|Events")
+	FOnWidgetLayerChanged OnWidgetRemoved;
+
+	void NotifyWidgetDestroyed(UCommonActivatableWidget* Widget);
+
 // ============================================================================
 // PLAYER SETTINGS
 // ============================================================================
@@ -158,6 +167,8 @@ protected:
 private:
 	void LoadWidgetClasses();
 	void BuildLayerStackMap();
+	void CompactTrackedWidgets(FGameplayTag LayerTag);
+	void UntrackWidget(UCommonActivatableWidget* Widget, FGameplayTag LayerTag);
 
 	/* Creates and adds PrimaryGameLayout to viewport */
 	void CreatePrimaryGameLayout();
@@ -184,7 +195,10 @@ private:
 	
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidgetStack>> LayerStackMap;
-	
+
+	/* Widgets pushed via PushWidgetToLayer, tracked per-layer with weak refs */
+	TMap<FGameplayTag, TArray<TWeakObjectPtr<UCommonActivatableWidget>>> TrackedWidgets;
+
 	/* Registered menu screens for this local player */
 	UPROPERTY(Transient)
 	TArray<FMCore_MenuTab> RegisteredMenuScreens;

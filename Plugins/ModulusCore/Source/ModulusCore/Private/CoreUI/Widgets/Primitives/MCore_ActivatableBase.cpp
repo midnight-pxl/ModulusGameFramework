@@ -7,13 +7,36 @@
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "Input/CommonUIInputTypes.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/PanelWidget.h"
 
 #if WITH_EDITOR
 #include "Editor/WidgetCompilerLog.h"
-#include "Blueprint/WidgetTree.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "ModulusCoreUI"
+
+namespace
+{
+	UWidget* FindFocusedDescendant(UWidget* Root)
+	{
+		if (!Root) { return nullptr; }
+		if (Root->HasKeyboardFocus()) { return Root; }
+
+		if (UPanelWidget* Panel = Cast<UPanelWidget>(Root))
+		{
+			for (int32 i = 0; i < Panel->GetChildrenCount(); i++)
+			{
+				if (UWidget* Found = FindFocusedDescendant(Panel->GetChildAt(i)))
+				{
+					return Found;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+}
 
 UMCore_ActivatableBase::UMCore_ActivatableBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -136,9 +159,9 @@ void UMCore_ActivatableBase::NativeOnInitialized()
 
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
 	{
-		if (UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
+		if (UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
 		{
-			ApplyTheme(UI->GetActiveTheme());
+			ApplyTheme(UISubsystem->GetActiveTheme());
 		}
 	}
 }
@@ -157,6 +180,16 @@ void UMCore_ActivatableBase::NativeOnActivated()
 
 	if (bShouldFocusOnActivation)
 	{
+		if (SavedFocusTarget.IsValid())
+		{
+			SavedFocusTarget->SetFocus();
+			SavedFocusTarget.Reset();
+
+			UE_LOG(LogModulusUI, Log, TEXT("NativeOnActivated: Restored saved focus for %s"),
+				*GetName());
+			return;
+		}
+
 		if (UWidget* WidgetToFocus = NativeGetDesiredFocusTarget())
 		{
 			WidgetToFocus->SetFocus();
@@ -173,6 +206,13 @@ void UMCore_ActivatableBase::NativeOnActivated()
 
 void UMCore_ActivatableBase::NativeOnDeactivated()
 {
+	// Save focused descendant before input cleanup shifts focus
+	SavedFocusTarget = nullptr;
+	if (WidgetTree && WidgetTree->RootWidget)
+	{
+		SavedFocusTarget = FindFocusedDescendant(WidgetTree->RootWidget);
+	}
+
 	// Cleanup input bindings BEFORE calling Super to prevent memory leaks
 	UnregisterAllBindings();
 
@@ -232,10 +272,10 @@ void UMCore_ActivatableBase::BindThemeDelegate()
 	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
 	if (!LocalPlayer) { return; }
 
-	UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
-	if (!UI) { return; }
+	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+	if (!UISubsystem) { return; }
 
-	UI->OnThemeChanged.AddDynamic(this, &UMCore_ActivatableBase::HandleThemeChanged);
+	UISubsystem->OnThemeChanged.AddDynamic(this, &UMCore_ActivatableBase::HandleThemeChanged);
 	bThemeDelegateBound = true;
 }
 
@@ -250,10 +290,10 @@ void UMCore_ActivatableBase::UnbindThemeDelegate()
 		return;
 	}
 
-	UMCore_UISubsystem* UI = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
-	if (UI)
+	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+	if (UISubsystem)
 	{
-		UI->OnThemeChanged.RemoveDynamic(this, &UMCore_ActivatableBase::HandleThemeChanged);
+		UISubsystem->OnThemeChanged.RemoveDynamic(this, &UMCore_ActivatableBase::HandleThemeChanged);
 	}
 
 	bThemeDelegateBound = false;
@@ -261,6 +301,14 @@ void UMCore_ActivatableBase::UnbindThemeDelegate()
 
 void UMCore_ActivatableBase::NativeDestruct()
 {
+	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+	{
+		if (UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
+		{
+			UISubsystem->NotifyWidgetDestroyed(this);
+		}
+	}
+
 	UnbindThemeDelegate();
 	Super::NativeDestruct();
 }

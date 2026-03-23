@@ -29,12 +29,21 @@ void UMCore_SettingsWidget_Slider::NativeOnInitialized()
 
 	const ESlateVisibility StepVisibility = bShowStepButtons ?
 		ESlateVisibility::Visible : ESlateVisibility::Collapsed;
-	
+
 	Btn_StepLeft->SetVisibility(StepVisibility);
 	Btn_StepLeft->OnButtonClicked.AddDynamic(this, &ThisClass::HandleStepLeft);
-	
+
 	Btn_StepRight->SetVisibility(StepVisibility);
 	Btn_StepRight->OnButtonClicked.AddDynamic(this, &ThisClass::HandleStepRight);
+}
+
+void UMCore_SettingsWidget_Slider::NativeDestruct()
+{
+	if (Slider_Value) { Slider_Value->OnValueChanged.RemoveAll(this); }
+	if (Btn_StepLeft) { Btn_StepLeft->OnButtonClicked.RemoveAll(this); }
+	if (Btn_StepRight) { Btn_StepRight->OnButtonClicked.RemoveAll(this); }
+
+	Super::NativeDestruct();
 }
 
 // ============================================================================

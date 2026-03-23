@@ -18,6 +18,16 @@ void UMCore_TabbedContainer::NativeOnInitialized()
 	TabList->OnTabSelected.AddDynamic(this, &ThisClass::HandleTabSelected);
 }
 
+void UMCore_TabbedContainer::NativeDestruct()
+{
+	if (TabList)
+	{
+		TabList->OnTabSelected.RemoveAll(this);
+	}
+
+	Super::NativeDestruct();
+}
+
 bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 {
 	if (TabID.IsNone())

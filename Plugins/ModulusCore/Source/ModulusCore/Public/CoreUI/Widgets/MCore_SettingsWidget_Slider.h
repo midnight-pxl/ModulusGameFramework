@@ -67,7 +67,8 @@ protected:
 	// ====================================================================
 
 	virtual void NativeOnInitialized() override;
-	
+	virtual void NativeDestruct() override;
+
 private:
 	// ====================================================================
 	// HANDLERS

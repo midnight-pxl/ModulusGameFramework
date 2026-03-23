@@ -65,8 +65,9 @@ void UMCore_UISubsystem::Deinitialize()
 		CachedPlayerSettings = nullptr;
 	}
 	
-	// Clear layer stack map
+	// Clear layer stack map and tracked widgets
 	LayerStackMap.Empty();
+	TrackedWidgets.Empty();
 	
 	if (IsValid(CachedMenuHub))
 	{
@@ -317,6 +318,9 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 			NewWidget->ActivateWidget();
 		}
 
+		TrackedWidgets.FindOrAdd(LayerTag).Add(NewWidget);
+		OnWidgetPushed.Broadcast(NewWidget, LayerTag);
+
 		UE_LOG(LogModulusUI, Log, TEXT("PushWidgetToLayer: Pushed '%s' to layer '%s'"),
 			*WidgetClass->GetName(), *LayerTag.ToString());
 	}
@@ -335,6 +339,55 @@ bool UMCore_UISubsystem::IsLayerActive(FGameplayTag LayerTag) const
 	if (!ThisStack) { return false; }
 	
 	return ThisStack->GetActiveWidget() != nullptr;
+}
+
+// ============================================================================
+// WIDGET TRACKING
+// ============================================================================
+
+void UMCore_UISubsystem::CompactTrackedWidgets(FGameplayTag LayerTag)
+{
+	TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets = TrackedWidgets.Find(LayerTag);
+	if (!Widgets) { return; }
+
+	Widgets->RemoveAllSwap([](const TWeakObjectPtr<UCommonActivatableWidget>& Ptr)
+	{
+		return !Ptr.IsValid();
+	});
+}
+
+void UMCore_UISubsystem::UntrackWidget(UCommonActivatableWidget* Widget, FGameplayTag LayerTag)
+{
+	TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets = TrackedWidgets.Find(LayerTag);
+	if (!Widgets) { return; }
+
+	const int32 Removed = Widgets->RemoveAllSwap([Widget](const TWeakObjectPtr<UCommonActivatableWidget>& Ptr)
+	{
+		return Ptr.Get() == Widget;
+	});
+
+	if (Removed > 0)
+	{
+		OnWidgetRemoved.Broadcast(Widget, LayerTag);
+	}
+}
+
+void UMCore_UISubsystem::NotifyWidgetDestroyed(UCommonActivatableWidget* Widget)
+{
+	if (!Widget) { return; }
+
+	for (auto& Pair : TrackedWidgets)
+	{
+		const int32 Removed = Pair.Value.RemoveAllSwap([Widget](const TWeakObjectPtr<UCommonActivatableWidget>& Ptr)
+		{
+			return Ptr.Get() == Widget;
+		});
+
+		if (Removed > 0)
+		{
+			OnWidgetRemoved.Broadcast(Widget, Pair.Key);
+		}
+	}
 }
 
 // ============================================================================

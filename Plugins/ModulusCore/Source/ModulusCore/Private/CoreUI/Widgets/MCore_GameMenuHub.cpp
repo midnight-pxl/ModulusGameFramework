@@ -25,6 +25,16 @@ void UMCore_GameMenuHub::NativeOnInitialized()
     }
 }
 
+void UMCore_GameMenuHub::NativeDestruct()
+{
+    if (TabbedContainer)
+    {
+        TabbedContainer->OnTabAdded.RemoveAll(this);
+    }
+
+    Super::NativeDestruct();
+}
+
 void UMCore_GameMenuHub::RebuildTabBar()
 {
     if (!TabbedContainer)

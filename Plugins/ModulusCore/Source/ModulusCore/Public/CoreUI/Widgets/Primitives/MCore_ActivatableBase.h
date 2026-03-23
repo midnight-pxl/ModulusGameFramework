@@ -128,4 +128,7 @@ private:
 	void UnbindThemeDelegate();
 
 	bool bThemeDelegateBound{false};
+
+	// Saved during deactivation for focus restore on reactivation
+	TWeakObjectPtr<UWidget> SavedFocusTarget;
 };

@@ -81,17 +81,54 @@ void UMCore_SettingsPanel::NativeOnInitialized()
 	Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
 }
 
+void UMCore_SettingsPanel::NativeOnDeactivated()
+{
+	// Dismiss any pending confirmation dialog before this panel leaves the stack
+	if (PendingConfirmationDialog.IsValid())
+	{
+		PendingConfirmationDialog->OnDialogResult.RemoveAll(this);
+		PendingConfirmationDialog->DeactivateWidget();
+		PendingConfirmationDialog.Reset();
+	}
+
+	Super::NativeOnDeactivated();
+}
+
 void UMCore_SettingsPanel::NativeDestruct()
 {
 	if (TabbedContainer_Main)
 	{
 		TabbedContainer_Main->OnTabSelected.RemoveAll(this);
 	}
-	
+
+	for (UMCore_TabbedContainer* SubContainer : SubTabContainers)
+	{
+		if (IsValid(SubContainer))
+		{
+			SubContainer->OnTabSelected.RemoveAll(this);
+		}
+	}
+	SubTabContainers.Empty();
+
+	for (UMCore_SettingsWidget_Base* Widget : AllSettingWidgets)
+	{
+		if (IsValid(Widget))
+		{
+			Widget->OnSettingFocused.RemoveAll(this);
+		}
+	}
+	AllSettingWidgets.Empty();
+
+	if (PendingConfirmationDialog.IsValid())
+	{
+		PendingConfirmationDialog->OnDialogResult.RemoveAll(this);
+		PendingConfirmationDialog.Reset();
+	}
+
 	if (Btn_ResetAll) { Btn_ResetAll->OnButtonClicked.RemoveAll(this); }
 	if (Btn_ResetCategory) { Btn_ResetCategory->OnButtonClicked.RemoveAll(this); }
 	if (Btn_Back) { Btn_Back->OnButtonClicked.RemoveAll(this); }
-	
+
 	Super::NativeDestruct();
 }
 
@@ -133,6 +170,7 @@ void UMCore_SettingsPanel::BuildPanel()
 	TabbedContainer_Main->ClearAllTabs();
 	TabIDToLeafTag.Reset();
 	AllSettingWidgets.Reset();
+	SubTabContainers.Reset();
 	KeyBindingMainTabID = NAME_None;
 	PreviousMainTabID = NAME_None;
 
@@ -226,11 +264,13 @@ UMCore_TabbedContainer* UMCore_SettingsPanel::BuildTabbedPage(
 	const TArray<FGameplayTag>& ChildTags)
 {
 	UMCore_TabbedContainer* SubContainer =
-		CreateWidget<UMCore_TabbedContainer>(GetOwningPlayer(), SubTabContainerClass);
+		CreateWidget<UMCore_TabbedContainer>(this, SubTabContainerClass);
 	if (!SubContainer)
 	{
 		return nullptr;
 	}
+
+	SubTabContainers.Add(SubContainer);
 
 	FName FirstSubTabID = NAME_None;
 
@@ -308,7 +348,7 @@ UMCore_SettingsWidget_Base* UMCore_SettingsPanel::CreateSettingWidget(
 		if (CoreSettings->SettingsSwitcherWidgetClass)
 		{
 			Widget = CreateWidget<UMCore_SettingsWidget_Switcher>(
-				GetOwningPlayer(), CoreSettings->SettingsSwitcherWidgetClass);
+				this, CoreSettings->SettingsSwitcherWidgetClass);
 		}
 		break;
 
@@ -316,7 +356,7 @@ UMCore_SettingsWidget_Base* UMCore_SettingsPanel::CreateSettingWidget(
 		if (CoreSettings->SettingsSliderWidgetClass)
 		{
 			Widget = CreateWidget<UMCore_SettingsWidget_Slider>(
-				GetOwningPlayer(), CoreSettings->SettingsSliderWidgetClass);
+				this, CoreSettings->SettingsSliderWidgetClass);
 		}
 		break;
 	}
@@ -439,6 +479,7 @@ void UMCore_SettingsPanel::HandleResetAllClicked()
 		
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
 		{
+			PendingConfirmationDialog = Dialog;
 			Dialog->SetDialogMessage(
 				NSLOCTEXT("ModulusCore", "ResetAllMessage", "Reset all setting to defaults?"));
 			Dialog->SetButtonLabels(
@@ -451,6 +492,8 @@ void UMCore_SettingsPanel::HandleResetAllClicked()
 
 void UMCore_SettingsPanel::HandleResetAllConfirmResult(bool bConfirmed)
 {
+	PendingConfirmationDialog.Reset();
+
 	if (bConfirmed)
 	{
 		UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(GetOwningLocalPlayer());
@@ -479,6 +522,7 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 		
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
 		{
+			PendingConfirmationDialog = Dialog;
 			const FText CurrentCategory = GetCategoryDisplayName(
 				UMCore_CoreSettings::Get()->GetDefaultSettingsCollection(), ActiveLeafCategory);
 			Dialog->SetDialogMessage(
@@ -494,6 +538,8 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 
 void UMCore_SettingsPanel::HandleResetCategoryConfirmResult(bool bConfirmed)
 {
+	PendingConfirmationDialog.Reset();
+
 	if (bConfirmed && ActiveLeafCategory.IsValid())
 	{
 		UMCore_GameSettingsLibrary::ResetCategoryToDefault(

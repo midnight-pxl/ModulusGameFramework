@@ -29,6 +29,14 @@ void UMCore_SettingsWidget_Switcher::NativeOnInitialized()
 	}
 }
 
+void UMCore_SettingsWidget_Switcher::NativeDestruct()
+{
+	if (Btn_Previous) { Btn_Previous->OnButtonClicked.RemoveAll(this); }
+	if (Btn_Next) { Btn_Next->OnButtonClicked.RemoveAll(this); }
+
+	Super::NativeDestruct();
+}
+
 // ============================================================================
 // DEFINITION SET
 // ============================================================================

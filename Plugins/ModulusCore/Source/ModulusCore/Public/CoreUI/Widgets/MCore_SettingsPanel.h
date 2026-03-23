@@ -9,6 +9,7 @@
 
 class UMCore_TabbedContainer;
 class UMCore_ButtonBase;
+class UMCore_ConfirmationDialog;
 class UMCore_DA_SettingDefinition;
 class UMCore_DA_SettingsCollection;
 class UMCore_SettingsWidget_Base;
@@ -39,6 +40,7 @@ public:
 protected:
  
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnDeactivated() override;
 	virtual void NativeDestruct() override;
  
 	// ============================================================================
@@ -161,4 +163,8 @@ private:
 	bool bIsRevertingTab{false};
  
 	TArray<TObjectPtr<UMCore_SettingsWidget_Base>> AllSettingWidgets;
+
+	TArray<TObjectPtr<UMCore_TabbedContainer>> SubTabContainers;
+
+	TWeakObjectPtr<UMCore_ConfirmationDialog> PendingConfirmationDialog;
 };
