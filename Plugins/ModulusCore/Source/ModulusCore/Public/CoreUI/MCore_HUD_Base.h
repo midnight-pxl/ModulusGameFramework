@@ -11,10 +11,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "MCore_HUD_Base.generated.h"
 
-class UMCore_PrimaryGameLayout;
 class UMCore_UISubsystem;
 
 /**
@@ -28,10 +26,6 @@ class MODULUSCORE_API AMCore_HUD_Base : public AHUD
 
 public:
 	AMCore_HUD_Base(const FObjectInitializer& ObjectInitializer);
-
-	/** May return nullptr if called before BeginPlay or on dedicated server. */
-	UFUNCTION(BlueprintPure, Category = "UI|HUD")
-	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
 
 	UFUNCTION(BlueprintPure, Category = "UI|HUD")
 	bool HasValidPrimaryGameLayout() const;

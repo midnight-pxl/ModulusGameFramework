@@ -93,7 +93,7 @@ void AMCore_PlayerController::OnUISystemReady_Implementation(UMCore_UISubsystem*
 
 	if (PrimaryWidgetClass && PrimaryWidgetLayer.IsValid())
 	{
-		PrimaryWidget = UISubsystem->PushWidgetToLayer(PrimaryWidgetClass, PrimaryWidgetLayer);
+		PrimaryWidget = UISubsystem->OpenScreen(PrimaryWidgetClass, PrimaryWidgetLayer);
 
 		if (PrimaryWidget)
 		{

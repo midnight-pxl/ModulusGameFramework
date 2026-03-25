@@ -19,13 +19,13 @@ class UCommonActivatableWidget;
  * Stores tab identity, widget class, icon, and sort priority for plugin screen registration.
  */
 USTRUCT(BlueprintType)
-struct FMCore_MenuTab
+struct MODULUSCORE_API FMCore_MenuTab
 {
   	GENERATED_BODY()
 
 public:
 
-  	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Menu Tab")
+  	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")
   	FGameplayTag TabID;
 
   	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu Tab")

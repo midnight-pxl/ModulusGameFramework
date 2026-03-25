@@ -49,30 +49,45 @@ public:
 	//~ End USubsystem Interface
 
 	UFUNCTION(BlueprintPure, Category = "UI|Layout")
-	UMCore_PrimaryGameLayout* GetPrimaryGameLayout() const;
-
-	UFUNCTION(BlueprintPure, Category = "UI|Layout")
 	bool HasPrimaryGameLayout() const { return IsValid(PrimaryGameLayout); }
 	
 	UPROPERTY(BlueprintAssignable, Category = "Modulus|UI|Events")
 	FOnPrimaryGameLayoutReady OnPrimaryGameLayoutReady;
 	
 // ============================================================================
-// LAYER STACKS
+// SCREEN MANAGEMENT
 // ============================================================================
 
-	/** Get stack by layer tag. Returns nullptr if layout not ready or tag invalid. */
-	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
-	UCommonActivatableWidgetStack* GetLayerStack(FGameplayTag LayerTag) const;
+	/** Opens a screen on the specified layer. Returns existing instance if already active (dedup by default). */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI", meta = (DeterminesOutputType = "ScreenClass"))
+	UCommonActivatableWidget* OpenScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass,
+		UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag,
+		bool bAllowDuplicates = false);
 
-	/** Push widget to layer by tag. Returns created widget or nullptr. */
-	UFUNCTION(BlueprintCallable, Category = "Modulus|UI|Layout", meta = (DeterminesOutputType = "WidgetClass"))
-	UCommonActivatableWidget* PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass,
+	/** Closes a screen: untracks it and deactivates it. */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI")
+	void CloseScreen(UCommonActivatableWidget* Screen);
+
+	/** Pops the top widget from the specified layer stack. Returns true if a widget was closed. */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI")
+	bool PopLayer(UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag);
+
+	/** Removes a specific widget from a specific layer. Returns true if found and closed. */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI")
+	bool RemoveWidgetFromLayer(UCommonActivatableWidget* Widget,
 		UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag);
 
+	/** Returns the top active widget on the specified layer, or nullptr. */
+	UFUNCTION(BlueprintPure, Category = "MCore|UI")
+	UCommonActivatableWidget* GetActiveWidgetInLayer(UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag) const;
+
+	/** Returns the number of tracked widgets on the specified layer. */
+	UFUNCTION(BlueprintPure, Category = "MCore|UI")
+	int32 GetWidgetCountInLayer(UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag) const;
+
 	/** Check if a layer has any active widget. */
-	UFUNCTION(BlueprintPure, Category = "Modulus|UI|Layout")
-	bool IsLayerActive(FGameplayTag LayerTag) const;
+	UFUNCTION(BlueprintPure, Category = "MCore|UI")
+	bool IsLayerActive(UPARAM(meta = (Categories = "MCore.UI.Layer")) FGameplayTag LayerTag) const;
 
 	UPROPERTY(BlueprintAssignable, Category = "Modulus|UI|Events")
 	FOnWidgetLayerChanged OnWidgetPushed;
@@ -94,30 +109,31 @@ public:
 // MENU HUB
 // ============================================================================
 
-	/** Returns the menu hub widget, creating it on first call. Caller pushes to appropriate stack. */
-	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
-	UMCore_GameMenuHub* GetOrCreateMenuHub();
+	/** Opens the GameMenuHub on the GameMenu layer. Returns existing if already active. */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI|MenuHub")
+	UMCore_GameMenuHub* OpenMenuHub();
+
+	/** Closes the GameMenuHub if it's currently on the GameMenu layer. */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI|MenuHub")
+	void CloseMenuHub();
 
 	/** Register a menu screen tab in the MenuHub. Duplicate TabIDs are rejected. */
-	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI|MenuHub")
 	void RegisterMenuScreen(
 		FGameplayTag TabID,
 		TSubclassOf<UCommonActivatableWidget> ScreenWidgetClass,
 		int32 Priority = 100,
 		UTexture2D* TabIcon = nullptr);
-	
+
 	/** Unregister a menu screen tab. Returns true if found and removed. */
-	UFUNCTION(BlueprintCallable, Category = "UI|MenuHub")
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI|MenuHub")
 	bool UnregisterMenuScreen(FGameplayTag TabID);
-	
-	UFUNCTION(BlueprintPure, Category = "UI|MenuHub")
+
+	UFUNCTION(BlueprintPure, Category = "MCore|UI|MenuHub")
 	const TArray<FMCore_MenuTab>& GetRegisteredMenuScreens() const { return RegisteredMenuScreens; }
 
-	/**
-	 * Force rebuild of MenuHub tab bar.
-	 * Called automatically when screens registered/unregistered while hub is active.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "ModulusUI|MenuHub")
+	/** Force rebuild of MenuHub tab bar. Auto-called when screens registered/unregistered while hub is active. */
+	UFUNCTION(BlueprintCallable, Category = "MCore|UI|MenuHub")
 	void RebuildMenuHubTabBar();
 	
 // ============================================================================
@@ -168,7 +184,11 @@ private:
 	void LoadWidgetClasses();
 	void BuildLayerStackMap();
 	void CompactTrackedWidgets(FGameplayTag LayerTag);
+
+	UCommonActivatableWidgetStack* GetLayerStack(FGameplayTag LayerTag) const;
+	UCommonActivatableWidget* PushWidgetToLayer(TSubclassOf<UCommonActivatableWidget> WidgetClass, FGameplayTag LayerTag);
 	void UntrackWidget(UCommonActivatableWidget* Widget, FGameplayTag LayerTag);
+	UMCore_GameMenuHub* FindTrackedMenuHub() const;
 
 	/* Creates and adds PrimaryGameLayout to viewport */
 	void CreatePrimaryGameLayout();
@@ -180,9 +200,6 @@ private:
 	/* Strong reference; UISubsystem owns the layout lifecycle */
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PrimaryGameLayout> PrimaryGameLayout;
-	
-	UPROPERTY(Transient)
-	TObjectPtr<UMCore_GameMenuHub> CachedMenuHub;
 	
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PDA_UITheme_Base> CachedActiveTheme;

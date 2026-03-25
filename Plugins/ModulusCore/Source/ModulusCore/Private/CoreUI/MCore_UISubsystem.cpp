@@ -40,7 +40,24 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Loaded default theme from index %d"),
 			DevSettings->DefaultThemeIndex);
 	}
-	
+
+	// Register default menu tabs from CoreSettings
+	if (DevSettings)
+	{
+		for (const FMCore_MenuTab& Tab : DevSettings->DefaultMenuTabs)
+		{
+			if (Tab.TabID.IsValid() && Tab.ScreenWidgetClass)
+			{
+				RegisterMenuScreen(Tab.TabID, Tab.ScreenWidgetClass, Tab.Priority, Tab.TabIcon);
+			}
+			else
+			{
+				UE_LOG(LogModulusUI, Warning,
+					TEXT("DefaultMenuTabs: skipping entry with invalid TabID or null ScreenWidgetClass"));
+			}
+		}
+	}
+
 	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized for LocalPlayer"));
 }
 
@@ -68,13 +85,7 @@ void UMCore_UISubsystem::Deinitialize()
 	// Clear layer stack map and tracked widgets
 	LayerStackMap.Empty();
 	TrackedWidgets.Empty();
-	
-	if (IsValid(CachedMenuHub))
-	{
-		CachedMenuHub->RemoveFromParent();
-		CachedMenuHub = nullptr;
-	}
-	
+
 	// Clean up PrimaryGameLayout
 	if (IsValid(PrimaryGameLayout))
 	{
@@ -135,14 +146,6 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 // ============================================================================
 // WIDGET LIFECYCLE
 // ============================================================================
-
-UMCore_PrimaryGameLayout* UMCore_UISubsystem::GetPrimaryGameLayout() const
-{
-	if (IsValid(PrimaryGameLayout)) { return PrimaryGameLayout; }
-    
-	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: No PrimaryGameLayout registered for this local player"));
-	return nullptr;
-}
 
 void UMCore_UISubsystem::CreatePrimaryGameLayout()
 {
@@ -333,12 +336,125 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 	return NewWidget;
 }
 
+UCommonActivatableWidget* UMCore_UISubsystem::OpenScreen(
+	TSubclassOf<UCommonActivatableWidget> ScreenClass,
+	FGameplayTag LayerTag,
+	bool bAllowDuplicates)
+{
+	if (!ScreenClass || !HasPrimaryGameLayout()) { return nullptr; }
+
+	if (!bAllowDuplicates)
+	{
+		CompactTrackedWidgets(LayerTag);
+
+		TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets = TrackedWidgets.Find(LayerTag);
+		if (Widgets)
+		{
+			for (int32 i = Widgets->Num() - 1; i >= 0; --i)
+			{
+				TWeakObjectPtr<UCommonActivatableWidget>& Weak = (*Widgets)[i];
+				if (!Weak.IsValid())
+				{
+					continue;
+				}
+
+				if (Weak->GetClass() == ScreenClass)
+				{
+					if (Weak->IsActivated())
+					{
+						return Weak.Get();
+					}
+					// Stale entry: tracked but no longer activated
+					UntrackWidget(Weak.Get(), LayerTag);
+				}
+			}
+		}
+	}
+
+	return PushWidgetToLayer(ScreenClass, LayerTag);
+}
+
+void UMCore_UISubsystem::CloseScreen(UCommonActivatableWidget* Screen)
+{
+	if (!Screen) { return; }
+
+	bool bWasTracked = false;
+	for (auto& Pair : TrackedWidgets)
+	{
+		const bool bFound = Pair.Value.ContainsByPredicate([Screen](const TWeakObjectPtr<UCommonActivatableWidget>& Ptr)
+		{
+			return Ptr.Get() == Screen;
+		});
+
+		if (bFound)
+		{
+			UntrackWidget(Screen, Pair.Key);
+			bWasTracked = true;
+			break;
+		}
+	}
+
+	if (!bWasTracked)
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("CloseScreen: Widget '%s' was not tracked"),
+			*Screen->GetName());
+	}
+
+	Screen->DeactivateWidget();
+}
+
+bool UMCore_UISubsystem::PopLayer(FGameplayTag LayerTag)
+{
+	UCommonActivatableWidgetStack* Stack = GetLayerStack(LayerTag);
+	if (!Stack) { return false; }
+
+	UCommonActivatableWidget* TopWidget = Stack->GetActiveWidget();
+	if (!TopWidget) { return false; }
+
+	CloseScreen(TopWidget);
+	return true;
+}
+
+bool UMCore_UISubsystem::RemoveWidgetFromLayer(UCommonActivatableWidget* Widget, FGameplayTag LayerTag)
+{
+	if (!Widget) { return false; }
+
+	const TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets = TrackedWidgets.Find(LayerTag);
+	if (!Widgets) { return false; }
+
+	const bool bFound = Widgets->ContainsByPredicate([Widget](const TWeakObjectPtr<UCommonActivatableWidget>& Ptr)
+	{
+		return Ptr.Get() == Widget;
+	});
+
+	if (!bFound) { return false; }
+
+	CloseScreen(Widget);
+	return true;
+}
+
+UCommonActivatableWidget* UMCore_UISubsystem::GetActiveWidgetInLayer(FGameplayTag LayerTag) const
+{
+	const UCommonActivatableWidgetStack* Stack = GetLayerStack(LayerTag);
+	return Stack ? Stack->GetActiveWidget() : nullptr;
+}
+
+int32 UMCore_UISubsystem::GetWidgetCountInLayer(FGameplayTag LayerTag) const
+{
+	const TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets = TrackedWidgets.Find(LayerTag);
+	if (!Widgets) { return 0; }
+
+	int32 Count = 0;
+	for (const TWeakObjectPtr<UCommonActivatableWidget>& Weak : *Widgets)
+	{
+		if (Weak.IsValid()) { Count++; }
+	}
+	return Count;
+}
+
 bool UMCore_UISubsystem::IsLayerActive(FGameplayTag LayerTag) const
 {
-	const UCommonActivatableWidgetStack* ThisStack = GetLayerStack(LayerTag);
-	if (!ThisStack) { return false; }
-	
-	return ThisStack->GetActiveWidget() != nullptr;
+	return GetActiveWidgetInLayer(LayerTag) != nullptr;
 }
 
 // ============================================================================
@@ -394,58 +510,47 @@ void UMCore_UISubsystem::NotifyWidgetDestroyed(UCommonActivatableWidget* Widget)
 // MENU HUB
 // ============================================================================
 
-UMCore_GameMenuHub* UMCore_UISubsystem::GetOrCreateMenuHub()
+UMCore_GameMenuHub* UMCore_UISubsystem::OpenMenuHub()
 {
-	// Return cached instance if valid
-	if (IsValid(CachedMenuHub)) { return CachedMenuHub; }
-    
 	if (!MenuHubClass)
 	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: Cannot create MenuHub - class not loaded"));
-		return nullptr;
-	}
-    
-	if (!IsValid(PrimaryGameLayout))
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: Cannot create MenuHub - PrimaryGameLayout not created"));
-		return nullptr;
-	}
-    
-	ULocalPlayer* LocalPlayer = GetLocalPlayer();
-	if (!LocalPlayer)
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: Cannot create MenuHub - no LocalPlayer"));
-		return nullptr;
-	}
-    
-	APlayerController* PlayerController = LocalPlayer->GetPlayerController(GetWorld());
-	if (!PlayerController)
-	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: Cannot create MenuHub - no PlayerController"));
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::OpenMenuHub: MenuHubClass not loaded"));
 		return nullptr;
 	}
 
-	// Create MenuHub widget
-	CachedMenuHub = CreateWidget<UMCore_GameMenuHub>(PlayerController, MenuHubClass);
-	if (!IsValid(CachedMenuHub))
+	UCommonActivatableWidget* Screen = OpenScreen(MenuHubClass, MCore_UILayerTags::MCore_UI_Layer_GameMenu);
+	UMCore_GameMenuHub* Hub = Cast<UMCore_GameMenuHub>(Screen);
+
+	if (Hub)
 	{
-		UE_LOG(LogModulusUI, Error, 
-			TEXT("UISubsystem: CreateWidget failed for MenuHub"));
-		return nullptr;
+		Hub->RebuildTabBar();
 	}
 
-	// Build tab bar with registered screens
-	CachedMenuHub->RebuildTabBar();
-    
-	UE_LOG(LogModulusUI, Log, 
-		TEXT("UISubsystem: MenuHub created with %d registered screens"), 
-		RegisteredMenuScreens.Num());
-    
-	return CachedMenuHub;
+	return Hub;
+}
+
+void UMCore_UISubsystem::CloseMenuHub()
+{
+	if (UMCore_GameMenuHub* Hub = FindTrackedMenuHub())
+	{
+		CloseScreen(Hub);
+	}
+}
+
+UMCore_GameMenuHub* UMCore_UISubsystem::FindTrackedMenuHub() const
+{
+	const TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets =
+		TrackedWidgets.Find(MCore_UILayerTags::MCore_UI_Layer_GameMenu);
+	if (!Widgets) { return nullptr; }
+
+	for (const TWeakObjectPtr<UCommonActivatableWidget>& Weak : *Widgets)
+	{
+		if (UMCore_GameMenuHub* Hub = Cast<UMCore_GameMenuHub>(Weak.Get()))
+		{
+			return Hub;
+		}
+	}
+	return nullptr;
 }
 
 /**
@@ -505,10 +610,10 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 		TEXT("RegisterMenuScreen: %s registered at priority %d (Total: %d)"),
 		*NewTab.GetDisplayName().ToString(), Priority, RegisteredMenuScreens.Num());
 
-	// If MenuHub already created, rebuild tab bar
-	if (IsValid(CachedMenuHub))
+	// If MenuHub is active, rebuild tab bar
+	if (UMCore_GameMenuHub* Hub = FindTrackedMenuHub())
 	{
-		CachedMenuHub->RebuildTabBar();
+		Hub->RebuildTabBar();
 	}
 }
 
@@ -532,10 +637,9 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 			TEXT("UISubsystem::UnregisterMenuScreen: '%s' unregistered (Remaining: %d)"),
 			*TabID.ToString(), RegisteredMenuScreens.Num());
 
-		// Rebuild MenuHub if it exists
-		if (IsValid(CachedMenuHub))
+		if (UMCore_GameMenuHub* Hub = FindTrackedMenuHub())
 		{
-			CachedMenuHub->RebuildTabBar();
+			Hub->RebuildTabBar();
 		}
 		return true;
 	}
@@ -548,9 +652,9 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 
 void UMCore_UISubsystem::RebuildMenuHubTabBar()
 {
-	if (IsValid(CachedMenuHub))
+	if (UMCore_GameMenuHub* Hub = FindTrackedMenuHub())
 	{
-		CachedMenuHub->RebuildTabBar();
+		Hub->RebuildTabBar();
 	}
 }
 

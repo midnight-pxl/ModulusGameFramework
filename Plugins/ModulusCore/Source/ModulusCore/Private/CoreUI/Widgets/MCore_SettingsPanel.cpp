@@ -12,6 +12,7 @@
 #include "CoreUI/Widgets/MCore_SettingsWidget_Base.h"
 #include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
 #include "CoreUI/Widgets/MCore_SettingsWidget_Switcher.h"
+#include "CoreUI/Widgets/MCore_KeyBindingPanel_Base.h"
 #include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
@@ -171,8 +172,6 @@ void UMCore_SettingsPanel::BuildPanel()
 	TabIDToLeafTag.Reset();
 	AllSettingWidgets.Reset();
 	SubTabContainers.Reset();
-	KeyBindingMainTabID = NAME_None;
-	PreviousMainTabID = NAME_None;
 
 	const TArray<FGameplayTag> AllCategories = CachedCollection->GetAllCategories();
 
@@ -207,9 +206,16 @@ void UMCore_SettingsPanel::BuildPanel()
 
 		if (ParentTag.MatchesTagExact(KeyBindingTag))
 		{
-			// Routing exception: placeholder page, actual panel pushed on tab selection
-			PageWidget = NewObject<USizeBox>(this);
-			KeyBindingMainTabID = TabID;
+			if (CoreSettings->KeyBindingPanelClass)
+			{
+				PageWidget = CreateWidget<UMCore_KeyBindingPanel_Base>(this, CoreSettings->KeyBindingPanelClass);
+			}
+
+			if (!PageWidget)
+			{
+				UE_LOG(LogModulusUI, Warning, TEXT("KeyBindingPanelClass not set in CoreSettings"));
+				PageWidget = NewObject<USizeBox>(this);
+			}
 		}
 		else
 		{
@@ -240,7 +246,6 @@ void UMCore_SettingsPanel::BuildPanel()
 
 	if (!FirstTabID.IsNone())
 	{
-		PreviousMainTabID = FirstTabID;
 		TabbedContainer_Main->SelectTab(FirstTabID);
 	}
 
@@ -375,32 +380,6 @@ UMCore_SettingsWidget_Base* UMCore_SettingsPanel::CreateSettingWidget(
 
 void UMCore_SettingsPanel::HandleMainTabSelected(FName TabID)
 {
-	if (bIsRevertingTab) { return; }
-
-	/* KeyBinding routing exception: push dedicated panel and revert tab selection */
-	if (TabID == KeyBindingMainTabID && !KeyBindingMainTabID.IsNone())
-	{
-		bIsRevertingTab = true;
-		TabbedContainer_Main->SelectTab(PreviousMainTabID);
-		bIsRevertingTab = false;
-
-		const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-		if (CoreSettings && CoreSettings->KeyBindingPanelClass)
-		{
-			if (UMCore_UISubsystem* UISubsystem =
-				GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
-			{
-				/* Hardcoded until Layer System update */
-				UISubsystem->PushWidgetToLayer(
-					CoreSettings->KeyBindingPanelClass, 
-					MCore_UILayerTags::MCore_UI_Layer_GameMenu);
-			}
-		}
-		return;
-	}
-
-	PreviousMainTabID = TabID;
-
 	/* Resolve ActiveLeafCategory from page type */
 	UWidget* Page = TabbedContainer_Main->GetPageWidget(TabID);
 
@@ -473,10 +452,10 @@ void UMCore_SettingsPanel::HandleResetAllClicked()
 	
 	if (UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
 	{
-		UCommonActivatableWidget* CAWidget = UISubsystem->PushWidgetToLayer(
+		UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
 			CoreSettings->ConfirmationDialogClass,
 			MCore_UILayerTags::MCore_UI_Layer_Modal);
-		
+
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
 		{
 			PendingConfirmationDialog = Dialog;
@@ -516,10 +495,10 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 	
 	if (UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
 	{
-		UCommonActivatableWidget* CAWidget = UISubsystem->PushWidgetToLayer(
+		UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
 			CoreSettings->ConfirmationDialogClass,
 			MCore_UILayerTags::MCore_UI_Layer_Modal);
-		
+
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
 		{
 			PendingConfirmationDialog = Dialog;

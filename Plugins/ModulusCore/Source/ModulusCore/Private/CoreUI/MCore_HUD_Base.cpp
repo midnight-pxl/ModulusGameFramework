@@ -2,8 +2,6 @@
 
 #include "CoreUI/MCore_HUD_Base.h"
 
-#include "CoreData/Logging/LogModulusUI.h"
-#include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreUI/MCore_UISubsystem.h"
 
 AMCore_HUD_Base::AMCore_HUD_Base(const FObjectInitializer& ObjectInitializer)
@@ -11,18 +9,9 @@ AMCore_HUD_Base::AMCore_HUD_Base(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-UMCore_PrimaryGameLayout* AMCore_HUD_Base::GetPrimaryGameLayout() const
-{
-	if (const UMCore_UISubsystem* UISubsystem = GetUISubsystem())
-	{
-		return UISubsystem->GetPrimaryGameLayout();
-	}
-	return nullptr;
-}
-
 bool AMCore_HUD_Base::HasValidPrimaryGameLayout() const
 {
-	return IsValid(GetPrimaryGameLayout());
+	return GetUISubsystem() && GetUISubsystem()->HasPrimaryGameLayout();
 }
 
 UMCore_UISubsystem* AMCore_HUD_Base::GetUISubsystem() const

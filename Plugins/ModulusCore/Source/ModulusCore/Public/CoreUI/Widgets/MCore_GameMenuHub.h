@@ -22,7 +22,7 @@ struct FGameplayTag;
  * In-game menu hub providing a tabbed interface for plugin menu pages.
  * Composes UMCore_TabbedContainer and rebuilds tabs from UISubsystem's registered screens.
  *
- * Open via UISubsystem->GetOrCreateMenuHub(), register screens via RegisterMenuScreen().
+ * Open via UISubsystem->OpenMenuHub(), register screens via RegisterMenuScreen().
  */
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class MODULUSCORE_API UMCore_GameMenuHub : public UMCore_ActivatableBase
@@ -38,7 +38,7 @@ public:
 
     /**
      * Rebuild tab bar from currently registered screens.
-     * Called by GetOrCreateMenuHub() on creation and RegisterMenuScreen() on dynamic registration.
+     * Called by OpenMenuHub() on creation and RegisterMenuScreen() on dynamic registration.
      */
     UFUNCTION(BlueprintCallable, Category = "Menu Hub")
     void RebuildTabBar();
@@ -73,7 +73,7 @@ protected:
     virtual void NativeOnInitialized() override;
     virtual void NativeDestruct() override;
 
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
     TObjectPtr<UMCore_TabbedContainer> TabbedContainer;
 
     UPROPERTY(EditDefaultsOnly, Category = "Menu Hub")

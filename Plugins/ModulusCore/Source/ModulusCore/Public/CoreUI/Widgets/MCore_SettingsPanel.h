@@ -23,8 +23,7 @@ class UScrollBox;
  * 
  * Depth-3 tags become main tabs (Settings_Category_Video, etc.)
  * If Depth-4 tags >1 sub-tabbing occurs (Settings_Category_Video_Display, Settings_Category_Video_GraphicQuality, etc.)
- * 
- * Keybinding category is an exception as it pushes pre-configured KeyBindingPanel to screen
+ * KeyBinding category creates an inline KeyBindingPanel_Base widget instead of setting rows.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_SettingsPanel : public UMCore_ActivatableBase
@@ -154,13 +153,6 @@ private:
 	TMap<FName, FGameplayTag> TabIDToLeafTag;
  
 	FGameplayTag ActiveLeafCategory;
- 
-	FName PreviousMainTabID;
-	
-	FName KeyBindingMainTabID;
- 
-	/** Prevents re-entrancy for tab selection when reverting from the KeyBinding tab */
-	bool bIsRevertingTab{false};
  
 	TArray<TObjectPtr<UMCore_SettingsWidget_Base>> AllSettingWidgets;
 
