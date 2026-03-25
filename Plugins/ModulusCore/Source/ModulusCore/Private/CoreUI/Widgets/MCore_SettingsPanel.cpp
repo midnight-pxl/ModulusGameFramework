@@ -71,8 +71,16 @@ namespace
 
 void UMCore_SettingsPanel::NativeOnInitialized()
 {
-	Super::NativeOnInitialized();
+	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnInitialized ENTERED - this=%p, TabbedContainer_Main=%p"),
+		this, TabbedContainer_Main.Get());
 
+	Super::NativeOnInitialized();
+	
+	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnInitialized POST-SUPER - TabbedContainer_Main=%p"),
+		TabbedContainer_Main.Get());
+
+	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnInitialized CALLING BuildPanel"));
+	
 	BuildPanel();
 
 	TabbedContainer_Main->OnTabSelected.AddDynamic(this, &ThisClass::HandleMainTabSelected);
