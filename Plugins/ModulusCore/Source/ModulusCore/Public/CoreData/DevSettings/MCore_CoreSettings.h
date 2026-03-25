@@ -12,6 +12,7 @@
 
 #include "CoreMinimal.h"
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
+#include "CoreData/Types/UI/MCore_MenuTabTypes.h"
 #include "Engine/DeveloperSettings.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
 #include "MCore_CoreSettings.generated.h"
@@ -22,7 +23,7 @@ class UMCore_GameMenuHub;
 class UMCore_SettingsWidget_Slider;
 class UMCore_SettingsWidget_Switcher;
 class UMCore_ConfirmationDialog;
-class UCommonActivatableWidget;
+class UMCore_KeyBindingPanel_Base;
 
 /**
  * Developer settings for the Modulus Game Framework (Project Settings > Game > Modulus Core).
@@ -64,6 +65,14 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="UI", meta=(DisplayName="Primary Game Layout Class"))
 	TSoftClassPtr<UMCore_PrimaryGameLayout> PrimaryGameLayoutClass;
 
+	/* Z-Order for PrimaryGameLayout in viewport. Higher values render on top. */
+	UPROPERTY(Config, EditAnywhere, Category="UI", meta=(DisplayName="Layout Z-Order", ClampMin="-100", ClampMax="100"))
+	int32 PrimaryGameLayoutZOrder{0};
+
+	// ============================================================================
+	// MENU HUB
+	// ============================================================================
+
 	/**
 	 * Widget class for the GameMenuHub.
 	 * This is the tabbed menu container for plugin screens.
@@ -71,12 +80,16 @@ public:
 	 * Leave empty to use default UMCore_GameMenuHub.
 	 * Set to a Blueprint subclass for custom hub appearance.
 	 */
-	UPROPERTY(Config, EditAnywhere, Category="UI", meta=(DisplayName="Menu Hub Class"))
+	UPROPERTY(Config, EditAnywhere, Category="Menu Hub", meta=(DisplayName="Menu Hub Class"))
 	TSoftClassPtr<UMCore_GameMenuHub> MenuHubClass;
 
-	/* Z-Order for PrimaryGameLayout in viewport. Higher values render on top. */
-	UPROPERTY(Config, EditAnywhere, Category="UI", meta=(DisplayName="Layout Z-Order", ClampMin="-100", ClampMax="100"))
-	int32 PrimaryGameLayoutZOrder{0};
+	/**
+	 * Menu tabs registered on UISubsystem initialization.
+	 * Configure all default tabs here, including tabs from other Modulus plugins.
+	 * Additional tabs can be added at runtime via RegisterMenuScreen().
+	 */
+	UPROPERTY(Config, EditAnywhere, Category="Menu Hub", meta=(DisplayName="Default Menu Tabs"))
+	TArray<FMCore_MenuTab> DefaultMenuTabs;
 
 	// ============================================================================
 	// THEME CONFIGURATION
@@ -114,9 +127,9 @@ public:
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_SettingsWidget_Switcher> SettingsSwitcherWidgetClass;
 
-	/** Panel class pushed when the KeyBinding category tab is selected. */
+	/** Widget class for inline key binding panel content in the Settings Panel. */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
-	TSubclassOf<UCommonActivatableWidget> KeyBindingPanelClass;
+	TSubclassOf<UMCore_KeyBindingPanel_Base> KeyBindingPanelClass;
 	
 	/** Dialog class used for destructive action confirmations (Reset All, etc). */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
