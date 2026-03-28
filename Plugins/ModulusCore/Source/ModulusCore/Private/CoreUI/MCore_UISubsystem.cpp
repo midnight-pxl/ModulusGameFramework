@@ -308,19 +308,11 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 		return nullptr;
 	}
 	
-	// AddWidget handles creation + activation
+	// AddWidget handles creation; activation is deferred until the stack's animated transition completes
 	UCommonActivatableWidget* NewWidget = ThisStack->AddWidget<UCommonActivatableWidget>(WidgetClass);
 
 	if (NewWidget)
 	{
-		// Safeguard: some engine versions may defer activation after AddWidget
-		if (!NewWidget->IsActivated())
-		{
-			UE_LOG(LogModulusUI, Warning, TEXT("PushWidgetToLayer: Stack did not activate '%s', activating manually"),
-				*WidgetClass->GetName());
-			NewWidget->ActivateWidget();
-		}
-
 		TrackedWidgets.FindOrAdd(LayerTag).Add(NewWidget);
 		OnWidgetPushed.Broadcast(NewWidget, LayerTag);
 

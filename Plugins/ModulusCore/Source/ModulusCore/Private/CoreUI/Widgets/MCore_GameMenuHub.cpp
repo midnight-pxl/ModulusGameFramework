@@ -176,6 +176,31 @@ bool UMCore_GameMenuHub::IsTabHidden(FGameplayTag TabID) const
     return TabbedContainer->IsTabHidden(FName(*TabID.ToString()));
 }
 
+TOptional<FUIInputConfig> UMCore_GameMenuHub::GetDesiredInputConfig() const
+{
+    FUIInputConfig Config(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture, false);
+    return Config;
+}
+
+UWidget* UMCore_GameMenuHub::NativeGetDesiredFocusTarget() const
+{
+    if (TabbedContainer)
+    {
+        const FName SelectedTab = TabbedContainer->GetSelectedTabID();
+        if (!SelectedTab.IsNone())
+        {
+            if (UWidget* PageWidget = TabbedContainer->GetPageWidget(SelectedTab))
+            {
+                return PageWidget;
+            }
+        }
+
+        return TabbedContainer;
+    }
+
+    return Super::NativeGetDesiredFocusTarget();
+}
+
 void UMCore_GameMenuHub::HandleContainerTabAdded(FName TabID, UCommonButtonBase* TabButton)
 {
     OnTabCreated(TabID, TabButton);

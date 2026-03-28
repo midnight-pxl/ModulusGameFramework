@@ -7,6 +7,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/PlayerController.h"
 #include "CoreData/Logging/LogModulusSettings.h"
+#include "CommonInputSubsystem.h"
+#include "CommonInputBaseTypes.h"
 
 // ============================================================================
 // PRIVATE HELPERS
@@ -260,5 +262,250 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefault(APlayerController* Player
 	}
 
 	OutError = FText::FromString(TEXT("No mappings found for action"));
+	return false;
+}
+
+// ============================================================================
+// REMAPPABLE ACTION QUERIES
+// ============================================================================
+
+TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetAllRemappableActions(
+	APlayerController* PlayerController)
+{
+	TArray<FPlayerKeyMapping> Result;
+
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile)
+	{
+		UE_LOG(LogModulusSettings, Warning, TEXT("GetAllRemappableActions: No active key profile"));
+		return Result;
+	}
+
+	const TMap<FName, FKeyMappingRow>& Rows = Profile->GetPlayerMappingRows();
+	for (const TPair<FName, FKeyMappingRow>& Pair : Rows)
+	{
+		for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
+		{
+			Result.Add(Mapping);
+		}
+	}
+
+	return Result;
+}
+
+TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForDevice(
+	APlayerController* PlayerController, ECommonInputType DeviceType)
+{
+	TArray<FPlayerKeyMapping> Result;
+
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile)
+	{
+		UE_LOG(LogModulusSettings, Warning, TEXT("GetRemappableActionsForDevice: No active key profile"));
+		return Result;
+	}
+
+	const TMap<FName, FKeyMappingRow>& Rows = Profile->GetPlayerMappingRows();
+	for (const TPair<FName, FKeyMappingRow>& Pair : Rows)
+	{
+		for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
+		{
+			// Use current key for device check; fall back to default if current is invalid
+			FKey KeyToCheck = Mapping.GetCurrentKey();
+			if (!KeyToCheck.IsValid())
+			{
+				KeyToCheck = Mapping.GetDefaultKey();
+			}
+
+			bool bInclude = false;
+			switch (DeviceType)
+			{
+			case ECommonInputType::Gamepad:
+				bInclude = KeyToCheck.IsGamepadKey();
+				break;
+			case ECommonInputType::MouseAndKeyboard:
+				bInclude = !KeyToCheck.IsGamepadKey() && !KeyToCheck.IsTouch();
+				break;
+			case ECommonInputType::Touch:
+				bInclude = KeyToCheck.IsTouch();
+				break;
+			default:
+				break;
+			}
+
+			if (bInclude)
+			{
+				Result.Add(Mapping);
+			}
+		}
+	}
+
+	return Result;
+}
+
+// ============================================================================
+// ICON RESOLUTION
+// ============================================================================
+
+bool UMCore_EnhancedInputDisplay::GetIconBrushForKey(const ULocalPlayer* LocalPlayer,
+	FKey Key, FSlateBrush& OutBrush)
+{
+	if (!LocalPlayer || !Key.IsValid()) { return false; }
+
+	UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
+	if (!CIS)
+	{
+		UE_LOG(LogModulusSettings, Warning, TEXT("GetIconBrushForKey: CommonInputSubsystem unavailable"));
+		return false;
+	}
+
+	UCommonInputPlatformSettings* PlatformSettings = UCommonInputPlatformSettings::Get();
+	if (!PlatformSettings) { return false; }
+
+	return PlatformSettings->TryGetInputBrush(
+		OutBrush, Key, CIS->GetCurrentInputType(), CIS->GetCurrentGamepadName());
+}
+
+bool UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(const ULocalPlayer* LocalPlayer,
+	FKey Key, ECommonInputType InputType, FSlateBrush& OutBrush)
+{
+	if (!LocalPlayer || !Key.IsValid()) { return false; }
+
+	UCommonInputPlatformSettings* PlatformSettings = UCommonInputPlatformSettings::Get();
+	if (!PlatformSettings) { return false; }
+
+	// Gamepad icons need the active gamepad name to pick the right controller data
+	FName GamepadName = NAME_None;
+	if (InputType == ECommonInputType::Gamepad)
+	{
+		UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
+		if (CIS)
+		{
+			GamepadName = CIS->GetCurrentGamepadName();
+		}
+	}
+
+	return PlatformSettings->TryGetInputBrush(OutBrush, Key, InputType, GamepadName);
+}
+
+// ============================================================================
+// SLOT-BASED OPERATIONS
+// ============================================================================
+
+FKey UMCore_EnhancedInputDisplay::GetBoundKeyForSlot(APlayerController* PlayerController,
+	UInputAction* InputAction, EPlayerMappableKeySlot Slot, bool bGamepad)
+{
+	if (!InputAction) { return EKeys::Invalid; }
+
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile) { return EKeys::Invalid; }
+
+	const FKeyMappingRow* Row = Profile->FindKeyMappingRow(InputAction->GetFName());
+	if (!Row) { return EKeys::Invalid; }
+
+	for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+	{
+		if (Mapping.GetSlot() == Slot && Mapping.GetCurrentKey().IsGamepadKey() == bGamepad)
+		{
+			return Mapping.GetCurrentKey();
+		}
+	}
+
+	return EKeys::Invalid;
+}
+
+bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* PlayerController,
+	UInputAction* InputAction, FKey NewKey, EPlayerMappableKeySlot Slot, FText& OutError)
+{
+	OutError = FText::GetEmpty();
+
+	if (!InputAction)
+	{
+		OutError = FText::FromString(TEXT("Input Action is null"));
+		return false;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	if (!Subsystem)
+	{
+		OutError = FText::FromString(TEXT("Enhanced Input subsystem not available"));
+		return false;
+	}
+
+	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+	if (!UserSettings)
+	{
+		OutError = FText::FromString(TEXT("User settings not initialized"));
+		return false;
+	}
+
+	FName MappingName = InputAction->GetFName();
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = UserSettings->GetActiveKeyProfile();
+	if (!KeyProfile || !KeyProfile->FindKeyMappingRow(MappingName))
+	{
+		OutError = FText::FromString(TEXT("Action not remappable or mapping invalid"));
+		return false;
+	}
+
+	FMapPlayerKeyArgs KeyArgs;
+	KeyArgs.MappingName = MappingName;
+	KeyArgs.NewKey = NewKey;
+	KeyArgs.Slot = Slot;
+	KeyArgs.bCreateMatchingSlotIfNeeded = true;
+
+	FGameplayTagContainer FailureReason;
+	UserSettings->MapPlayerKey(KeyArgs, FailureReason);
+
+	if (FailureReason.IsEmpty())
+	{
+		UserSettings->SaveSettings();
+		UE_LOG(LogModulusSettings, Log, TEXT("Remapped action %s (slot %d) to key %s"),
+			*InputAction->GetName(), static_cast<int32>(Slot), *NewKey.ToString());
+		return true;
+	}
+
+	OutError = FText::FromString(FailureReason.ToString());
+	UE_LOG(LogModulusSettings, Warning, TEXT("Failed to remap action %s (slot %d) to key %s: %s"),
+		*InputAction->GetName(), static_cast<int32>(Slot), *NewKey.ToString(),
+		*FailureReason.ToString());
+	return false;
+}
+
+bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController* PlayerController,
+	UInputAction* InputAction, EPlayerMappableKeySlot Slot, bool bGamepad, FText& OutError)
+{
+	OutError = FText::GetEmpty();
+
+	if (!InputAction)
+	{
+		OutError = FText::FromString(TEXT("Input Action is null"));
+		return false;
+	}
+
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile)
+	{
+		OutError = FText::FromString(TEXT("No active key profile"));
+		return false;
+	}
+
+	const FKeyMappingRow* Row = Profile->FindKeyMappingRow(InputAction->GetFName());
+	if (!Row)
+	{
+		OutError = FText::FromString(TEXT("Action not found in key profile"));
+		return false;
+	}
+
+	// Find the mapping matching the requested slot and device type
+	for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+	{
+		if (Mapping.GetSlot() == Slot && Mapping.GetDefaultKey().IsGamepadKey() == bGamepad)
+		{
+			return RemapActionKeyForSlot(PlayerController, InputAction,
+				Mapping.GetDefaultKey(), Slot, OutError);
+		}
+	}
+
+	OutError = FText::FromString(TEXT("No matching mapping found for slot and device type"));
 	return false;
 }

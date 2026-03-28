@@ -11,12 +11,16 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "CommonInputTypeEnum.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
+#include "Styling/SlateBrush.h"
 #include "MCore_EnhancedInputDisplay.generated.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 class UEnhancedPlayerMappableKeyProfile;
 class APlayerController;
 class UInputAction;
+class ULocalPlayer;
 
 /**
  * Enhanced Input display and rebinding helpers.
@@ -81,6 +85,51 @@ public:
 	static bool ResetActionToDefault(APlayerController* PlayerController,
 									UInputAction* InputAction,
 									UPARAM(DisplayName = "Error Message") FText& OutError);
+
+	// ============================================================================
+	// REMAPPABLE ACTION QUERIES
+	// ============================================================================
+
+	/** Returns all player-mappable key mappings from the active key profile. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static TArray<FPlayerKeyMapping> GetAllRemappableActions(APlayerController* PlayerController);
+
+	/** Returns player-mappable key mappings filtered to a specific device type. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static TArray<FPlayerKeyMapping> GetRemappableActionsForDevice(
+		APlayerController* PlayerController, ECommonInputType DeviceType);
+
+	// ============================================================================
+	// ICON RESOLUTION
+	// ============================================================================
+
+	/** Resolve an FKey to its platform-appropriate icon brush using the current input device. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static bool GetIconBrushForKey(const ULocalPlayer* LocalPlayer, FKey Key, FSlateBrush& OutBrush);
+
+	/** Resolve an FKey to its icon brush for a specific device type (for dual-column display). */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static bool GetIconBrushForKeyByDeviceType(const ULocalPlayer* LocalPlayer, FKey Key,
+		ECommonInputType InputType, FSlateBrush& OutBrush);
+
+	// ============================================================================
+	// SLOT-BASED OPERATIONS
+	// ============================================================================
+
+	/** Returns the bound key for a specific action, slot, and device type. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Input Display")
+	static FKey GetBoundKeyForSlot(APlayerController* PlayerController, UInputAction* InputAction,
+		EPlayerMappableKeySlot Slot, bool bGamepad);
+
+	/** Remap an action to a new key in a specific slot. Device derived from NewKey. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static bool RemapActionKeyForSlot(APlayerController* PlayerController, UInputAction* InputAction,
+		FKey NewKey, EPlayerMappableKeySlot Slot, FText& OutError);
+
+	/** Reset an action's binding to default for a specific slot and device type. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static bool ResetActionToDefaultForSlot(APlayerController* PlayerController, UInputAction* InputAction,
+		EPlayerMappableKeySlot Slot, bool bGamepad, FText& OutError);
 
 private:
 	/* Resolve Enhanced Input subsystem from PlayerController with validation */
