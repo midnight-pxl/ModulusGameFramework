@@ -35,6 +35,21 @@ void UMCore_ConfirmationDialog::SetButtonLabels(FText InConfirmText, FText InCan
 	}
 }
 
+void UMCore_ConfirmationDialog::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+
+	if (Btn_Confirm)
+	{
+		Btn_Confirm->OnButtonClicked.AddDynamic(this, &ThisClass::HandleConfirmClicked);
+	}
+
+	if (Btn_Cancel)
+	{
+		Btn_Cancel->OnButtonClicked.AddDynamic(this, &ThisClass::HandleCancelClicked);
+	}
+}
+
 void UMCore_ConfirmationDialog::NativeOnActivated()
 {
 	Super::NativeOnActivated();
@@ -45,13 +60,11 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 	if (Btn_Confirm)
 	{
 		Btn_Confirm->SetButtonText(ConfirmText);
-		Btn_Confirm->OnButtonClicked.AddDynamic(this, &UMCore_ConfirmationDialog::HandleConfirmClicked);
 	}
 
 	if (Btn_Cancel)
 	{
 		Btn_Cancel->SetButtonText(CancelText);
-		Btn_Cancel->OnButtonClicked.AddDynamic(this, &UMCore_ConfirmationDialog::HandleCancelClicked);
 	}
 
 	if (!AcceptInputAction.IsNull())
@@ -73,17 +86,22 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 
 void UMCore_ConfirmationDialog::NativeOnDeactivated()
 {
-	// Unbind button delegates to prevent double-binding on reactivation
+	Super::NativeOnDeactivated();
+}
+
+void UMCore_ConfirmationDialog::NativeDestruct()
+{
 	if (Btn_Confirm)
 	{
-		Btn_Confirm->OnButtonClicked.RemoveDynamic(this, &UMCore_ConfirmationDialog::HandleConfirmClicked);
-	}
-	if (Btn_Cancel)
-	{
-		Btn_Cancel->OnButtonClicked.RemoveDynamic(this, &UMCore_ConfirmationDialog::HandleCancelClicked);
+		Btn_Confirm->OnButtonClicked.RemoveAll(this);
 	}
 
-	Super::NativeOnDeactivated();
+	if (Btn_Cancel)
+	{
+		Btn_Cancel->OnButtonClicked.RemoveAll(this);
+	}
+
+	Super::NativeDestruct();
 }
 
 UWidget* UMCore_ConfirmationDialog::NativeGetDesiredFocusTarget() const

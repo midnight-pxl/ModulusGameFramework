@@ -15,11 +15,15 @@ void UMCore_TabbedContainer::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::NativeOnInitialized: this=%p"), this);
+
 	TabList->OnTabSelected.AddDynamic(this, &ThisClass::HandleTabSelected);
 }
 
 void UMCore_TabbedContainer::NativeDestruct()
 {
+	UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::NativeDestruct: this=%p, TabCount=%d"), this, GetTabCount());
+
 	if (TabList)
 	{
 		TabList->OnTabSelected.RemoveAll(this);
@@ -125,6 +129,15 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 
 void UMCore_TabbedContainer::ClearAllTabs()
 {
+	UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::ClearAllTabs: this=%p, TabCount=%d"), this, GetTabCount());
+
+	// Self-heal: if this container went through NativeDestruct and was reused
+	// without NativeOnInitialized firing again, the internal delegate is dead.
+	if (TabList && !TabList->OnTabSelected.IsBound())
+	{
+		TabList->OnTabSelected.AddDynamic(this, &ThisClass::HandleTabSelected);
+	}
+
 	TabList->RemoveAllTabs();
 	PageSwitcher->ClearChildren();
 	PageWidgets.Empty();

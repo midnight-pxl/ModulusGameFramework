@@ -67,7 +67,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
         if (EmptyStateWidgetClass)
         {
             UCommonActivatableWidget* EmptyWidget = CreateWidget<UCommonActivatableWidget>(
-                GetOwningPlayer(), EmptyStateWidgetClass);
+                this, EmptyStateWidgetClass);
 
             if (EmptyWidget)
             {
@@ -93,7 +93,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
         FName TabNameID = FName(*Tab.TabID.ToString());
 
         UCommonActivatableWidget* ScreenWidget = CreateWidget<UCommonActivatableWidget>(
-            GetOwningPlayer(), Tab.ScreenWidgetClass);
+            this, Tab.ScreenWidgetClass);
 
         if (!ScreenWidget)
         {

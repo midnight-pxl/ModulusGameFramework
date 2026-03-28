@@ -71,17 +71,7 @@ namespace
 
 void UMCore_SettingsPanel::NativeOnInitialized()
 {
-	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnInitialized ENTERED - this=%p, TabbedContainer_Main=%p"),
-		this, TabbedContainer_Main.Get());
-
 	Super::NativeOnInitialized();
-	
-	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnInitialized POST-SUPER - TabbedContainer_Main=%p"),
-		TabbedContainer_Main.Get());
-
-	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnInitialized CALLING BuildPanel"));
-	
-	BuildPanel();
 
 	TabbedContainer_Main->OnTabSelected.AddDynamic(this, &ThisClass::HandleMainTabSelected);
 
@@ -90,8 +80,74 @@ void UMCore_SettingsPanel::NativeOnInitialized()
 	Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
 }
 
+void UMCore_SettingsPanel::NativeOnActivated()
+{
+	Super::NativeOnActivated();
+
+	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: this=%p, IsActivated()=%s, TabbedContainer_Main=%s, bNeedsFullRebuild=%s"),
+		this,
+		IsActivated() ? TEXT("true") : TEXT("false"),
+		TabbedContainer_Main ? TEXT("valid") : TEXT("NULL"),
+		bNeedsFullRebuild ? TEXT("true") : TEXT("false"));
+
+	if (!IsActivated())
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: EARLY EXIT - not activated (BlockTags?)"));
+		return;
+	}
+
+	if (bNeedsFullRebuild)
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: POST-DESTRUCT REBUILD — rebinding child delegates + full BuildPanel"));
+		bNeedsFullRebuild = false;
+
+		// Rebind the 4 child delegates that NativeOnInitialized originally bound
+		// NativeDestruct unbound all of these — AddDynamic on clean delegates, no double-bind risk
+		TabbedContainer_Main->OnTabSelected.AddDynamic(this, &ThisClass::HandleMainTabSelected);
+		Btn_ResetAll->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetAllClicked);
+		Btn_ResetCategory->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetCategoryClicked);
+		Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
+
+		// BuildPanel internally clears stale state:
+		//   ClearAllTabs() resets PageWidgets/TabList/PageSwitcher (fixes stale GetTabCount=5)
+		//   Rebuilds SubContainer->OnTabSelected and Widget->OnSettingFocused delegates via helpers
+		BuildPanel();
+	}
+	else if (TabbedContainer_Main->GetTabCount() == 0)
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: Calling BuildPanel (first activation)"));
+		BuildPanel();
+	}
+	else
+	{
+		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: Calling RefreshAllWidgets (re-activation, %d tabs exist)"), TabbedContainer_Main->GetTabCount());
+		RefreshAllWidgets();
+	}
+}
+
+UWidget* UMCore_SettingsPanel::NativeGetDesiredFocusTarget() const
+{
+	if (TabbedContainer_Main)
+	{
+		const FName SelectedTab = TabbedContainer_Main->GetSelectedTabID();
+		if (!SelectedTab.IsNone())
+		{
+			if (UWidget* TabButton = TabbedContainer_Main->GetTabButton(SelectedTab))
+			{
+				return TabButton;
+			}
+		}
+	}
+
+	return Super::NativeGetDesiredFocusTarget();
+}
+
 void UMCore_SettingsPanel::NativeOnDeactivated()
 {
+	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnDeactivated: ENTERED - this=%p, TabCount=%d"),
+		this,
+		TabbedContainer_Main ? TabbedContainer_Main->GetTabCount() : -1);
+
 	// Dismiss any pending confirmation dialog before this panel leaves the stack
 	if (PendingConfirmationDialog.IsValid())
 	{
@@ -105,6 +161,13 @@ void UMCore_SettingsPanel::NativeOnDeactivated()
 
 void UMCore_SettingsPanel::NativeDestruct()
 {
+	bNeedsFullRebuild = true;
+
+	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeDestruct: ENTERED - this=%p, TabbedContainer_Main=%s, TabCount=%d"),
+		this,
+		TabbedContainer_Main ? TEXT("valid") : TEXT("NULL"),
+		TabbedContainer_Main ? TabbedContainer_Main->GetTabCount() : -1);
+
 	if (TabbedContainer_Main)
 	{
 		TabbedContainer_Main->OnTabSelected.RemoveAll(this);

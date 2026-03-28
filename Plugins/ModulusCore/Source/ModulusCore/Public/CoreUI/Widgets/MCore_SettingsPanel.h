@@ -39,8 +39,10 @@ public:
 protected:
  
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
 	virtual void NativeDestruct() override;
+	virtual UWidget* NativeGetDesiredFocusTarget() const override;
  
 	// ============================================================================
 	// CONFIGURATION
@@ -154,9 +156,13 @@ private:
  
 	FGameplayTag ActiveLeafCategory;
  
+	UPROPERTY()
 	TArray<TObjectPtr<UMCore_SettingsWidget_Base>> AllSettingWidgets;
 
+	UPROPERTY()
 	TArray<TObjectPtr<UMCore_TabbedContainer>> SubTabContainers;
 
 	TWeakObjectPtr<UMCore_ConfirmationDialog> PendingConfirmationDialog;
+
+	bool bNeedsFullRebuild{false};
 };
