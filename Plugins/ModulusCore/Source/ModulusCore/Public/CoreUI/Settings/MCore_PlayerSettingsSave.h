@@ -53,6 +53,10 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
     UPROPERTY(SaveGame)
     bool bHasSeenWelcomeScreen{false};
 
+    /** Index into the available gamepad controller configs. 0 = Auto-Detect. */
+    UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Settings")
+    int32 GamepadIconSetIndex = 0;
+
 	// ========================================================================
 	// GENERIC SETTING STORAGE
 	// ========================================================================

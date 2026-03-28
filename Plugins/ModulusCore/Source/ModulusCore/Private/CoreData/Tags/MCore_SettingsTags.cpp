@@ -104,6 +104,7 @@ namespace MCore_SettingsTags
     // ========================================================================
 
     UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Event_ConfirmationRequired, "MCore.Settings.Event.ConfirmationRequired");
+    UE_DEFINE_GAMEPLAY_TAG(MCore_Settings_Event_GamepadIconSetChanged, "MCore.Settings.Event.GamepadIconSetChanged");
 
     // ========================================================================
     // UTILITY FUNCTIONS

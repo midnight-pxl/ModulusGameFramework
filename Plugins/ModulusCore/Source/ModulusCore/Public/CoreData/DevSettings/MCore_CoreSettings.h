@@ -130,7 +130,11 @@ public:
 	/** Widget class for inline key binding panel content in the Settings Panel. */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_KeyBindingPanel_Base> KeyBindingPanelClass;
-	
+
+	/** Show secondary binding columns in the key binding panel. */
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	bool bShowSecondaryBindings = false;
+
 	/** Dialog class used for destructive action confirmations (Reset All, etc). */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_ConfirmationDialog> ConfirmationDialogClass;

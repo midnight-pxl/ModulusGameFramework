@@ -9,6 +9,8 @@
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CommonInputSubsystem.h"
 #include "CommonInputBaseTypes.h"
+#include "CoreUI/MCore_UISubsystem.h"
+#include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
 
 // ============================================================================
 // PRIVATE HELPERS
@@ -386,6 +388,76 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(const ULocalPla
 	}
 
 	return PlatformSettings->TryGetInputBrush(OutBrush, Key, InputType, GamepadName);
+}
+
+// ============================================================================
+// GAMEPAD CONFIG HELPERS
+// ============================================================================
+
+TArray<FName> UMCore_EnhancedInputDisplay::GetAvailableGamepadConfigs(
+	const UObject* WorldContextObject)
+{
+	TArray<FName> Result;
+
+	UCommonInputPlatformSettings* PlatformSettings = UCommonInputPlatformSettings::Get();
+	if (!PlatformSettings) { return Result; }
+
+	const TArray<TSoftClassPtr<UCommonInputBaseControllerData>> ControllerData =
+		PlatformSettings->GetControllerData();
+
+	for (const TSoftClassPtr<UCommonInputBaseControllerData>& SoftClass : ControllerData)
+	{
+		const UClass* LoadedClass = SoftClass.LoadSynchronous();
+		if (!LoadedClass) { continue; }
+
+		const UCommonInputBaseControllerData* CDO =
+			LoadedClass->GetDefaultObject<UCommonInputBaseControllerData>();
+		if (!CDO || CDO->InputType != ECommonInputType::Gamepad) { continue; }
+
+		Result.AddUnique(CDO->GamepadName);
+	}
+
+	return Result;
+}
+
+/**
+ * @param LocalPlayer  Used to access PlayerSettingsSave and CommonInputSubsystem.
+ */
+FName UMCore_EnhancedInputDisplay::GetEffectiveGamepadName(
+	const UObject* WorldContextObject, const ULocalPlayer* LocalPlayer)
+{
+	if (!LocalPlayer) { return NAME_None; }
+
+	// Read the player's override index
+	int32 OverrideIndex = 0;
+	UMCore_UISubsystem* UISub = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+	if (UISub)
+	{
+		if (UMCore_PlayerSettingsSave* Save = UISub->GetPlayerSettings())
+		{
+			OverrideIndex = Save->GamepadIconSetIndex;
+		}
+	}
+
+	// 0 = Auto-Detect: use whatever CommonInput reports
+	if (OverrideIndex == 0)
+	{
+		UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
+		return CIS ? CIS->GetCurrentGamepadName() : NAME_None;
+	}
+
+	// Non-zero: look up the config at (index - 1)
+	TArray<FName> Configs = GetAvailableGamepadConfigs(WorldContextObject);
+	const int32 AdjustedIndex = OverrideIndex - 1;
+
+	if (Configs.IsValidIndex(AdjustedIndex))
+	{
+		return Configs[AdjustedIndex];
+	}
+
+	// Out of range: fall back to auto-detect
+	UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
+	return CIS ? CIS->GetCurrentGamepadName() : NAME_None;
 }
 
 // ============================================================================

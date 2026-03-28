@@ -113,6 +113,21 @@ public:
 		ECommonInputType InputType, FSlateBrush& OutBrush);
 
 	// ============================================================================
+	// GAMEPAD CONFIG HELPERS
+	// ============================================================================
+
+	/** Returns the registered gamepad config names from CommonInput platform settings. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Input Display",
+		meta = (WorldContext = "WorldContextObject"))
+	static TArray<FName> GetAvailableGamepadConfigs(const UObject* WorldContextObject);
+
+	/** Returns the gamepad name to use for icon resolution, respecting the player's manual override. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Input Display",
+		meta = (WorldContext = "WorldContextObject"))
+	static FName GetEffectiveGamepadName(const UObject* WorldContextObject,
+		const ULocalPlayer* LocalPlayer);
+
+	// ============================================================================
 	// SLOT-BASED OPERATIONS
 	// ============================================================================
 

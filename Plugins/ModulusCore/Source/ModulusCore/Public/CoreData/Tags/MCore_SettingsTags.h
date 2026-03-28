@@ -118,6 +118,7 @@ namespace MCore_SettingsTags
     // ========================================================================
 
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Event_ConfirmationRequired);
+    MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Event_GamepadIconSetChanged);
 
     // ========================================================================
     // UTILITY FUNCTIONS
