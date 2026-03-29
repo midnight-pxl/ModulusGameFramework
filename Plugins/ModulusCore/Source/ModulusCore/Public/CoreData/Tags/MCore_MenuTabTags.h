@@ -1,10 +1,10 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 /**
- * MCore_SettingsTags.h
+ * MCore_MenuTabTags.h
  *
- * Native gameplay tag declarations for the settings system.
- * Covers categories, sub-categories, individual settings, and events.
+ * Native gameplay tag declarations for the in-game GameMenuHub system.
+ * Allows for categorizing and sorting of in-menu tabs by GameplayTag
  */
 
 #pragma once

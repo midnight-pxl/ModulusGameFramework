@@ -333,12 +333,6 @@ UCommonActivatableWidget* UMCore_UISubsystem::OpenScreen(
 	FGameplayTag LayerTag,
 	bool bAllowDuplicates)
 {
-	// [TEMP DEBUG] Entry
-	UE_LOG(LogModulusUI, Verbose, TEXT("OpenScreen: ENTER - Class='%s', Layer='%s', bAllowDuplicates=%s"),
-		ScreenClass ? *ScreenClass->GetName() : TEXT("NULL"),
-		*LayerTag.ToString(),
-		bAllowDuplicates ? TEXT("true") : TEXT("false"));
-
 	if (!ScreenClass || !HasPrimaryGameLayout()) { return nullptr; }
 
 	if (!bAllowDuplicates)
@@ -347,56 +341,25 @@ UCommonActivatableWidget* UMCore_UISubsystem::OpenScreen(
 
 		TArray<TWeakObjectPtr<UCommonActivatableWidget>>* Widgets = TrackedWidgets.Find(LayerTag);
 
-		// [TEMP DEBUG] Pre-scan state
-		UE_LOG(LogModulusUI, Verbose, TEXT("OpenScreen: TrackedWidgets[%s] has %d entries after compact"),
-			*LayerTag.ToString(),
-			Widgets ? Widgets->Num() : 0);
-
 		if (Widgets)
 		{
 			for (int32 i = Widgets->Num() - 1; i >= 0; --i)
 			{
 				TWeakObjectPtr<UCommonActivatableWidget>& Weak = (*Widgets)[i];
 
-				// [TEMP DEBUG] Per-entry state
-				const bool bIsValid = Weak.IsValid();
-				UE_LOG(LogModulusUI, Verbose, TEXT("OpenScreen: [%d] WeakPtr.IsValid()=%s%s"),
-					i,
-					bIsValid ? TEXT("true") : TEXT("false"),
-					bIsValid ? *FString::Printf(TEXT(", Class='%s', Addr=%p, IsActivated()=%s"),
-						*Weak->GetClass()->GetName(),
-						Weak.Get(),
-						Weak->IsActivated() ? TEXT("true") : TEXT("false"))
-					: TEXT(""));
-
-				if (!bIsValid)
-				{
-					continue;
-				}
-
 				if (Weak->GetClass() == ScreenClass)
 				{
 					if (Weak->IsActivated())
 					{
-						// [TEMP DEBUG] Dedup hit
-						UE_LOG(LogModulusUI, Verbose, TEXT("OpenScreen: DEDUP HIT - returning existing widget [%p]"),
-							Weak.Get());
 						return Weak.Get();
 					}
-					// [TEMP DEBUG] Stale entry
-					UE_LOG(LogModulusUI, Verbose, TEXT("OpenScreen: STALE ENTRY - untracking [%p]"),
-						Weak.Get());
 					// Stale entry: tracked but no longer activated
 					UntrackWidget(Weak.Get(), LayerTag);
 				}
 			}
 		}
 	}
-
-	// [TEMP DEBUG] Creating new
-	UE_LOG(LogModulusUI, Verbose, TEXT("OpenScreen: CREATING NEW - Class='%s'"),
-		*ScreenClass->GetName());
-
+	
 	return PushWidgetToLayer(ScreenClass, LayerTag);
 }
 

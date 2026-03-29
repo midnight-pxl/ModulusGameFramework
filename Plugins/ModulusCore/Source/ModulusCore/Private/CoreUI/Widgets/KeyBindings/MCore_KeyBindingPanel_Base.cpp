@@ -97,13 +97,13 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 	// Build the ScrollBox content
 	for (const FString& CategoryKey : SortedCategories)
 	{
-		const FText CategoryName = FText::FromString(CategoryKey);
+		const FText CategoryDisplayName = FText::FromString(CategoryKey);
 
-		UWidget* Header = CreateCategoryHeader(CategoryName);
+		UWidget* Header = CreateCategoryHeader(CategoryDisplayName);
 		if (Header)
 		{
 			ScrollBox_Bindings->AddChild(Header);
-			OnCategoryHeaderCreated(CategoryName, Header);
+			OnCategoryHeaderCreated(CategoryDisplayName, Header);
 		}
 
 		for (const FPlayerKeyMapping* Mapping : CategorizedActions[CategoryKey])
@@ -147,12 +147,12 @@ void UMCore_KeyBindingPanel_Base::RefreshAllRows()
 // HELPERS
 // ============================================================================
 
-UWidget* UMCore_KeyBindingPanel_Base::CreateCategoryHeader(const FText& CategoryName)
+UWidget* UMCore_KeyBindingPanel_Base::CreateCategoryHeader(const FText& CategoryDisplayName)
 {
 	UTextBlock* Header = NewObject<UTextBlock>(this);
 	if (Header)
 	{
-		Header->SetText(CategoryName);
+		Header->SetText(CategoryDisplayName);
 	}
 	return Header;
 }

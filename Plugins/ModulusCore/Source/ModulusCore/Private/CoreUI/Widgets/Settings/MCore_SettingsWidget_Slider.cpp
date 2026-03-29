@@ -2,8 +2,6 @@
 
 #include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
 
-#include <rapidjson/document.h>
-
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"

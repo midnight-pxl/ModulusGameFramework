@@ -49,8 +49,8 @@ public:
 
 	/** Fires after each category header is added to the ScrollBox. */
 	UFUNCTION(BlueprintNativeEvent, Category = "UI|KeyBinding")
-	void OnCategoryHeaderCreated(const FText& CategoryName, UWidget* HeaderWidget);
-	virtual void OnCategoryHeaderCreated_Implementation(const FText& CategoryName, UWidget* HeaderWidget) {}
+	void OnCategoryHeaderCreated(const FText& CategoryDisplayName, UWidget* HeaderWidget);
+	virtual void OnCategoryHeaderCreated_Implementation(const FText& CategoryDisplayName, UWidget* HeaderWidget) {}
 
 	/** Fires after each row is created and added to the ScrollBox. */
 	UFUNCTION(BlueprintNativeEvent, Category = "UI|KeyBinding")
@@ -86,7 +86,7 @@ private:
 	// HELPERS
 	// ====================================================================
 
-	UWidget* CreateCategoryHeader(const FText& CategoryName);
+	UWidget* CreateCategoryHeader(const FText& CategoryDisplayName);
 
 	UFUNCTION()
 	void HandleRowRebindCompleted();
