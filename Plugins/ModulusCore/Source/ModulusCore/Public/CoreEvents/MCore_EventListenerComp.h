@@ -65,6 +65,9 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+	/* Resolves the LocalPlayer from the owning actor's player connection chain. Falls back to first local player for non-player-owned actors. */
+	ULocalPlayer* ResolveOwningLocalPlayer() const;
+
 	/* Cached reference to local event subsystem */
 	UPROPERTY()
 	TWeakObjectPtr<UMCore_LocalEventSubsystem> CachedLocalSubsystem;

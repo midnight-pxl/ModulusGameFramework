@@ -5,6 +5,8 @@
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 UMCore_EventListenerComp::UMCore_EventListenerComp()
 {
@@ -22,21 +24,14 @@ void UMCore_EventListenerComp::BeginPlay()
 	const UWorld* World = GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("EventListener BeginPlay: No valid world"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("EventListenerComp::BeginPlay -- no valid world"));
 		return;
 	}
 
-	UGameInstance* GameInstance = World->GetGameInstance();
-	if (!GameInstance)
-	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("EventListener BeginPlay: No valid game instance"));
-		return;
-	}
-
-	// Register with local event subsystem
+	// Register with local event subsystem (per-LocalPlayer, split-screen safe)
 	if (bReceiveLocalEvents)
 	{
-		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
+		if (ULocalPlayer* LocalPlayer = ResolveOwningLocalPlayer())
 		{
 			if (UMCore_LocalEventSubsystem* LocalEventSys = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
 			{
@@ -45,29 +40,81 @@ void UMCore_EventListenerComp::BeginPlay()
 			}
 			else
 			{
-				UE_LOG(LogModulusEvent, Warning, TEXT("Failed to get LocalEventSubsystem for %s"), *GetName());
+				UE_LOG(LogModulusEvent, Warning, TEXT("EventListenerComp::BeginPlay -- failed to get LocalEventSubsystem for %s"), *GetNameSafe(this));
 			}
 		}
 	}
 
-	// Register with global event subsystem
+	// Register with global event subsystem (GameInstance-scoped)
 	if (bReceiveGlobalEvents)
 	{
-		if (UMCore_GlobalEventSubsystem* GlobalEventSys = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
+		if (UGameInstance* GameInstance = World->GetGameInstance())
 		{
-			CachedGlobalSubsystem = GlobalEventSys;
-			GlobalEventSys->RegisterGlobalListener(this);
-		}
-		else
-		{
-			UE_LOG(LogModulusEvent, Warning, TEXT("Failed to get GlobalEventSubsystem for %s"), *GetName());
+			if (UMCore_GlobalEventSubsystem* GlobalEventSys = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
+			{
+				CachedGlobalSubsystem = GlobalEventSys;
+				GlobalEventSys->RegisterGlobalListener(this);
+			}
+			else
+			{
+				UE_LOG(LogModulusEvent, Warning, TEXT("EventListenerComp::BeginPlay -- failed to get GlobalEventSubsystem for %s"), *GetNameSafe(this));
+			}
 		}
 	}
 
-	UE_LOG(LogModulusEvent, Verbose, TEXT("EventListener initialized: %s (Local: %s, Global: %s)"), 
-		   *GetName(), 
+	UE_LOG(LogModulusEvent, Verbose, TEXT("EventListenerComp::BeginPlay -- initialized %s (Local: %s, Global: %s)"),
+		   *GetNameSafe(this),
 		   bReceiveLocalEvents ? TEXT("Yes") : TEXT("No"),
 		   bReceiveGlobalEvents ? TEXT("Yes") : TEXT("No"));
+}
+
+ULocalPlayer* UMCore_EventListenerComp::ResolveOwningLocalPlayer() const
+{
+	if (AActor* Owner = GetOwner())
+	{
+		if (const APlayerController* PC = Cast<APlayerController>(Owner))
+		{
+			return PC->GetLocalPlayer();
+		}
+
+		if (const APawn* Pawn = Cast<APawn>(Owner))
+		{
+			if (const APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+			{
+				return PC->GetLocalPlayer();
+			}
+		}
+
+		if (const APawn* Instigator = Owner->GetInstigator())
+		{
+			if (const APlayerController* PC = Cast<APlayerController>(Instigator->GetController()))
+			{
+				return PC->GetLocalPlayer();
+			}
+		}
+
+		// Walk owner chain (covers PlayerState, HUD, etc. that set Owner to the PC)
+		AActor* OwnerActor = Owner->GetOwner();
+		while (OwnerActor)
+		{
+			if (const APlayerController* PC = Cast<APlayerController>(OwnerActor))
+			{
+				return PC->GetLocalPlayer();
+			}
+			OwnerActor = OwnerActor->GetOwner();
+		}
+	}
+
+	// Fallback for non-player-owned actors (world actors, GameState, etc.)
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UGameInstance* GI = World->GetGameInstance())
+		{
+			return GI->GetFirstGamePlayer();
+		}
+	}
+
+	return nullptr;
 }
 
 void UMCore_EventListenerComp::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -85,15 +132,15 @@ void UMCore_EventListenerComp::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	CachedGlobalSubsystem.Reset();
 
-	UE_LOG(LogModulusEvent, Verbose, TEXT("EventListener cleanup: %s"), *GetName());
+	UE_LOG(LogModulusEvent, Verbose, TEXT("EventListenerComp::EndPlay -- cleanup %s"), *GetNameSafe(this));
 
 	Super::EndPlay(EndPlayReason);
 }
 
 void UMCore_EventListenerComp::DeliverEvent(const FMCore_EventData& EventData, bool bWasGlobalEvent)
 {
-	UE_LOG(LogModulusEvent, VeryVerbose, TEXT("Delivering event to %s: %s (Global: %s)"),
-	   *GetName(), *EventData.EventTag.ToString(), bWasGlobalEvent ? TEXT("Yes") : TEXT("No"));
+	UE_LOG(LogModulusEvent, VeryVerbose, TEXT("EventListenerComp::DeliverEvent -- delivering to %s: %s (Global: %s)"),
+	   *GetNameSafe(this), *EventData.EventTag.ToString(), bWasGlobalEvent ? TEXT("Yes") : TEXT("No"));
 
 	OnEventReceived(EventData, bWasGlobalEvent);
 }

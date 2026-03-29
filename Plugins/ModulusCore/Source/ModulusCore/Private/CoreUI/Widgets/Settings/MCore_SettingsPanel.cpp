@@ -5,7 +5,6 @@
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
-#include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/Widgets/Primitives/MCore_TabbedContainer.h"
@@ -14,7 +13,7 @@
 #include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Switcher.h"
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingPanel_Base.h"
 #include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
-#include "CoreData/Logging/LogModulusUI.h"
+#include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CommonTextBlock.h"
 #include "Components/ScrollBox.h"
@@ -37,29 +36,11 @@ namespace
 		return FGameplayTag();
 	}
 
-	FText GetCategoryDisplayName(const UMCore_DA_SettingsCollection* Collection, const FGameplayTag& Tag)
+	void SetTabButtonLabel(UMCore_TabbedContainer* Container, FName TabID, const FGameplayTag& Tag)
 	{
-		if (const FText* Name = Collection->CategoryDisplayName.Find(Tag))
-		{
-			return *Name;
-		}
-		// Fallback: last segment of the tag path
-		const FString TagStr = Tag.ToString();
-		int32 LastDot;
-		if (TagStr.FindLastChar(TEXT('.'), LastDot))
-		{
-			return FText::FromString(TagStr.Mid(LastDot + 1));
-		}
-		return FText::GetEmpty();
-	}
-
-	void SetTabButtonLabel(UMCore_TabbedContainer* Container, FName TabID,
-		const UMCore_DA_SettingsCollection* Collection, const FGameplayTag& Tag)
-	{
-		// NOTE: Assumes UMCore_ButtonBase has SetButtonText(). If not, add it or wire in BP.
 		if (UMCore_ButtonBase* TabBtn = Cast<UMCore_ButtonBase>(Container->GetTabButton(TabID)))
 		{
-			TabBtn->SetButtonText(GetCategoryDisplayName(Collection, Tag));
+			TabBtn->SetButtonText(UMCore_CoreSettings::Get()->GetCategoryDisplayName(Tag));
 		}
 	}
 }
@@ -83,7 +64,7 @@ void UMCore_SettingsPanel::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: this=%p, IsActivated()=%s, TabbedContainer_Main=%s, bNeedsFullRebuild=%s"),
+	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnActivated -- this=%p, IsActivated()=%s, TabbedContainer_Main=%s, bNeedsFullRebuild=%s"),
 		this,
 		IsActivated() ? TEXT("true") : TEXT("false"),
 		TabbedContainer_Main ? TEXT("valid") : TEXT("NULL"),
@@ -91,13 +72,13 @@ void UMCore_SettingsPanel::NativeOnActivated()
 
 	if (!IsActivated())
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: EARLY EXIT - not activated (BlockTags?)"));
+		UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnActivated -- early exit, not activated (BlockTags?)"));
 		return;
 	}
 
 	if (bNeedsFullRebuild)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: POST-DESTRUCT REBUILD — rebinding child delegates + full BuildPanel"));
+		UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnActivated -- post-destruct rebuild, rebinding child delegates + full BuildPanel"));
 		bNeedsFullRebuild = false;
 
 		// Rebind the 4 child delegates that NativeOnInitialized originally bound
@@ -114,12 +95,12 @@ void UMCore_SettingsPanel::NativeOnActivated()
 	}
 	else if (TabbedContainer_Main->GetTabCount() == 0)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: Calling BuildPanel (first activation)"));
+		UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnActivated -- calling BuildPanel (first activation)"));
 		BuildPanel();
 	}
 	else
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnActivated: Calling RefreshAllWidgets (re-activation, %d tabs exist)"), TabbedContainer_Main->GetTabCount());
+		UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnActivated -- calling RefreshAllWidgets (re-activation, %d tabs exist)"), TabbedContainer_Main->GetTabCount());
 		RefreshAllWidgets();
 	}
 }
@@ -143,7 +124,7 @@ UWidget* UMCore_SettingsPanel::NativeGetDesiredFocusTarget() const
 
 void UMCore_SettingsPanel::NativeOnDeactivated()
 {
-	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeOnDeactivated: ENTERED - this=%p, TabCount=%d"),
+	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnDeactivated -- this=%p, TabCount=%d"),
 		this,
 		TabbedContainer_Main ? TabbedContainer_Main->GetTabCount() : -1);
 
@@ -162,7 +143,7 @@ void UMCore_SettingsPanel::NativeDestruct()
 {
 	bNeedsFullRebuild = true;
 
-	UE_LOG(LogModulusUI, Warning, TEXT("SettingsPanel::NativeDestruct: ENTERED - this=%p, TabbedContainer_Main=%s, TabCount=%d"),
+	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeDestruct -- this=%p, TabbedContainer_Main=%s, TabCount=%d"),
 		this,
 		TabbedContainer_Main ? TEXT("valid") : TEXT("NULL"),
 		TabbedContainer_Main ? TabbedContainer_Main->GetTabCount() : -1);
@@ -224,26 +205,24 @@ void UMCore_SettingsPanel::OnPanelBuildComplete_Implementation()
 
 void UMCore_SettingsPanel::BuildPanel()
 {
-	UE_LOG(LogModulusUI, Warning, TEXT("BuildPanel: ENTERED - TabbedContainer has %d tabs"), 
+	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::BuildPanel -- TabbedContainer has %d tabs"),
 	TabbedContainer_Main->GetTabCount());
 	
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	if (!CoreSettings || !CoreSettings->GetDefaultSettingsCollection())
+	if (!CoreSettings || !CoreSettings->HasValidSettingsCollections())
 	{
-		UE_LOG(LogModulusUI, Error,
-			TEXT("UMCore_SettingsPanel::BuildPanel - CoreSettings or DefaultSettingsCollection is null. "
-			     "Ensure UMCore_CoreSettings has a valid default SettingsCollection assigned."));
+		UE_LOG(LogModulusSettings, Error,
+			TEXT("SettingsPanel::BuildPanel -- CoreSettings is null or no SettingsCollections configured, "
+			     "ensure CoreSettings has at least one valid SettingsCollection assigned"));
 		return;
 	}
-
-	CachedCollection = CoreSettings->GetDefaultSettingsCollection();
 
 	TabbedContainer_Main->ClearAllTabs();
 	TabIDToLeafTag.Reset();
 	AllSettingWidgets.Reset();
 	SubTabContainers.Reset();
 
-	const TArray<FGameplayTag> AllCategories = CachedCollection->GetAllCategories();
+	const TArray<FGameplayTag> AllCategories = CoreSettings->GetAllSettingsCategories();
 
 	// Group depth-4 tags under their depth-3 parent, preserving encounter order
 	TArray<FGameplayTag> MainTabOrder;
@@ -283,7 +262,7 @@ void UMCore_SettingsPanel::BuildPanel()
 
 			if (!PageWidget)
 			{
-				UE_LOG(LogModulusUI, Warning, TEXT("KeyBindingPanelClass not set in CoreSettings"));
+				UE_LOG(LogModulusSettings, Warning, TEXT("SettingsPanel::BuildPanel -- KeyBindingPanelClass not set in CoreSettings"));
 				PageWidget = NewObject<USizeBox>(this);
 			}
 		}
@@ -293,19 +272,19 @@ void UMCore_SettingsPanel::BuildPanel()
 
 			if (Children.Num() == 1)
 			{
-				PageWidget = BuildSinglePage(CachedCollection, Children[0]);
+				PageWidget = BuildSinglePage(Children[0]);
 				TabIDToLeafTag.Add(TabID, Children[0]);
 			}
 			else
 			{
-				PageWidget = BuildTabbedPage(CachedCollection, ParentTag, Children);
+				PageWidget = BuildTabbedPage(ParentTag, Children);
 			}
 		}
 
-		UE_LOG(LogModulusUI, Log, TEXT("BuildPanel: Adding tab [%s] order index %d"), *TabID.ToString(), MainTabOrder.IndexOfByKey(ParentTag));
+		UE_LOG(LogModulusSettings, Log, TEXT("SettingsPanel::BuildPanel -- adding tab [%s] order index %d"), *TabID.ToString(), MainTabOrder.IndexOfByKey(ParentTag));
 		if (PageWidget && TabbedContainer_Main->AddTab(TabID, PageWidget))
 		{
-			SetTabButtonLabel(TabbedContainer_Main, TabID, CachedCollection, ParentTag);
+			SetTabButtonLabel(TabbedContainer_Main, TabID, ParentTag);
 
 			if (FirstTabID.IsNone())
 			{
@@ -322,11 +301,10 @@ void UMCore_SettingsPanel::BuildPanel()
 	OnPanelBuildComplete();
 }
 
-UScrollBox* UMCore_SettingsPanel::BuildSinglePage(
-	const UMCore_DA_SettingsCollection* Collection, const FGameplayTag& SubcategoryTag)
+UScrollBox* UMCore_SettingsPanel::BuildSinglePage(const FGameplayTag& SubcategoryTag)
 {
 	UScrollBox* ScrollBox = NewObject<UScrollBox>(this);
-	PopulatePage(ScrollBox, Collection, SubcategoryTag);
+	PopulatePage(ScrollBox, SubcategoryTag);
 
 	OnCategoryPageCreated(SubcategoryTag, ScrollBox);
 
@@ -334,7 +312,6 @@ UScrollBox* UMCore_SettingsPanel::BuildSinglePage(
 }
 
 UMCore_TabbedContainer* UMCore_SettingsPanel::BuildTabbedPage(
-	const UMCore_DA_SettingsCollection* Collection,
 	const FGameplayTag& ParentTag,
 	const TArray<FGameplayTag>& ChildTags)
 {
@@ -342,6 +319,7 @@ UMCore_TabbedContainer* UMCore_SettingsPanel::BuildTabbedPage(
 		CreateWidget<UMCore_TabbedContainer>(this, SubTabContainerClass);
 	if (!SubContainer)
 	{
+		UE_LOG(LogModulusSettings, Error, TEXT("SettingsPanel::BuildTabbedPage -- failed to create SubTabContainer, SubTabContainerClass may be null or invalid"));
 		return nullptr;
 	}
 
@@ -353,11 +331,11 @@ UMCore_TabbedContainer* UMCore_SettingsPanel::BuildTabbedPage(
 	{
 		const FName SubTabID = FName(*ChildTag.ToString());
 		UScrollBox* SubPage = NewObject<UScrollBox>(this);
-		PopulatePage(SubPage, Collection, ChildTag);
+		PopulatePage(SubPage, ChildTag);
 
 		if (SubContainer->AddTab(SubTabID, SubPage))
 		{
-			SetTabButtonLabel(SubContainer, SubTabID, Collection, ChildTag);
+			SetTabButtonLabel(SubContainer, SubTabID, ChildTag);
 			TabIDToLeafTag.Add(SubTabID, ChildTag);
 
 			OnCategoryPageCreated(ChildTag, SubPage);
@@ -380,10 +358,9 @@ UMCore_TabbedContainer* UMCore_SettingsPanel::BuildTabbedPage(
 }
 
 void UMCore_SettingsPanel::PopulatePage(
-	UScrollBox* ScrollBox, const UMCore_DA_SettingsCollection* Collection,
-	const FGameplayTag& CategoryTag)
+	UScrollBox* ScrollBox, const FGameplayTag& CategoryTag)
 {
-	TArray<UMCore_DA_SettingDefinition*> Definitions = Collection->GetSettingsInCategory(CategoryTag);
+	TArray<UMCore_DA_SettingDefinition*> Definitions = UMCore_CoreSettings::Get()->GetSettingsForCategory(CategoryTag);
 
 	for (const UMCore_DA_SettingDefinition* Definition : Definitions)
 	{
@@ -439,6 +416,10 @@ UMCore_SettingsWidget_Base* UMCore_SettingsPanel::CreateSettingWidget(
 	if (Widget)
 	{
 		Widget->InitFromDefinition(Definition);
+	}
+	else
+	{
+		UE_LOG(LogModulusSettings, Warning, TEXT("SettingsPanel::CreateSettingWidget -- no widget class configured for SettingType %d, setting='%s'"), (int32)Definition->SettingType, *Definition->SettingTag.ToString());
 	}
 
 	return Widget;
@@ -552,7 +533,7 @@ void UMCore_SettingsPanel::HandleResetAllConfirmResult(bool bConfirmed)
 
 void UMCore_SettingsPanel::HandleResetCategoryClicked()
 {
-	if (!CachedCollection || !ActiveLeafCategory.IsValid()) { return; }
+	if (!ActiveLeafCategory.IsValid()) { return; }
 
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
 	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
@@ -572,8 +553,7 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
 		{
 			PendingConfirmationDialog = Dialog;
-			const FText CurrentCategory = GetCategoryDisplayName(
-				UMCore_CoreSettings::Get()->GetDefaultSettingsCollection(), ActiveLeafCategory);
+			const FText CurrentCategory = UMCore_CoreSettings::Get()->GetCategoryDisplayName(ActiveLeafCategory);
 			Dialog->SetDialogMessage(
 				FText::Format(NSLOCTEXT("ModulusCore", "ResetCategoryMessage",
 					"Reset {0} settings to defaults?"), CurrentCategory));

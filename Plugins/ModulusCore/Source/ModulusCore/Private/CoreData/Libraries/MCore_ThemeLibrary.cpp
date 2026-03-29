@@ -7,6 +7,7 @@
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Engine/LocalPlayer.h"
+#include "CoreData/Logging/LogModulusUI.h"
 
 void UMCore_ThemeLibrary::ApplyTextStyleFromTheme(const ULocalPlayer* LocalPlayer, UCommonTextBlock* TextBlock,
 	const TArray<TSubclassOf<UCommonTextStyle>>& TextStyleArray)
@@ -28,6 +29,7 @@ void UMCore_ThemeLibrary::ApplyTextStyleFromTheme(const ULocalPlayer* LocalPlaye
 		: TextStyleArray[0];
 	
 	if (ResolvedStyle) { TextBlock->SetStyle(ResolvedStyle); }
+	UE_LOG(LogModulusUI, VeryVerbose, TEXT("ThemeLibrary::ApplyTextStyleFromTheme -- applied style at size index %d"), SizeIndex);
 }
 
 FSliderStyle UMCore_ThemeLibrary::BuildSliderStyle(const UMCore_PDA_SliderStyle* SliderStyleDA,
@@ -71,6 +73,7 @@ FSliderStyle UMCore_ThemeLibrary::BuildSliderStyle(const UMCore_PDA_SliderStyle*
 	
 	NewStyle.BarThickness = SliderStyleDA->BarThickness;
 	
+	UE_LOG(LogModulusUI, VeryVerbose, TEXT("ThemeLibrary::BuildSliderStyle -- slider style built from DataAsset"));
 	return NewStyle;
 }
 

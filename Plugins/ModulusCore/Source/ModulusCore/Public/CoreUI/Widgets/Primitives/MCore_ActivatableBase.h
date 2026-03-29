@@ -22,7 +22,7 @@ class UMCore_PDA_UITheme_Base;
  * Allows Blueprint code to receive and store binding handles for manual unregistration if needed.
  */
 USTRUCT(BlueprintType)
-struct MODULUSCORE_API FInputActionBindingHandle
+struct MODULUSCORE_API FMCore_InputActionBindingHandle
 {
 	GENERATED_BODY()
 
@@ -60,7 +60,7 @@ public:
 	void RegisterBinding(
 		FDataTableRowHandle InputAction,
 		const FInputActionExecutedDelegate& Callback,
-		UPARAM(ref) FInputActionBindingHandle& IABindingHandle,
+		UPARAM(ref) FMCore_InputActionBindingHandle& IABindingHandle,
 		FText OverrideDisplayName = FText::GetEmpty(),
 		bool bShouldDisplayInActionBar = true);
 

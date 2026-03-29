@@ -7,6 +7,72 @@
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
+#include "Blueprint/UserWidget.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+
+namespace
+{
+	ULocalPlayer* ResolveLocalPlayer(const UObject* WorldContext)
+	{
+		if (!WorldContext) { return nullptr; }
+
+		if (const APlayerController* PC = Cast<APlayerController>(WorldContext))
+		{
+			return PC->GetLocalPlayer();
+		}
+
+		if (const APawn* Pawn = Cast<APawn>(WorldContext))
+		{
+			if (const APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+			{
+				return PC->GetLocalPlayer();
+			}
+		}
+
+		if (const UActorComponent* Comp = Cast<UActorComponent>(WorldContext))
+		{
+			return ResolveLocalPlayer(Comp->GetOwner());
+		}
+
+		if (const UUserWidget* Widget = Cast<UUserWidget>(WorldContext))
+		{
+			return Widget->GetOwningLocalPlayer();
+		}
+
+		if (const AActor* Actor = Cast<AActor>(WorldContext))
+		{
+			if (const APawn* Instigator = Actor->GetInstigator())
+			{
+				if (const APlayerController* PC = Cast<APlayerController>(Instigator->GetController()))
+				{
+					return PC->GetLocalPlayer();
+				}
+			}
+
+			AActor* OwnerActor = Actor->GetOwner();
+			while (OwnerActor)
+			{
+				if (const APlayerController* PC = Cast<APlayerController>(OwnerActor))
+				{
+					return PC->GetLocalPlayer();
+				}
+				OwnerActor = OwnerActor->GetOwner();
+			}
+		}
+
+		// Fallback for non-player-owned contexts
+		if (const UWorld* World = WorldContext->GetWorld())
+		{
+			if (const UGameInstance* GI = World->GetGameInstance())
+			{
+				return GI->GetFirstGamePlayer();
+			}
+		}
+
+		return nullptr;
+	}
+}
 
 // ============================================================================
 // BROADCAST
@@ -18,7 +84,7 @@ void UMCore_EventFunctionLibrary::BroadcastSimpleEvent(const UObject* WorldConte
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("BroadcastSimpleEvent: Invalid parameters (WorldContext: %s, Tag: %s)"),
+		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::BroadcastSimpleEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
 			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
@@ -37,7 +103,7 @@ void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* World
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("BroadcastEventWithContext: Invalid parameters (WorldContext: %s, Tag: %s)"),
+		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::BroadcastEventWithContext -- invalid parameters (WorldContext: %s, Tag: %s)"),
 			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
@@ -56,7 +122,7 @@ void UMCore_EventFunctionLibrary::BroadcastEvent(const UObject* WorldContext,
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("BroadcastEvent: Invalid parameters (WorldContext: %s, Tag: %s)"),
+		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::BroadcastEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
 			   WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
@@ -124,50 +190,51 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 	const UWorld* World = WorldContext->GetWorld();
 	if (!World)
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("RouteEventToSubsystem: No valid world context"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- no valid world context"));
 		return;
 	}
 
-	UGameInstance* GameInstance = World->GetGameInstance();
-	if (!GameInstance)
-	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("RouteEventToSubsystem: No valid game instance"));
-		return;
-	}
-	
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Routing event: %s (Scope: %s)"), 
-		   *EventData.EventTag.ToString(), 
+	UE_LOG(LogModulusEvent, Verbose, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- routing event: %s (Scope: %s)"),
+		   *EventData.EventTag.ToString(),
 		   EventScope == EMCore_EventScope::Global ? TEXT("Global") : TEXT("Local"));
 
 	if (EventScope == EMCore_EventScope::Global)
 	{
-		// Global: subsystem handles authority, replicator routing, and fallback
+		UGameInstance* GameInstance = World->GetGameInstance();
+		if (!GameInstance)
+		{
+			UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- no valid game instance"));
+			return;
+		}
+
 		if (UMCore_GlobalEventSubsystem* GlobalSystem = GameInstance->GetSubsystem<UMCore_GlobalEventSubsystem>())
 		{
 			GlobalSystem->BroadcastGlobalEvent(EventData);
 		}
 		else
 		{
-			UE_LOG(LogModulusEvent, Error, TEXT("Failed to get GlobalEventSubsystem"));
+			UE_LOG(LogModulusEvent, Error, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- failed to get GlobalEventSubsystem"));
 		}
 	}
 	else
 	{
-		// Local: route to LocalPlayerSubsystem
-		if (ULocalPlayer* LocalPlayer = GameInstance->GetFirstGamePlayer())
+		// Local: resolve the correct LocalPlayer from the calling context (split-screen safe)
+		ULocalPlayer* LocalPlayer = ResolveLocalPlayer(WorldContext);
+		if (!LocalPlayer)
 		{
-			if (UMCore_LocalEventSubsystem* LocalSystem = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
-			{
-				LocalSystem->BroadcastLocalEvent(EventData);
-			}
-			else
-			{
-				UE_LOG(LogModulusEvent, Error, TEXT("RouteEventToSubsystem: Failed to get LocalEventSubsystem"));
-			}
+			UE_LOG(LogModulusEvent, Warning,
+				TEXT("EventFunctionLibrary::RouteEventToSubsystem -- could not resolve LocalPlayer for event '%s'"),
+				*EventData.EventTag.ToString());
+			return;
+		}
+
+		if (UMCore_LocalEventSubsystem* LocalSystem = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
+		{
+			LocalSystem->BroadcastLocalEvent(EventData);
 		}
 		else
 		{
-			UE_LOG(LogModulusEvent, Warning, TEXT("RouteEventToSubsystem: No LocalPlayer found for event"));
+			UE_LOG(LogModulusEvent, Error, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- failed to get LocalEventSubsystem"));
 		}
 	}
 }

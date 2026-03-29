@@ -7,7 +7,7 @@
 
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
-#include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
+#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
@@ -25,7 +25,7 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	
 	if (IsRunningDedicatedServer())
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Skipping initialization on dedicated server"));
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Initialize -- skipping on dedicated server"));
 		return;
 	}
 
@@ -37,7 +37,7 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	if (DevSettings && DevSettings->IsValidThemeIndex(DevSettings->DefaultThemeIndex))
 	{
 		SetActiveThemeByIndex(DevSettings->DefaultThemeIndex);
-		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Loaded default theme from index %d"),
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::Initialize -- loaded default theme from index %d"),
 			DevSettings->DefaultThemeIndex);
 	}
 
@@ -53,17 +53,17 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 			else
 			{
 				UE_LOG(LogModulusUI, Warning,
-					TEXT("DefaultMenuTabs: skipping entry with invalid TabID or null ScreenWidgetClass"));
+					TEXT("UISubsystem::Initialize -- skipping DefaultMenuTabs entry with invalid TabID or null ScreenWidgetClass"));
 			}
 		}
 	}
 
-	UE_LOG(LogModulusUI, Log, TEXT("MCore_UISubsystem Initialized for LocalPlayer"));
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Initialize -- initialized for LocalPlayer"));
 }
 
 void UMCore_UISubsystem::Deinitialize()
 {
-	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize - Cleaning up"));
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize -- cleaning up"));
 	
 	// Clear delegate handle if still bound
 	if (PlayerControllerReadyHandle.IsValid())
@@ -117,7 +117,7 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 	if (!PrimaryGameLayoutClass)
 	{
 		PrimaryGameLayoutClass = UMCore_PrimaryGameLayout::StaticClass();
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Using default PrimaryGameLayoutClass"));
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::LoadWidgetClasses -- using default PrimaryGameLayoutClass"));
 	}
 	
 	// Load MenuHubClass
@@ -128,7 +128,7 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 
 	if (!MenuHubClass)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem: MenuHubClass is nullptr - check class exists"));
+		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem::LoadWidgetClasses -- MenuHubClass is nullptr, check class exists"));
 		MenuHubClass = UMCore_GameMenuHub::StaticClass();
 	}
     
@@ -139,7 +139,7 @@ void UMCore_UISubsystem::LoadWidgetClasses()
 	}
 	
 	UE_LOG(LogModulusUI, Verbose, 
-		TEXT("UISubsystem: Widget classes loaded - MenuHub: %s"),
+		TEXT("UISubsystem::LoadWidgetClasses -- widget classes loaded, MenuHub: %s"),
 		MenuHubClass ? TEXT("OK") : TEXT("FAIL"));
 }
 
@@ -153,7 +153,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	
 	if (!PrimaryGameLayoutClass)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem: PrimaryGameLayoutClass not set"));
+		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem::CreatePrimaryGameLayout -- PrimaryGameLayoutClass not set"));
 		return;
 	}
 	
@@ -164,7 +164,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	if (!PlayerController)
 	{
 		// PlayerController not yet ready, defer creation
-		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem: Deferring layout creation until PlayerController ready"));
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::CreatePrimaryGameLayout -- deferring layout creation until PlayerController ready"));
 		
 		if (ULocalPlayer* ThisPlayer = GetLocalPlayer())
 		{
@@ -178,14 +178,14 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(PlayerController, PrimaryGameLayoutClass);
 	if (!IsValid(PrimaryGameLayout))
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem: Failed to create PrimaryGameLayout widget"));
+		UE_LOG(LogModulusUI, Error, TEXT("UISubsystem::CreatePrimaryGameLayout -- failed to create PrimaryGameLayout widget"));
 		return;
 	}
 	
 	PrimaryGameLayout->AddToPlayerScreen(PrimaryGameLayoutZOrder);
 	BuildLayerStackMap();
 		
-	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PrimaryGameLayout created (ZOrder: %d)"),
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::CreatePrimaryGameLayout -- PrimaryGameLayout created (ZOrder: %d)"),
 		PrimaryGameLayoutZOrder);
 	
 	// Notify subclasses and listeners
@@ -203,7 +203,7 @@ void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerContro
 	
 	if (IsValid(PlayerController) && !IsValid(PrimaryGameLayout))
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: PlayerController initialized, creating PrimaryGameLayout"));
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::OnPlayerControllerReady -- PlayerController initialized, creating PrimaryGameLayout"));
 		CreatePrimaryGameLayout();
 	}
 }
@@ -219,7 +219,7 @@ void UMCore_UISubsystem::BuildLayerStackMap()
 	
 	if (!IsValid(PrimaryGameLayout))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem: Cannot build layer map - no PrimaryGameLayout"));
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::BuildLayerStackMap -- cannot build layer map, no PrimaryGameLayout"));
 		return;
 	}
 	
@@ -246,20 +246,28 @@ void UMCore_UISubsystem::BuildLayerStackMap()
 		LayerStackMap.Add(MCore_UI_Layer_Modal, PrimaryGameLayout->MCore_ModalLayer);
 	}
 	
-	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: LayerStackMap created with %d layers"), LayerStackMap.Num());
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::BuildLayerStackMap -- LayerStackMap created with %d layers"), LayerStackMap.Num());
 }
 
 // ============================================================================
 // PLAYER SETTINGS
 // ============================================================================
 
+FString UMCore_UISubsystem::GetSettingsSaveSlotName_Implementation() const
+{
+	const ULocalPlayer* LP = GetLocalPlayer();
+	const int32 PlayerIndex = LP ? LP->GetControllerId() : 0;
+	return FString::Printf(TEXT("MCore_PlayerSettings_%d"), PlayerIndex);
+}
+
 UMCore_PlayerSettingsSave* UMCore_UISubsystem::GetPlayerSettings()
 {
 	if (!CachedPlayerSettings)
 	{
-		CachedPlayerSettings = UMCore_PlayerSettingsSave::LoadPlayerSettings();
+		CachedPlayerSettings = UMCore_PlayerSettingsSave::LoadPlayerSettings(GetSettingsSaveSlotName());
 
-		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem: Player settings loaded"));
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::GetPlayerSettings -- player settings loaded from slot '%s'"),
+			*CachedPlayerSettings->GetCachedSlotName());
 	}
 
 	return CachedPlayerSettings;
@@ -273,19 +281,19 @@ UCommonActivatableWidgetStack* UMCore_UISubsystem::GetLayerStack(FGameplayTag La
 {
 	if (!LayerTag.IsValid())
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack: Invalid LayerTag"));
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack -- invalid LayerTag"));
 		return nullptr;
 	}
 	
 	if (const TObjectPtr<UCommonActivatableWidgetStack> ThisStack = LayerStackMap.FindRef(LayerTag))
 	{
-		UE_LOG(LogModulusUI, Verbose, TEXT("GetLayerStack: Tag='%s', Stack=%s"),
-			*LayerTag.ToString(), ThisStack ? *ThisStack->GetName() : TEXT("NULL"));
+		UE_LOG(LogModulusUI, Verbose, TEXT("UISubsystem::GetLayerStack -- Tag='%s', Stack=%s"),
+			*LayerTag.ToString(), ThisStack ? *GetNameSafe(ThisStack.Get()) : TEXT("NULL"));
 		
 		return ThisStack;
 	}
 	
-	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack: No stack found for tag '%s'"),
+	UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::GetLayerStack -- no stack found for tag '%s'"),
 		*LayerTag.ToString());
 	return nullptr;
 }
@@ -296,14 +304,14 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 {
 	if (!WidgetClass)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer: Invalid WidgetClass"));
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer -- invalid WidgetClass"));
 		return nullptr;
 	}
 	
 	UCommonActivatableWidgetStack* ThisStack = GetLayerStack(LayerTag);
 	if (!ThisStack)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer: No stack for tag '%s'"),
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer -- no stack for tag '%s'"),
 			*LayerTag.ToString());
 		return nullptr;
 	}
@@ -316,12 +324,12 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 		TrackedWidgets.FindOrAdd(LayerTag).Add(NewWidget);
 		OnWidgetPushed.Broadcast(NewWidget, LayerTag);
 
-		UE_LOG(LogModulusUI, Log, TEXT("PushWidgetToLayer: Pushed '%s' to layer '%s'"),
+		UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::PushWidgetToLayer -- pushed '%s' to layer '%s'"),
 			*WidgetClass->GetName(), *LayerTag.ToString());
 	}
 	else
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("PushWidgetToLayer: Failed to add '%s' to layer '%s'"),
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer -- failed to add '%s' to layer '%s'"),
 			*WidgetClass->GetName(), *LayerTag.ToString());
 	}
 	
@@ -385,8 +393,8 @@ void UMCore_UISubsystem::CloseScreen(UCommonActivatableWidget* Screen)
 
 	if (!bWasTracked)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("CloseScreen: Widget '%s' was not tracked"),
-			*Screen->GetName());
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::CloseScreen -- widget '%s' was not tracked"),
+			*GetNameSafe(Screen));
 	}
 
 	Screen->DeactivateWidget();
@@ -503,7 +511,7 @@ UMCore_GameMenuHub* UMCore_UISubsystem::OpenMenuHub()
 {
 	if (!MenuHubClass)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::OpenMenuHub: MenuHubClass not loaded"));
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::OpenMenuHub -- MenuHubClass not loaded"));
 		return nullptr;
 	}
 
@@ -554,14 +562,14 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	if (!ScreenWidgetClass)
 	{
 		UE_LOG(LogModulusUI, Warning, 
-			TEXT("RegisterMenuScreen: Invalid ScreenClass provided"));
+			TEXT("UISubsystem::RegisterMenuScreen -- invalid ScreenClass provided"));
 		return;
 	}
 
 	if (!TabID.IsValid())
 	{
 		UE_LOG(LogModulusUI, Error, 
-			TEXT("RegisterMenuScreen: Invalid TabID"));
+			TEXT("UISubsystem::RegisterMenuScreen -- invalid TabID"));
 		return;
 	}
 	
@@ -572,7 +580,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	 }))
 	{
 		UE_LOG(LogModulusUI, Warning, 
-			TEXT("RegisterMenuScreen: Tab '%s' already registered, skipping duplicate"),
+			TEXT("UISubsystem::RegisterMenuScreen -- tab '%s' already registered, skipping duplicate"),
 			*TabID.ToString());
 		return;
 	}
@@ -596,7 +604,7 @@ void UMCore_UISubsystem::RegisterMenuScreen(FGameplayTag TabID,
 	RegisteredMenuScreens.Insert(NewTab, InsertIndex);
     
 	UE_LOG(LogModulusUI, Log,
-		TEXT("RegisterMenuScreen: %s registered at priority %d (Total: %d)"),
+		TEXT("UISubsystem::RegisterMenuScreen -- %s registered at priority %d (Total: %d)"),
 		*NewTab.GetDisplayName().ToString(), Priority, RegisteredMenuScreens.Num());
 
 	// If MenuHub is active, rebuild tab bar
@@ -611,7 +619,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 	if (!TabID.IsValid())
 	{
 		UE_LOG(LogModulusUI, Warning, 
-			TEXT("UISubsystem::UnregisterMenuScreen: Invalid TabID"));
+			TEXT("UISubsystem::UnregisterMenuScreen -- invalid TabID"));
 		return false;
 	}
 
@@ -623,7 +631,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 	if (RemovedCount > 0)
 	{
 		UE_LOG(LogModulusUI, Log,
-			TEXT("UISubsystem::UnregisterMenuScreen: '%s' unregistered (Remaining: %d)"),
+			TEXT("UISubsystem::UnregisterMenuScreen -- '%s' unregistered (Remaining: %d)"),
 			*TabID.ToString(), RegisteredMenuScreens.Num());
 
 		if (UMCore_GameMenuHub* Hub = FindTrackedMenuHub())
@@ -634,7 +642,7 @@ bool UMCore_UISubsystem::UnregisterMenuScreen(FGameplayTag TabID)
 	}
 
 	UE_LOG(LogModulusUI, Warning,
-		TEXT("UISubsystem::UnregisterMenuScreen: Tab '%s' not found"),
+		TEXT("UISubsystem::UnregisterMenuScreen -- tab '%s' not found"),
 		*TabID.ToString());
 	return false;
 }
@@ -668,7 +676,7 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
 	if (!Settings || !Settings->IsValidThemeIndex(ThemeIndex))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("SetActiveThemeByIndex: Invalid theme index %d"), ThemeIndex);
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::SetActiveThemeByIndex -- invalid theme index %d"), ThemeIndex);
 		return false;
 	}
 
@@ -677,7 +685,7 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 	const FMCore_ThemeEntry& ThemeEntry = Settings->AvailableThemes[ThemeIndex];
 	if (ThemeEntry.ThemeAsset.IsNull())
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("SetActiveThemeByIndex: Theme at index %d has no asset"), ThemeIndex);
+		UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::SetActiveThemeByIndex -- theme at index %d has no asset"), ThemeIndex);
 		return false;
 	}
 
@@ -685,7 +693,7 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 	ActiveThemeIndex = ThemeIndex;
 	OnThemeChanged.Broadcast(CachedActiveTheme);
 
-	UE_LOG(LogModulusUI, Log, TEXT("Theme changed to: %s (index %d)"),
+	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::SetActiveThemeByIndex -- theme changed to '%s' (index %d)"),
 		*ThemeEntry.DisplayName.ToString(), ThemeIndex);
 
 	return true;

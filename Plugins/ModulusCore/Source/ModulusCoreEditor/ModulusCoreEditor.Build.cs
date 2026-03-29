@@ -30,7 +30,6 @@ public class ModulusCoreEditor : ModuleRules
                 "EditorSubsystem",
                 "UMG",
                 "UMGEditor",
-                "EditorScriptingUtilities",
                 "Blutility",
                 "Json",
                 "JsonUtilities",

@@ -20,7 +20,7 @@ class UMCore_DA_SettingDefinition;
  * Collection of setting definitions for a settings panel.
  * Provides category-based filtering, tag-based lookup, and sort-order awareness.
  *
- * Create as a DataAsset; assign to UMCore_CoreSettings::DefaultSettingsCollection.
+ * Create as a DataAsset; add to UMCore_CoreSettings::SettingsCollections.
  */
 UCLASS(BlueprintType, Const)
 class MODULUSCORE_API UMCore_DA_SettingsCollection : public UDataAsset

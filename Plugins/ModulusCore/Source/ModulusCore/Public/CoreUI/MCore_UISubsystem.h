@@ -101,6 +101,14 @@ public:
 // PLAYER SETTINGS
 // ============================================================================
 
+	/**
+	 * Returns the save slot name for this player's settings.
+	 * Default: "MCore_PlayerSettings_" + local player index.
+	 * Override for custom platform identity integration (e.g., console profile IDs).
+	 */
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "ModulusCore|Settings")
+	FString GetSettingsSaveSlotName() const;
+
 	/** Get cached player settings. Loads from disk on first access. */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	UMCore_PlayerSettingsSave* GetPlayerSettings();

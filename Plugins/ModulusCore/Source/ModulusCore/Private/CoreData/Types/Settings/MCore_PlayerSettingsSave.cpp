@@ -1,9 +1,10 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved.
 
-#include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
+#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/UserInterfaceSettings.h"
 #include "Engine/Engine.h"
+#include "CoreData/Logging/LogModulusSettings.h"
 
 UMCore_PlayerSettingsSave::UMCore_PlayerSettingsSave()
 {
@@ -64,45 +65,73 @@ void UMCore_PlayerSettingsSave::SetBoolSetting(const FString& Key, bool Value)
 
 void UMCore_PlayerSettingsSave::SaveSettings()
 {
-	UGameplayStatics::SaveGameToSlot(this, GetSaveSlotName(), GetUserIndex());
+	UGameplayStatics::SaveGameToSlot(this, CachedSlotName, 0);
+	UE_LOG(LogModulusSettings, Log, TEXT("PlayerSettingsSave::SaveSettings -- saved to slot '%s'"), *CachedSlotName);
 }
 
-UMCore_PlayerSettingsSave* UMCore_PlayerSettingsSave::LoadPlayerSettings()
+UMCore_PlayerSettingsSave* UMCore_PlayerSettingsSave::LoadPlayerSettings(const FString& SlotName)
 {
-	if (UGameplayStatics::DoesSaveGameExist(GetSaveSlotName(), GetUserIndex()))
+	UMCore_PlayerSettingsSave* Settings = nullptr;
+
+	bool bExistingSave = false;
+
+	if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
 	{
-		if (USaveGame* LoadedSave = UGameplayStatics::LoadGameFromSlot(GetSaveSlotName(), GetUserIndex()))
+		if (USaveGame* LoadedSave = UGameplayStatics::LoadGameFromSlot(SlotName, 0))
 		{
-			if (UMCore_PlayerSettingsSave* Settings = Cast<UMCore_PlayerSettingsSave>(LoadedSave))
+			Settings = Cast<UMCore_PlayerSettingsSave>(LoadedSave);
+			if (!Settings)
 			{
-				Settings->ValidateSettings();
-				return Settings;
+				UE_LOG(LogModulusSettings, Warning, TEXT("PlayerSettingsSave::LoadPlayerSettings -- save existed in slot '%s' but cast to UMCore_PlayerSettingsSave failed"), *SlotName);
+			}
+			else
+			{
+				bExistingSave = true;
 			}
 		}
 	}
 
-	return Cast<UMCore_PlayerSettingsSave>(
-		UGameplayStatics::CreateSaveGameObject(UMCore_PlayerSettingsSave::StaticClass()));
+	if (!Settings)
+	{
+		Settings = Cast<UMCore_PlayerSettingsSave>(
+			UGameplayStatics::CreateSaveGameObject(UMCore_PlayerSettingsSave::StaticClass()));
+		UE_LOG(LogModulusSettings, Log, TEXT("PlayerSettingsSave::LoadPlayerSettings -- created fresh settings for slot '%s'"), *SlotName);
+	}
+	else
+	{
+		UE_LOG(LogModulusSettings, Log, TEXT("PlayerSettingsSave::LoadPlayerSettings -- loaded existing settings from slot '%s'"), *SlotName);
+	}
+
+	Settings->CachedSlotName = SlotName;
+	Settings->ValidateSettings();
+
+	UE_LOG(LogModulusSettings, Log, TEXT("PlayerSettingsSave::LoadPlayerSettings -- loaded from slot '%s' (existing=%s)"), *SlotName, bExistingSave ? TEXT("true") : TEXT("false"));
+	return Settings;
 }
 
-void UMCore_PlayerSettingsSave::LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded OnLoaded)
+void UMCore_PlayerSettingsSave::LoadPlayerSettingsAsync(const FString& SlotName, FOnPlayerSettingsLoaded OnLoaded)
 {
-	if (!UGameplayStatics::DoesSaveGameExist(GetSaveSlotName(), GetUserIndex()))
+	if (!UGameplayStatics::DoesSaveGameExist(SlotName, 0))
 	{
 		UMCore_PlayerSettingsSave* NewSettings = Cast<UMCore_PlayerSettingsSave>(
 			UGameplayStatics::CreateSaveGameObject(UMCore_PlayerSettingsSave::StaticClass()));
+		NewSettings->CachedSlotName = SlotName;
 		OnLoaded.ExecuteIfBound(NewSettings);
 		return;
 	}
 
 	FAsyncLoadGameFromSlotDelegate AsyncLoadGameDelegate;
-	AsyncLoadGameDelegate.BindLambda([OnLoaded](const FString& SlotName, const int32 UserIndex, USaveGame* LoadedSave)
+	AsyncLoadGameDelegate.BindLambda([OnLoaded, SlotName](const FString& LoadedSlot, const int32 UserIndex, USaveGame* LoadedSave)
 	{
 		UMCore_PlayerSettingsSave* Settings = nullptr;
 
 		if (LoadedSave)
 		{
 			Settings = Cast<UMCore_PlayerSettingsSave>(LoadedSave);
+			if (!Settings)
+			{
+				UE_LOG(LogModulusSettings, Warning, TEXT("PlayerSettingsSave::LoadPlayerSettingsAsync -- save existed in slot '%s' but cast to UMCore_PlayerSettingsSave failed"), *SlotName);
+			}
 		}
 
 		if (!Settings)
@@ -111,11 +140,12 @@ void UMCore_PlayerSettingsSave::LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded 
 				UGameplayStatics::CreateSaveGameObject(UMCore_PlayerSettingsSave::StaticClass()));
 		}
 
+		Settings->CachedSlotName = SlotName;
 		Settings->ValidateSettings();
 		OnLoaded.ExecuteIfBound(Settings);
 	});
 
-	UGameplayStatics::AsyncLoadGameFromSlot(GetSaveSlotName(), GetUserIndex(), AsyncLoadGameDelegate);
+	UGameplayStatics::AsyncLoadGameFromSlot(SlotName, 0, AsyncLoadGameDelegate);
 }
 
 // ============================================================================

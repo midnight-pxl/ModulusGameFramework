@@ -1,9 +1,9 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUI/Widgets/MCore_SettingsWidget_Base.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Base.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
-#include "CoreData/Logging/LogModulusUI.h"
+#include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CommonTextBlock.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
@@ -17,16 +17,16 @@ void UMCore_SettingsWidget_Base::InitFromDefinition(const UMCore_DA_SettingDefin
 {
 	if (!InDefinition)
 	{
-		UE_LOG(LogModulusUI, Warning,
-			TEXT("[%s] InitFromDefinition: null definition passed"), *GetName());
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SettingsWidget_Base::InitFromDefinition -- null definition passed, widget=%s"), *GetNameSafe(this));
 		return;
 	}
 
 	if (!InDefinition->IsValid())
 	{
-		UE_LOG(LogModulusUI, Warning,
-			TEXT("[%s] InitFromDefinition: definition '%s' failed validation"),
-			*GetName(), *InDefinition->GetName());
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SettingsWidget_Base::InitFromDefinition -- definition '%s' failed validation, widget=%s"),
+			*InDefinition->GetName(), *GetNameSafe(this));
 		return;
 	}
 
@@ -37,11 +37,11 @@ void UMCore_SettingsWidget_Base::InitFromDefinition(const UMCore_DA_SettingDefin
 		Txt_SettingName->SetText(InDefinition->DisplayName);
 	}
 
-	UE_LOG(LogModulusUI, Verbose,
-		TEXT("[%s] Initialized from definition: %s (%s)"),
-		*GetName(),
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("SettingsWidget_Base::InitFromDefinition -- initialized from definition: %s (%s), widget=%s"),
 		*InDefinition->DisplayName.ToString(),
-		*InDefinition->SettingTag.ToString());
+		*InDefinition->SettingTag.ToString(),
+		*GetNameSafe(this));
 
 	OnDefinitionSet(InDefinition);
 }
@@ -57,9 +57,9 @@ FGameplayTag UMCore_SettingsWidget_Base::GetSettingTag() const
 
 void UMCore_SettingsWidget_Base::ResetToDefault_Implementation()
 {
-	UE_LOG(LogModulusUI, Warning,
-		TEXT("[%s] ResetToDefault not overridden — widget will not reset"),
-		*GetName());
+	UE_LOG(LogModulusSettings, Warning,
+		TEXT("SettingsWidget_Base::ResetToDefault -- not overridden, widget will not reset, widget=%s"),
+		*GetNameSafe(this));
 }
 
 void UMCore_SettingsWidget_Base::RefreshValueFromSettings_Implementation()
@@ -96,11 +96,11 @@ void UMCore_SettingsWidget_Base::BroadcastValueChanged()
 		const FString ValueStr = GetValueAsString();
 		OnSettingValueChanged.Broadcast(SettingDefinition->SettingTag, ValueStr);
 
-		UE_LOG(LogModulusUI, Verbose,
-			TEXT("[%s] Value changed: %s = %s"),
-			*GetName(),
+		UE_LOG(LogModulusSettings, Verbose,
+			TEXT("SettingsWidget_Base::BroadcastValueChanged -- value changed: %s = %s, widget=%s"),
 			*SettingDefinition->SettingTag.ToString(),
-			*ValueStr);
+			*ValueStr,
+			*GetNameSafe(this));
 	}
 }
 

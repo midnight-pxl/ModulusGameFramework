@@ -27,7 +27,7 @@ void FModulusCoreEditorModule::StartupModule()
 	UToolMenus::RegisterStartupCallback(
 		FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FModulusCoreEditorModule::RegisterToolbarButton));
 
-	UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditor module started"));
+	UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditorModule::StartupModule -- module started"));
 }
 
 void FModulusCoreEditorModule::ShutdownModule()
@@ -37,7 +37,7 @@ void FModulusCoreEditorModule::ShutdownModule()
 
 	FModulusEditorStyle::Shutdown();
 
-	UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditor module shutdown"));
+	UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditorModule::ShutdownModule -- module shutdown"));
 }
 
 TSharedRef<SDockTab> FModulusCoreEditorModule::SpawnModulusHubTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -64,11 +64,11 @@ void FModulusCoreEditorModule::RegisterToolbarButton()
 			FSlateIcon(FModulusEditorStyle::GetStyleSetName(), FModulusEditorStyle::ModulusIconName)
 		));
 
-		UE_LOG(LogModulusEditor, Log, TEXT("Modulus toolbar button registered"));
+		UE_LOG(LogModulusEditor, Log, TEXT("ModulusCoreEditorModule::RegisterToolbarButton -- toolbar button registered"));
 	}
 	else
 	{
-		UE_LOG(LogModulusEditor, Warning, TEXT("Failed to extend LevelEditor toolbar"));
+		UE_LOG(LogModulusEditor, Warning, TEXT("ModulusCoreEditorModule::RegisterToolbarButton -- failed to extend LevelEditor toolbar"));
 	}
 }
 

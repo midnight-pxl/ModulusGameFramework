@@ -20,11 +20,11 @@ void UMCore_GlobalEventReplicator::BeginPlay()
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 	{
 		Subsystem->RegisterEventReplicator(this);
-		UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventReplicator registered with GlobalEventSubsystem"));
+		UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventReplicator::BeginPlay -- registered with GlobalEventSubsystem"));
 	}
 	else
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("GlobalEventReplicator: Could not find GlobalEventSubsystem"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("GlobalEventReplicator::BeginPlay -- could not find GlobalEventSubsystem"));
 	}
 }
 
@@ -46,7 +46,7 @@ void UMCore_GlobalEventReplicator::RequestBroadcast(const FMCore_EventData& Even
 	AActor* Owner = GetOwner();
 	if (!Owner)
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("RequestBroadcast: No owner actor"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("GlobalEventReplicator::RequestBroadcast -- no owner actor"));
 		return;
 	}
 	
@@ -67,7 +67,7 @@ void UMCore_GlobalEventReplicator::RequestBroadcast(const FMCore_EventData& Even
 
 void UMCore_GlobalEventReplicator::ServerRequestBroadcast_Implementation(const FMCore_EventData& EventData)
 {
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Server received Broadcast request: %s"),
+	UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventReplicator::ServerRequestBroadcast -- received request: %s"),
 		*EventData.EventTag.ToString());
 	
 	// Server has authority: deliver locally and multicast
@@ -98,7 +98,7 @@ void UMCore_GlobalEventReplicator::MulticastToClients_Implementation(const FMCor
 	if (UMCore_GlobalEventSubsystem* Subsystem = GetEventSubsystem())
 	{
 		Subsystem->DeliverToLocalListeners(EventData);
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Client received multicast: %s"),
+		UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventReplicator::MulticastToClients -- client received: %s"),
 			*EventData.EventTag.ToString());
 	}
 }

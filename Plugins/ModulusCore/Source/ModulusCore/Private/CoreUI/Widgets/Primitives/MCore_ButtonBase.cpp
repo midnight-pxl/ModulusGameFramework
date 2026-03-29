@@ -9,6 +9,7 @@
 #include "Components/Image.h"
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
 #include "Engine/Texture2D.h"
+#include "CoreData/Logging/LogModulusUI.h"
 
 UMCore_ButtonBase::UMCore_ButtonBase()
 {
@@ -26,6 +27,8 @@ void UMCore_ButtonBase::NativePreConstruct()
 void UMCore_ButtonBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+
+	UE_LOG(LogModulusUI, Verbose, TEXT("ButtonBase::NativeOnInitialized -- initialized, widget=%s"), *GetNameSafe(this));
 
 	BindThemeDelegate();
 
@@ -53,6 +56,8 @@ void UMCore_ButtonBase::SimulateClick()
 
 void UMCore_ButtonBase::NativeDestruct()
 {
+	UE_LOG(LogModulusUI, Verbose, TEXT("ButtonBase::NativeDestruct -- destructing, widget=%s"), *GetNameSafe(this));
+
 	UnbindThemeDelegate();
 
 	Super::NativeDestruct();

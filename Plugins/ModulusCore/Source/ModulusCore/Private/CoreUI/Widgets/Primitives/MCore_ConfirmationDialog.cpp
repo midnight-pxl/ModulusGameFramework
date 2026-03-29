@@ -81,7 +81,7 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 		RegisterBinding(BackInputAction, CancelDelegate, BackBindingHandle);
 	}
 
-	UE_LOG(LogModulusUI, Log, TEXT("[%s] Confirmation dialog activated"), *GetName());
+	UE_LOG(LogModulusUI, Log, TEXT("ConfirmationDialog::NativeOnActivated -- dialog activated, widget=%s"), *GetNameSafe(this));
 }
 
 void UMCore_ConfirmationDialog::NativeOnDeactivated()
@@ -112,9 +112,10 @@ UWidget* UMCore_ConfirmationDialog::NativeGetDesiredFocusTarget() const
 
 void UMCore_ConfirmationDialog::ResolveDialog(bool bConfirmed)
 {
-	UE_LOG(LogModulusUI, Log, TEXT("[%s] Dialog resolved: %s"),
-		*GetName(),
-		bConfirmed ? TEXT("Confirmed") : TEXT("Cancelled"));
+	UE_LOG(LogModulusUI, Log,
+		TEXT("ConfirmationDialog::ResolveDialog -- resolved: %s, widget=%s"),
+		bConfirmed ? TEXT("Confirmed") : TEXT("Cancelled"),
+		*GetNameSafe(this));
 
 	OnDialogResult.Broadcast(bConfirmed);
 	DeactivateWidget();

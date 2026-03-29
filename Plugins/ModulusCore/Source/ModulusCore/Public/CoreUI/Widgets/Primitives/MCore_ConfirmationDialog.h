@@ -99,6 +99,6 @@ private:
 	UFUNCTION()
 	void HandleCancelInput(FName ActionName);
 
-	FInputActionBindingHandle AcceptBindingHandle;
-	FInputActionBindingHandle BackBindingHandle;
+	FMCore_InputActionBindingHandle AcceptBindingHandle;
+	FMCore_InputActionBindingHandle BackBindingHandle;
 };

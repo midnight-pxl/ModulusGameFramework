@@ -9,7 +9,7 @@
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	UE_LOG(LogModulusEvent, Log, TEXT("Initializing global event subsystem"));
+	UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventSubsystem::Initialize -- initializing"));
 }
 
 void UMCore_GlobalEventSubsystem::Deinitialize()
@@ -24,11 +24,11 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 {
 	if (!EventData.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("Attempted to broadcast invalid global event"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- attempted to broadcast invalid event"));
 		return;
 	}
 	
-	UE_LOG(LogModulusEvent, Verbose, TEXT("BroadcastGlobalEvent: %s"), *EventData.EventTag.ToString());
+	UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- broadcasting: %s"), *EventData.EventTag.ToString());
 	
 	// Route through event replicator if available
 	if (UMCore_GlobalEventReplicator* Replicator = EventReplicator.Get())
@@ -46,8 +46,8 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 			if (IsNetworkedGame())
 			{
 				UE_LOG(LogModulusEvent, Warning,
-					TEXT("Global event delivered locally only - no replicator found; "
-						 "add UMCore_GlobalEventReplicator to GameState for network support."));
+					TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- delivered locally only, no replicator found; "
+						 "add GlobalEventReplicator to GameState for network support."));
 				return;
 			}
 		}
@@ -55,13 +55,13 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		{
 			// Client w/o replicator: cannot request broadcast
 			UE_LOG(LogModulusEvent, Warning,
-				TEXT("Global event not broadcast - not authority and no replicator found; "
-					 "add UMCore_GlobalEventReplicator to GameState for network support."))
+				TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- not authority and no replicator found; "
+					 "add GlobalEventReplicator to GameState for network support."))
 			return;
 		}
 	}
 
-	UE_LOG(LogModulusEvent, Log, TEXT("Broadcasting global event: %s"), *EventData.EventTag.ToString());
+	UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- broadcast complete: %s"), *EventData.EventTag.ToString());
 }
 
 void UMCore_GlobalEventSubsystem::RegisterEventReplicator(UMCore_GlobalEventReplicator* Replicator)
@@ -69,7 +69,7 @@ void UMCore_GlobalEventSubsystem::RegisterEventReplicator(UMCore_GlobalEventRepl
 	if (IsValid(Replicator))
 	{
 		EventReplicator = Replicator;
-		UE_LOG(LogModulusEvent, Log, TEXT("Registered global event replicator: %s"),
+		UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventSubsystem::RegisterEventReplicator -- registered: %s"),
 			Replicator->GetOwner() ? *Replicator->GetOwner()->GetName() : TEXT("Unknown"));
 	}
 }
@@ -79,7 +79,7 @@ void UMCore_GlobalEventSubsystem::UnregisterEventReplicator(UMCore_GlobalEventRe
 	if (EventReplicator.Get() == Replicator)
 	{
 		EventReplicator.Reset();
-		UE_LOG(LogModulusEvent, Log, TEXT("Unregistered global event replicator"));
+		UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventSubsystem::UnregisterEventReplicator -- unregistered"));
 	}
 }
 
@@ -88,7 +88,7 @@ void UMCore_GlobalEventSubsystem::RegisterGlobalListener(UMCore_EventListenerCom
 	if (IsValid(ListenerComponent))
 	{
 		GlobalListeners.AddUnique(ListenerComponent);
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Registered global event listener: %s"),
+		UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventSubsystem::RegisterGlobalListener -- registered: %s"),
 			*ListenerComponent->GetName());
 	}
 }
@@ -102,7 +102,7 @@ void UMCore_GlobalEventSubsystem::UnregisterGlobalListener(UMCore_EventListenerC
 
 	if (RemoveCount > 0)
 	{
-		UE_LOG(LogModulusEvent, Verbose, TEXT("Unregistered global event listener: %s"),
+		UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventSubsystem::UnregisterGlobalListener -- unregistered: %s"),
 			ListenerComponent ? *ListenerComponent->GetName() : TEXT("Unknown"));
 	}
 }
@@ -111,7 +111,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 {
 	if (GlobalListeners.IsEmpty()) { return; }
 	
-	UE_LOG(LogModulusEvent, Verbose, TEXT("Delivering global event '%s' to %d listeners"),
+	UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventSubsystem::DeliverToLocalListeners -- delivering '%s' to %d listeners"),
 		*EventData.EventTag.ToString(), GlobalListeners.Num());
 	
 	// Reverse traverse to remove stale entries
@@ -162,7 +162,7 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 {
 	if (!EventData.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("ValidateEventRequest: Invalid event data"));
+		UE_LOG(LogModulusEvent, Warning, TEXT("GlobalEventSubsystem::ValidateEventRequest -- invalid event data"));
 		return false;
 	}
 	
@@ -173,7 +173,7 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 	if (EventData.EventParams.Num() > MaxParams)
 	{
 		UE_LOG(LogModulusEvent, Warning,
-			TEXT("Event Rejected: '%s' -- %d params exceeds cap of %d. "
+			TEXT("GlobalEventSubsystem::ValidateEventRequest -- rejected '%s': %d params exceeds cap of %d. "
 				 "Override ValidateEventRequest() for custom limits."),
 				 *EventData.EventTag.ToString(), EventData.EventParams.Num(), MaxParams);
 		return false;
@@ -182,7 +182,7 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 	if (EventData.ContextID.Len() > MaxContextIDLength)
 	{
 		UE_LOG(LogModulusEvent, Warning,
-			TEXT("Event Rejected: '%s' -- ContextID length of %d exceeds cap of %d. "
+			TEXT("GlobalEventSubsystem::ValidateEventRequest -- rejected '%s': ContextID length of %d exceeds cap of %d. "
 				 "Override ValidateEventRequest() for custom limits."),
 				 *EventData.EventTag.ToString(), EventData.ContextID.Len(), MaxContextIDLength);
 		return false;

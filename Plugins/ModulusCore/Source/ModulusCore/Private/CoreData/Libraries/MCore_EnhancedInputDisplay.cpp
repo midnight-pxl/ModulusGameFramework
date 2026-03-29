@@ -6,7 +6,7 @@
 #include "EnhancedInput/Public/UserSettings/EnhancedInputUserSettings.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/PlayerController.h"
-#include "CoreData/Logging/LogModulusSettings.h"
+#include "CoreData/Logging/LogModulusUI.h"
 #include "CommonInputSubsystem.h"
 #include "CommonInputBaseTypes.h"
 #include "CoreUI/MCore_UISubsystem.h"
@@ -21,14 +21,14 @@ UEnhancedInputLocalPlayerSubsystem* UMCore_EnhancedInputDisplay::GetEnhancedInpu
 {
 	if (!PlayerController)
 	{
-		UE_LOG(LogModulusSettings, Error, TEXT("GetEnhancedInputSubsystem: PlayerController is null"));
+		UE_LOG(LogModulusUI, Error, TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- PlayerController is null"));
 		return nullptr;
 	}
 
 	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
 	if (!LocalPlayer)
 	{
-		UE_LOG(LogModulusSettings, Error, TEXT("GetEnhancedInputSubsystem: LocalPlayer is null"));
+		UE_LOG(LogModulusUI, Error, TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- LocalPlayer is null"));
 		return nullptr;
 	}
 
@@ -217,13 +217,13 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 	if (FailureReason.IsEmpty())
 	{
 		UserSettings->SaveSettings();
-		UE_LOG(LogModulusSettings, Log, TEXT("Successfully remapped action %s to key %s"),
+		UE_LOG(LogModulusUI, Log, TEXT("EnhancedInputDisplay::RemapActionKey -- successfully remapped action %s to key %s"),
 			   *InputAction->GetName(), *NewKey.ToString());
 		return true;
 	}
 
 	OutError = FText::FromString(FailureReason.ToString());
-	UE_LOG(LogModulusSettings, Warning, TEXT("Failed to remap action %s to key %s: %s"),
+	UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::RemapActionKey -- failed to remap action %s to key %s: %s"),
 		   *InputAction->GetName(), *NewKey.ToString(), *FailureReason.ToString());
 	return false;
 }
@@ -279,7 +279,7 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetAllRemappableActions(
 	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
 	if (!Profile)
 	{
-		UE_LOG(LogModulusSettings, Warning, TEXT("GetAllRemappableActions: No active key profile"));
+		UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::GetAllRemappableActions -- no active key profile"));
 		return Result;
 	}
 
@@ -303,7 +303,7 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForDe
 	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
 	if (!Profile)
 	{
-		UE_LOG(LogModulusSettings, Warning, TEXT("GetRemappableActionsForDevice: No active key profile"));
+		UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::GetRemappableActionsForDevice -- no active key profile"));
 		return Result;
 	}
 
@@ -357,7 +357,7 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKey(const ULocalPlayer* LocalPl
 	UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
 	if (!CIS)
 	{
-		UE_LOG(LogModulusSettings, Warning, TEXT("GetIconBrushForKey: CommonInputSubsystem unavailable"));
+		UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::GetIconBrushForKey -- CommonInputSubsystem unavailable"));
 		return false;
 	}
 
@@ -531,13 +531,13 @@ bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* Playe
 	if (FailureReason.IsEmpty())
 	{
 		UserSettings->SaveSettings();
-		UE_LOG(LogModulusSettings, Log, TEXT("Remapped action %s (slot %d) to key %s"),
+		UE_LOG(LogModulusUI, Log, TEXT("EnhancedInputDisplay::RemapActionKeyForSlot -- remapped action %s (slot %d) to key %s"),
 			*InputAction->GetName(), static_cast<int32>(Slot), *NewKey.ToString());
 		return true;
 	}
 
 	OutError = FText::FromString(FailureReason.ToString());
-	UE_LOG(LogModulusSettings, Warning, TEXT("Failed to remap action %s (slot %d) to key %s: %s"),
+	UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::RemapActionKeyForSlot -- failed to remap action %s (slot %d) to key %s: %s"),
 		*InputAction->GetName(), static_cast<int32>(Slot), *NewKey.ToString(),
 		*FailureReason.ToString());
 	return false;

@@ -15,14 +15,14 @@ void UMCore_TabbedContainer::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::NativeOnInitialized: this=%p"), this);
+	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::NativeOnInitialized -- this=%p"), this);
 
 	TabList->OnTabSelected.AddDynamic(this, &ThisClass::HandleTabSelected);
 }
 
 void UMCore_TabbedContainer::NativeDestruct()
 {
-	UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::NativeDestruct: this=%p, TabCount=%d"), this, GetTabCount());
+	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::NativeDestruct -- this=%p, TabCount=%d"), this, GetTabCount());
 
 	if (TabList)
 	{
@@ -36,20 +36,20 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 {
 	if (TabID.IsNone())
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::AddTab: Invalid TabID (NAME_None)"));
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::AddTab -- invalid TabID (NAME_None)"));
 		return false;
 	}
 
 	if (!PageWidget)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::AddTab: PageWidget is null for tab '%s'"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::AddTab -- PageWidget is null for tab '%s'"),
 			*TabID.ToString());
 		return false;
 	}
 
 	if (PageWidgets.Contains(TabID))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::AddTab: Tab '%s' already exists, skipping duplicate"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::AddTab -- tab '%s' already exists, skipping duplicate"),
 			*TabID.ToString());
 		return false;
 	}
@@ -59,7 +59,7 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 	{
 		ButtonClass = UCommonButtonBase::StaticClass();
 		UE_LOG(LogModulusUI, Warning,
-			TEXT("TabbedContainer::AddTab: TabButtonClass not set, using framework default"));
+			TEXT("TabbedContainer::AddTab -- TabButtonClass not set, using framework default"));
 	}
 
 	PageWidgets.Add(TabID, PageWidget);
@@ -71,7 +71,7 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 		OnTabAdded.Broadcast(TabID, TabButton);
 	}
 
-	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::AddTab: Added tab '%s' (total: %d)"),
+	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::AddTab -- added tab '%s' (total: %d)"),
 		*TabID.ToString(), PageWidgets.Num());
 
 	return true;
@@ -81,7 +81,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 {
 	if (!PageWidgets.Contains(TabID))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::RemoveTab: Tab '%s' not found"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::RemoveTab -- tab '%s' not found"),
 			*TabID.ToString());
 		return false;
 	}
@@ -121,7 +121,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		TabList->SelectTabByID(RemainingTabs[0].Key);
 	}
 
-	UE_LOG(LogModulusUI, Log, TEXT("TabbedContainer::RemoveTab: Removed tab '%s' (remaining: %d)"),
+	UE_LOG(LogModulusUI, Log, TEXT("TabbedContainer::RemoveTab -- removed tab '%s' (remaining: %d)"),
 		*TabID.ToString(), PageWidgets.Num());
 
 	return true;
@@ -129,7 +129,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 
 void UMCore_TabbedContainer::ClearAllTabs()
 {
-	UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::ClearAllTabs: this=%p, TabCount=%d"), this, GetTabCount());
+	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::ClearAllTabs -- this=%p, TabCount=%d"), this, GetTabCount());
 
 	// Self-heal: if this container went through NativeDestruct and was reused
 	// without NativeOnInitialized firing again, the internal delegate is dead.
@@ -148,7 +148,7 @@ bool UMCore_TabbedContainer::SelectTab(FName TabID)
 {
 	if (!PageWidgets.Contains(TabID))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::SelectTab: Tab '%s' not found"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::SelectTab -- tab '%s' not found"),
 			*TabID.ToString());
 		return false;
 	}
@@ -164,7 +164,7 @@ void UMCore_TabbedContainer::HandleTabSelected(FName TabNameID)
 	TObjectPtr<UWidget>* FoundWidget = PageWidgets.Find(TabNameID);
 	if (!FoundWidget || !*FoundWidget)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::HandleTabSelected: Tab '%s' not found in cache"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::HandleTabSelected -- tab '%s' not found in cache"),
 			*TabNameID.ToString());
 		return;
 	}
@@ -172,7 +172,7 @@ void UMCore_TabbedContainer::HandleTabSelected(FName TabNameID)
 	if (!PageSwitcher->HasChild(*FoundWidget))
 	{
 		UE_LOG(LogModulusUI, Error,
-			TEXT("TabbedContainer::HandleTabSelected: Widget for tab '%s' is not a child of PageSwitcher"),
+			TEXT("TabbedContainer::HandleTabSelected -- widget for tab '%s' is not a child of PageSwitcher"),
 			*TabNameID.ToString());
 		return;
 	}
@@ -181,7 +181,7 @@ void UMCore_TabbedContainer::HandleTabSelected(FName TabNameID)
 	SelectedTabID = TabNameID;
 	OnTabSelected.Broadcast(TabNameID);
 
-	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::HandleTabSelected: Switched to tab '%s'"),
+	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::HandleTabSelected -- switched to tab '%s'"),
 		*TabNameID.ToString());
 }
 
@@ -200,7 +200,7 @@ bool UMCore_TabbedContainer::SetTabEnabled(FName TabID, bool bEnabled)
 {
 	if (!PageWidgets.Contains(TabID))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::SetTabEnabled: Tab '%s' not found"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::SetTabEnabled -- tab '%s' not found"),
 			*TabID.ToString());
 		return false;
 	}
@@ -213,7 +213,7 @@ bool UMCore_TabbedContainer::SetTabHidden(FName TabID, bool bIsHidden)
 {
 	if (!PageWidgets.Contains(TabID))
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::SetTabHidden: Tab '%s' not found"),
+		UE_LOG(LogModulusUI, Warning, TEXT("TabbedContainer::SetTabHidden -- tab '%s' not found"),
 			*TabID.ToString());
 		return false;
 	}

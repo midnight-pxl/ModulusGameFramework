@@ -11,14 +11,13 @@ class UMCore_TabbedContainer;
 class UMCore_ButtonBase;
 class UMCore_ConfirmationDialog;
 class UMCore_DA_SettingDefinition;
-class UMCore_DA_SettingsCollection;
 class UMCore_SettingsWidget_Base;
 class UCommonTextBlock;
 class UScrollBox;
 
 /**
  * Data-driven settings panel for auto-generating category tabs
- * and setting widgets from DefaultSettingsCollection in
+ * and setting widgets from SettingsCollections in
  * UMCore_CoreSettings
  * 
  * Depth-3 tags become main tabs (Settings_Category_Video, etc.)
@@ -92,13 +91,12 @@ private:
  
 	void BuildPanel();
  
-	UScrollBox* BuildSinglePage(const UMCore_DA_SettingsCollection* Collection, const FGameplayTag& SubcategoryTag);
- 
-	UMCore_TabbedContainer* BuildTabbedPage(const UMCore_DA_SettingsCollection* Collection,
+	UScrollBox* BuildSinglePage(const FGameplayTag& SubcategoryTag);
+
+	UMCore_TabbedContainer* BuildTabbedPage(
 		const FGameplayTag& ParentTag, const TArray<FGameplayTag>& ChildTags);
- 
-	void PopulatePage(UScrollBox* ScrollBox, const UMCore_DA_SettingsCollection* Collection,
-		const FGameplayTag& CategoryTag);
+
+	void PopulatePage(UScrollBox* ScrollBox, const FGameplayTag& CategoryTag);
  
 	UMCore_SettingsWidget_Base* CreateSettingWidget(const UMCore_DA_SettingDefinition* Definition);
  
@@ -144,9 +142,6 @@ private:
 	// INTERNAL STATE
 	// ============================================================================
  
-	/* Set once in BuildPanel, used by action bar handlers */
-	const UMCore_DA_SettingsCollection* CachedCollection{nullptr};
-	
 	/**
 	 * Maps single-page tab IDs and sub-tab IDs to their depth-4 leaf category tag.
 	 * Sub-tabbed main tab IDs are NOT in this map,

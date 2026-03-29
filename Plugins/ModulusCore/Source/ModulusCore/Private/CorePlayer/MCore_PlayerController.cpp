@@ -3,7 +3,7 @@
 #include "CorePlayer/MCore_PlayerController.h"
 
 #include "CoreData/Tags/MCore_UILayerTags.h"
-#include "CoreData\Logging\LogModulusUI.h"
+#include "CoreData/Logging/LogModulusPlayer.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreUI/Widgets/Primitives/MCore_ActivatableBase.h"
 
@@ -69,7 +69,7 @@ void AMCore_PlayerController::InitializeUISystem()
 	else
 	{
 		UISubsystem->OnPrimaryGameLayoutReady.AddDynamic(this, &ThisClass::OnPrimaryGameLayoutReady);
-		UE_LOG(LogModulusUI, Verbose, TEXT("PlayerController: Waiting for PrimaryGameLayout..."));
+		UE_LOG(LogModulusPlayer, Verbose, TEXT("PlayerController::InitializeUISystem -- waiting for PrimaryGameLayout"));
 	}
 }
 
@@ -97,12 +97,12 @@ void AMCore_PlayerController::OnUISystemReady_Implementation(UMCore_UISubsystem*
 
 		if (PrimaryWidget)
 		{
-			UE_LOG(LogModulusUI, Log, TEXT("PlayerController::OnUISystemReady: Pushed '%s' to layer '%s'"),
+			UE_LOG(LogModulusPlayer, Log, TEXT("PlayerController::OnUISystemReady -- pushed '%s' to layer '%s'"),
 				*PrimaryWidgetClass->GetName(), *PrimaryWidgetLayer.ToString());
 		}
 		else
 		{
-			UE_LOG(LogModulusUI, Error, TEXT("PlayerController: Failed to push '%s' to layer '%s'"),
+			UE_LOG(LogModulusPlayer, Error, TEXT("PlayerController::OnUISystemReady -- failed to push '%s' to layer '%s'"),
 				*PrimaryWidgetClass->GetName(), *PrimaryWidgetLayer.ToString());
 		}
 	}

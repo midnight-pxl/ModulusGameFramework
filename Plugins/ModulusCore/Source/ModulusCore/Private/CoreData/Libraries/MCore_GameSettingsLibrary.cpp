@@ -132,7 +132,7 @@ float UMCore_GameSettingsLibrary::GetSettingFloat(const UObject* WorldContextObj
 	if (Setting->SettingType != EMCore_SettingType::Slider)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GetSettingFloat: called on non-Slider setting '%s'"),
+			TEXT("GameSettingsLibrary::GetSettingFloat -- called on non-Slider setting '%s'"),
 			*Setting->SettingTag.ToString());
 	}
 
@@ -156,7 +156,7 @@ int32 UMCore_GameSettingsLibrary::GetSettingInt(const UObject* WorldContextObjec
 	if (Setting->SettingType != EMCore_SettingType::Dropdown)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GetSettingInt: called on non-Dropdown setting '%s'"),
+			TEXT("GameSettingsLibrary::GetSettingInt -- called on non-Dropdown setting '%s'"),
 			*Setting->SettingTag.ToString());
 	}
 
@@ -180,7 +180,7 @@ bool UMCore_GameSettingsLibrary::GetSettingBool(const UObject* WorldContextObjec
 	if (Setting->SettingType != EMCore_SettingType::Toggle)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GetSettingBool: called on non-Toggle setting '%s'"),
+			TEXT("GameSettingsLibrary::GetSettingBool -- called on non-Toggle setting '%s'"),
 			*Setting->SettingTag.ToString());
 	}
 
@@ -197,334 +197,200 @@ bool UMCore_GameSettingsLibrary::GetSettingBool(const UObject* WorldContextObjec
 }
 
 // ============================================================================
-// TAG-BASED GETTER
+// TEMPLATE HELPERS (private static, defined here, declared in header)
 // ============================================================================
+
+template<typename TChangeStruct, typename TValue>
+void UMCore_GameSettingsLibrary::ApplySettingChanges_Internal(
+	const UObject* WorldContextObject,
+	const TArray<TChangeStruct>& Changes,
+	bool bBypassConfirmation,
+	TFunctionRef<TValue(const UMCore_DA_SettingDefinition*, TValue)> ClampValue,
+	TFunctionRef<TValue(const UMCore_DA_SettingDefinition*)> GetDefault,
+	TFunctionRef<bool(UMCore_PlayerSettingsSave*, const FString&, TValue&)> GetCommitted,
+	TFunctionRef<void(UMCore_PlayerSettingsSave*, const FString&, TValue)> SetCommitted,
+	TFunctionRef<void(const UMCore_DA_SettingDefinition*, TValue)> ApplyToEngine,
+	TFunctionRef<FString(TValue)> ValueToString)
+{
+	if (!WorldContextObject || Changes.IsEmpty()) { return; }
+
+	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
+	if (!Save)
+	{
+		UE_LOG(LogModulusSettings, Warning, TEXT("GameSettingsLibrary::ApplySettingChanges -- failed to get PlayerSettingsSave"));
+		return;
+	}
+
+	TArray<FString> AffectedTags;
+	TArray<FString> PreviousValues;
+	TArray<FGameplayTag> ProcessedTags;
+	float LongestRevertDelay = 0.f;
+	bool bAnyRequiresConfirmation = false;
+
+	for (const TChangeStruct& Change : Changes)
+	{
+		if (!Change.Setting)
+		{
+			UE_LOG(LogModulusSettings, Warning, TEXT("GameSettingsLibrary::ApplySettingChanges -- null Setting in Changes, skipping"));
+			continue;
+		}
+
+		const FString Key = Change.Setting->GetSaveKey();
+		const TValue ClampedVal = ClampValue(Change.Setting, Change.Value);
+
+		TValue PreviousVal = GetDefault(Change.Setting);
+		GetCommitted(Save, Key, PreviousVal);
+
+		SetCommitted(Save, Key, ClampedVal);
+		ApplyToEngine(Change.Setting, ClampedVal);
+
+		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
+		{
+			bAnyRequiresConfirmation = true;
+			AffectedTags.Add(Change.Setting->SettingTag.ToString());
+			PreviousValues.Add(ValueToString(PreviousVal));
+			LongestRevertDelay = FMath::Max(LongestRevertDelay, Change.Setting->ConfirmationRevertDelay);
+		}
+		else
+		{
+			ProcessedTags.Add(Change.Setting->SettingTag);
+		}
+	}
+
+	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
+	{
+		GUS->ApplySettings(false);
+	}
+
+	if (bAnyRequiresConfirmation)
+	{
+		TMap<FString, FString> EventParams;
+		EventParams.Add(TEXT("SettingTags"), FString::Join(AffectedTags, TEXT("|")));
+		EventParams.Add(TEXT("PreviousValues"), FString::Join(PreviousValues, TEXT("|")));
+		EventParams.Add(TEXT("RevertDelay"), FString::SanitizeFloat(LongestRevertDelay));
+
+		UMCore_EventFunctionLibrary::BroadcastEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
+			EventParams, EMCore_EventScope::Local);
+	}
+	else
+	{
+		SavePlayerSettings(WorldContextObject);
+	}
+
+	if (!bBypassConfirmation)
+	{
+		for (const FGameplayTag& Tag : ProcessedTags)
+		{
+			BroadcastSettingChanged(WorldContextObject, Tag);
+		}
+	}
+}
+
+template<typename TValue>
+TValue UMCore_GameSettingsLibrary::GetSettingByTag_Internal(
+	const UObject* WorldContextObject,
+	const FGameplayTag& SettingTag,
+	TFunctionRef<TValue(const UObject*, const UMCore_DA_SettingDefinition*)> TypedGetter,
+	TValue DefaultReturn,
+	const TCHAR* FunctionName)
+{
+	const UMCore_DA_SettingDefinition* Setting = UMCore_CoreSettings::Get()->FindSettingDefinitionByTag(SettingTag);
+	if (!Setting)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GameSettingsLibrary::%s -- no definition found for tag '%s' in any collection"),
+			FunctionName, *SettingTag.ToString());
+		return DefaultReturn;
+	}
+	return TypedGetter(WorldContextObject, Setting);
+}
+
+// ============================================================================
+// TAG-BASED GETTERS
+// ============================================================================
+
+float UMCore_GameSettingsLibrary::GetSettingFloatByTag(const UObject* WorldContextObject,
+	FGameplayTag SettingTag)
+{
+	return GetSettingByTag_Internal<float>(
+		WorldContextObject, SettingTag,
+		[](const UObject* WCO, const UMCore_DA_SettingDefinition* S) { return GetSettingFloat(WCO, S); },
+		0.f, TEXT("GetSettingFloatByTag"));
+}
 
 int32 UMCore_GameSettingsLibrary::GetSettingIntByTag(const UObject* WorldContextObject,
 	FGameplayTag SettingTag)
 {
-	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->GetDefaultSettingsCollection();
-	if (!Collection)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GetSettingIntByTag: DefaultSettingsCollection is null — cannot resolve tag '%s'"),
-			*SettingTag.ToString());
-		return 0;
-	}
+	return GetSettingByTag_Internal<int32>(
+		WorldContextObject, SettingTag,
+		[](const UObject* WCO, const UMCore_DA_SettingDefinition* S) { return GetSettingInt(WCO, S); },
+		0, TEXT("GetSettingIntByTag"));
+}
 
-	const UMCore_DA_SettingDefinition* Setting = Collection->FindSettingByTag(SettingTag);
-	if (!Setting)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GetSettingIntByTag: No setting found for tag '%s' in DefaultSettingsCollection"),
-			*SettingTag.ToString());
-		return 0;
-	}
-
-	return GetSettingInt(WorldContextObject, Setting);
+bool UMCore_GameSettingsLibrary::GetSettingBoolByTag(const UObject* WorldContextObject,
+	FGameplayTag SettingTag)
+{
+	return GetSettingByTag_Internal<bool>(
+		WorldContextObject, SettingTag,
+		[](const UObject* WCO, const UMCore_DA_SettingDefinition* S) { return GetSettingBool(WCO, S); },
+		false, TEXT("GetSettingBoolByTag"));
 }
 
 // ============================================================================
 // TYPED SETTERS
 // ============================================================================
 
-/**
- * @param Changes              One or more float setting/value pairs. Each is applied and flushed.
- * @param bBypassConfirmation  When true, skips the revert countdown for confirmation-required settings.
- */
 void UMCore_GameSettingsLibrary::SetSettingFloat(
 	const UObject* WorldContextObject,
 	const TArray<FMCore_FloatSettingChange>& Changes,
 	bool bBypassConfirmation)
 {
-	if (!WorldContextObject || Changes.IsEmpty()) { return; }
-
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("SetSettingFloat: Failed to get PlayerSettingsSave"));
-		return;
-	}
-
-	TArray<FString> AffectedTags;
-	TArray<FString> PreviousValues;
-	TArray<FGameplayTag> ProcessedTags;
-	float LongestRevertDelay = 0.f;
-	bool bAnyRequiresConfirmation = false;
-
-	for (const FMCore_FloatSettingChange& Change : Changes)
-	{
-		if (!Change.Setting)
-		{
-			UE_LOG(LogModulusSettings, Warning,
-				TEXT("SetSettingFloat: Null Setting in Changes — skipping"));
-			continue;
-		}
-
-		const FString Key = Change.Setting->GetSaveKey();
-		float ClampedValue = Change.Value;
-
-		if (Change.Setting->SettingType == EMCore_SettingType::Slider)
-		{
-			ClampedValue = FMath::Clamp(ClampedValue,
-				Change.Setting->MinValue, Change.Setting->MaxValue);
-		}
-
-		// Capture previous committed value before overwriting
-		float PreviousFloat = Change.Setting->DefaultValue;
-		Save->GetFloatSetting(Key, PreviousFloat);
-
-		Save->SetFloatSetting(Key, ClampedValue);
-		ApplySettingToEngine(Change.Setting, ClampedValue, 0, false);
-
-		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
-		{
-			bAnyRequiresConfirmation = true;
-			AffectedTags.Add(Change.Setting->SettingTag.ToString());
-			PreviousValues.Add(FString::SanitizeFloat(PreviousFloat));
-			LongestRevertDelay = FMath::Max(
-				LongestRevertDelay,
-				Change.Setting->ConfirmationRevertDelay);
-		}
-		else
-		{
-			ProcessedTags.Add(Change.Setting->SettingTag);
-		}
-	}
-
-	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
-	{
-		GUS->ApplySettings(false);
-	}
-
-	if (bAnyRequiresConfirmation)
-	{
-		// Do not save; UMCore_SettingsRevertCountdown decides
-		// whether to save (confirm) or revert (discard)
-		TMap<FString, FString> EventParams;
-		EventParams.Add(TEXT("SettingTags"),
-			FString::Join(AffectedTags, TEXT("|")));
-		EventParams.Add(TEXT("PreviousValues"),
-			FString::Join(PreviousValues, TEXT("|")));
-		EventParams.Add(TEXT("RevertDelay"),
-			FString::SanitizeFloat(LongestRevertDelay));
-
-		UMCore_EventFunctionLibrary::BroadcastEvent(
-			WorldContextObject,
-			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
-			EventParams, EMCore_EventScope::Local);
-	}
-	else
-	{
-		SavePlayerSettings(WorldContextObject);
-	}
-
-	/* Confirmation-required settings excluded. Their BroadcastSettingChanged
-	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
-	if (!bBypassConfirmation)
-	{
-		for (const FGameplayTag& Tag : ProcessedTags)
-		{
-			BroadcastSettingChanged(WorldContextObject, Tag);
-		}
-	}
+	ApplySettingChanges_Internal<FMCore_FloatSettingChange, float>(
+		WorldContextObject, Changes, bBypassConfirmation,
+		[](const UMCore_DA_SettingDefinition* S, float V) {
+			return (S->SettingType == EMCore_SettingType::Slider)
+				? FMath::Clamp(V, S->MinValue, S->MaxValue) : V;
+		},
+		[](const UMCore_DA_SettingDefinition* S) { return S->DefaultValue; },
+		[](UMCore_PlayerSettingsSave* Save, const FString& Key, float& Out) { return Save->GetFloatSetting(Key, Out); },
+		[](UMCore_PlayerSettingsSave* Save, const FString& Key, float V) { Save->SetFloatSetting(Key, V); },
+		[](const UMCore_DA_SettingDefinition* S, float V) { ApplySettingToEngine(S, V, 0, false); },
+		[](float V) { return FString::SanitizeFloat(V); });
 }
 
-/**
- * @param Changes              One or more int setting/value pairs. Each is applied and flushed.
- * @param bBypassConfirmation  When true, skips the revert countdown for confirmation-required settings.
- */
 void UMCore_GameSettingsLibrary::SetSettingInt(
 	const UObject* WorldContextObject,
 	const TArray<FMCore_IntSettingChange>& Changes,
 	bool bBypassConfirmation)
 {
-	if (!WorldContextObject || Changes.IsEmpty()) { return; }
-
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("SetSettingInt: Failed to get PlayerSettingsSave"));
-		return;
-	}
-
-	TArray<FString> AffectedTags;
-	TArray<FString> PreviousValues;
-	TArray<FGameplayTag> ProcessedTags;
-	float LongestRevertDelay = 0.f;
-	bool bAnyRequiresConfirmation = false;
-
-	for (const FMCore_IntSettingChange& Change : Changes)
-	{
-		if (!Change.Setting)
-		{
-			UE_LOG(LogModulusSettings, Warning,
-				TEXT("SetSettingInt: Null Setting in Changes — skipping"));
-			continue;
-		}
-
-		const FString Key = Change.Setting->GetSaveKey();
-		int32 ClampedValue = Change.Value;
-
-		if (Change.Setting->SettingType == EMCore_SettingType::Dropdown
-			&& Change.Setting->DropdownOptions.Num() > 0)
-		{
-			ClampedValue = FMath::Clamp(ClampedValue,
-				0, Change.Setting->DropdownOptions.Num() - 1);
-		}
-
-		// Capture previous committed value before overwriting
-		int32 PreviousInt = Change.Setting->DefaultDropdownIndex;
-		Save->GetIntSetting(Key, PreviousInt);
-
-		Save->SetIntSetting(Key, ClampedValue);
-		ApplySettingToEngine(Change.Setting, 0.f, ClampedValue, false);
-
-		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
-		{
-			bAnyRequiresConfirmation = true;
-			AffectedTags.Add(Change.Setting->SettingTag.ToString());
-			PreviousValues.Add(FString::FromInt(PreviousInt));
-			LongestRevertDelay = FMath::Max(
-				LongestRevertDelay,
-				Change.Setting->ConfirmationRevertDelay);
-		}
-		else
-		{
-			ProcessedTags.Add(Change.Setting->SettingTag);
-		}
-	}
-
-	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
-	{
-		GUS->ApplySettings(false);
-	}
-
-	if (bAnyRequiresConfirmation)
-	{
-		TMap<FString, FString> EventParams;
-		EventParams.Add(TEXT("SettingTags"),
-			FString::Join(AffectedTags, TEXT("|")));
-		EventParams.Add(TEXT("PreviousValues"),
-			FString::Join(PreviousValues, TEXT("|")));
-		EventParams.Add(TEXT("RevertDelay"),
-			FString::SanitizeFloat(LongestRevertDelay));
-
-		UMCore_EventFunctionLibrary::BroadcastEvent(
-			WorldContextObject,
-			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
-			EventParams, EMCore_EventScope::Local);
-	}
-	else
-	{
-		SavePlayerSettings(WorldContextObject);
-	}
-
-	/* Confirmation-required settings excluded. Their BroadcastSettingChanged
-	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
-	if (!bBypassConfirmation)
-	{
-		for (const FGameplayTag& Tag : ProcessedTags)
-		{
-			BroadcastSettingChanged(WorldContextObject, Tag);
-		}
-	}
+	ApplySettingChanges_Internal<FMCore_IntSettingChange, int32>(
+		WorldContextObject, Changes, bBypassConfirmation,
+		[](const UMCore_DA_SettingDefinition* S, int32 V) {
+			return (S->SettingType == EMCore_SettingType::Dropdown && S->DropdownOptions.Num() > 0)
+				? FMath::Clamp(V, 0, S->DropdownOptions.Num() - 1) : V;
+		},
+		[](const UMCore_DA_SettingDefinition* S) { return S->DefaultDropdownIndex; },
+		[](UMCore_PlayerSettingsSave* Save, const FString& Key, int32& Out) { return Save->GetIntSetting(Key, Out); },
+		[](UMCore_PlayerSettingsSave* Save, const FString& Key, int32 V) { Save->SetIntSetting(Key, V); },
+		[](const UMCore_DA_SettingDefinition* S, int32 V) { ApplySettingToEngine(S, 0.f, V, false); },
+		[](int32 V) { return FString::FromInt(V); });
 }
 
-/**
- * @param Changes              One or more bool setting/value pairs. Each is applied and flushed.
- * @param bBypassConfirmation  When true, skips the revert countdown for confirmation-required settings.
- */
 void UMCore_GameSettingsLibrary::SetSettingBool(
 	const UObject* WorldContextObject,
 	const TArray<FMCore_BoolSettingChange>& Changes,
 	bool bBypassConfirmation)
 {
-	if (!WorldContextObject || Changes.IsEmpty()) { return; }
-
-	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
-	if (!Save)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("SetSettingBool: Failed to get PlayerSettingsSave"));
-		return;
-	}
-
-	TArray<FString> AffectedTags;
-	TArray<FString> PreviousValues;
-	TArray<FGameplayTag> ProcessedTags;
-	float LongestRevertDelay = 0.f;
-	bool bAnyRequiresConfirmation = false;
-
-	for (const FMCore_BoolSettingChange& Change : Changes)
-	{
-		if (!Change.Setting)
-		{
-			UE_LOG(LogModulusSettings, Warning,
-				TEXT("SetSettingBool: Null Setting in Changes — skipping"));
-			continue;
-		}
-
-		const FString Key = Change.Setting->GetSaveKey();
-
-		// Capture previous committed value before overwriting
-		bool PreviousBool = Change.Setting->DefaultToggleValue;
-		Save->GetBoolSetting(Key, PreviousBool);
-
-		Save->SetBoolSetting(Key, Change.Value);
-		ApplySettingToEngine(Change.Setting, 0.f, 0, Change.Value);
-
-		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
-		{
-			bAnyRequiresConfirmation = true;
-			AffectedTags.Add(Change.Setting->SettingTag.ToString());
-			PreviousValues.Add(PreviousBool ? TEXT("true") : TEXT("false"));
-			LongestRevertDelay = FMath::Max(
-				LongestRevertDelay,
-				Change.Setting->ConfirmationRevertDelay);
-		}
-		else
-		{
-			ProcessedTags.Add(Change.Setting->SettingTag);
-		}
-	}
-
-	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
-	{
-		GUS->ApplySettings(false);
-	}
-
-	if (bAnyRequiresConfirmation)
-	{
-		TMap<FString, FString> EventParams;
-		EventParams.Add(TEXT("SettingTags"),
-			FString::Join(AffectedTags, TEXT("|")));
-		EventParams.Add(TEXT("PreviousValues"),
-			FString::Join(PreviousValues, TEXT("|")));
-		EventParams.Add(TEXT("RevertDelay"),
-			FString::SanitizeFloat(LongestRevertDelay));
-
-		UMCore_EventFunctionLibrary::BroadcastEvent(
-			WorldContextObject,
-			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
-			EventParams, EMCore_EventScope::Local);
-	}
-	else
-	{
-		SavePlayerSettings(WorldContextObject);
-	}
-
-	/* Confirmation-required settings excluded. Their BroadcastSettingChanged
-	 * is deferred to UMCore_SettingsRevertCountdown on user confirm. */
-	if (!bBypassConfirmation)
-	{
-		for (const FGameplayTag& Tag : ProcessedTags)
-		{
-			BroadcastSettingChanged(WorldContextObject, Tag);
-		}
-	}
+	ApplySettingChanges_Internal<FMCore_BoolSettingChange, bool>(
+		WorldContextObject, Changes, bBypassConfirmation,
+		[](const UMCore_DA_SettingDefinition*, bool V) { return V; },
+		[](const UMCore_DA_SettingDefinition* S) { return S->DefaultToggleValue; },
+		[](UMCore_PlayerSettingsSave* Save, const FString& Key, bool& Out) { return Save->GetBoolSetting(Key, Out); },
+		[](UMCore_PlayerSettingsSave* Save, const FString& Key, bool V) { Save->SetBoolSetting(Key, V); },
+		[](const UMCore_DA_SettingDefinition* S, bool V) { ApplySettingToEngine(S, 0.f, 0, V); },
+		[](bool V) -> FString { return V ? TEXT("true") : TEXT("false"); });
 }
 
 // ============================================================================
@@ -562,18 +428,21 @@ void UMCore_GameSettingsLibrary::ResetSettingToDefault(const UObject* WorldConte
 
 void UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(const UObject* WorldContextObject)
 {
-	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->GetDefaultSettingsCollection();
-	if (!Collection)
+	const TArray<UMCore_DA_SettingsCollection*>& Collections = UMCore_CoreSettings::Get()->GetAllSettingsCollections();
+	if (Collections.IsEmpty())
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("ResetAllSettingsToDefault: DefaultSettingsCollection is null in CoreSettings"));
+			TEXT("GameSettingsLibrary::ResetAllSettingsToDefault -- no settings collections configured in CoreSettings"));
 		return;
 	}
 
 	TArray<UMCore_DA_SettingDefinition*> Definitions;
-	for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Collection->GetAllSettings())
+	for (const UMCore_DA_SettingsCollection* Collection : Collections)
 	{
-		if (Setting) { Definitions.Add(Setting); }
+		for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Collection->GetAllSettings())
+		{
+			if (Setting) { Definitions.Add(Setting); }
+		}
 	}
 
 	ResetDefinitionsToDefault(WorldContextObject, Definitions);
@@ -587,15 +456,8 @@ void UMCore_GameSettingsLibrary::ResetCategoryToDefault(const UObject* WorldCont
 {
 	if (!CategoryTag.IsValid()) { return; }
 
-	const UMCore_DA_SettingsCollection* Collection = UMCore_CoreSettings::Get()->GetDefaultSettingsCollection();
-	if (!Collection)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("ResetCategoryToDefault: DefaultSettingsCollection is null in CoreSettings"));
-		return;
-	}
-
-	ResetDefinitionsToDefault(WorldContextObject, Collection->GetSettingsInCategory(CategoryTag));
+	ResetDefinitionsToDefault(WorldContextObject,
+		UMCore_CoreSettings::Get()->GetSettingsForCategory(CategoryTag));
 }
 
 void UMCore_GameSettingsLibrary::ResetDefinitionsToDefault(const UObject* WorldContextObject,
@@ -704,7 +566,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 	if (!ThisProperty)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSetting property '%s' not found"), *PropertyName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToGameUserSettings -- property '%s' not found"), *PropertyName.ToString());
 		return;
 	}
 
@@ -719,7 +581,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 	else
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSetting property '%s' is not float/double"), *PropertyName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToGameUserSettings -- property '%s' is not float/double"), *PropertyName.ToString());
 	}
 }
 
@@ -732,7 +594,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 	if (!ThisProperty)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSetting property '%s' not found"), *PropertyName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToGameUserSettings -- property '%s' not found"), *PropertyName.ToString());
 		return;
 	}
 
@@ -743,7 +605,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 	else
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSetting property '%s' is not int32"), *PropertyName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToGameUserSettings -- property '%s' is not int32"), *PropertyName.ToString());
 	}
 }
 
@@ -756,7 +618,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 	if (!ThisProperty)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSetting property '%s' not found"), *PropertyName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToGameUserSettings -- property '%s' not found"), *PropertyName.ToString());
 		return;
 	}
 
@@ -767,7 +629,7 @@ void UMCore_GameSettingsLibrary::ApplyToGameUserSettings(const FName& PropertyNa
 	else
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSetting property '%s' is not bool"), *PropertyName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToGameUserSettings -- property '%s' is not bool"), *PropertyName.ToString());
 	}
 }
 
@@ -785,7 +647,7 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, f
 	else
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("Console variable '%s' not found"), *CVarName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToConsoleVariable -- console variable '%s' not found"), *CVarName.ToString());
 	}
 }
 
@@ -799,7 +661,7 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, i
 	else
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("Console variable '%s' not found"), *CVarName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToConsoleVariable -- console variable '%s' not found"), *CVarName.ToString());
 	}
 }
 
@@ -813,7 +675,7 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, b
 	else
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("Console variable '%s' not found"), *CVarName.ToString());
+			TEXT("GameSettingsLibrary::ApplyToConsoleVariable -- console variable '%s' not found"), *CVarName.ToString());
 	}
 }
 
@@ -827,14 +689,14 @@ void UMCore_GameSettingsLibrary::ApplyToSoundClass(const TSoftObjectPtr<USoundCl
 	if (!LoadedClass)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("Failed to load SoundClass: %s"), *SoundClassRef.ToString());
+			TEXT("GameSettingsLibrary::ApplyToSoundClass -- failed to load SoundClass '%s'"), *SoundClassRef.ToString());
 		return;
 	}
 
 	LoadedClass->Properties.Volume = FMath::Clamp(Volume, 0.0f, 1.0f);
 
 	UE_LOG(LogModulusSettings, Verbose,
-		TEXT("SoundClass '%s' volume set to %.2f"),
+		TEXT("GameSettingsLibrary::ApplyToSoundClass -- SoundClass '%s' volume set to %.2f"),
 		*LoadedClass->GetName(), Volume);
 }
 

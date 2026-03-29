@@ -515,7 +515,7 @@ void SModulusHubTab::Construct(const FArguments& InArgs)
 	// Initialize plugin list UI
 	UpdatePluginListUI();
 
-	UE_LOG(LogModulusEditor, Log, TEXT("Modulus Hub opened"));
+	UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::Construct -- hub opened"));
 }
 
 void SModulusHubTab::UpdatePluginListUI()
@@ -595,7 +595,7 @@ void SModulusHubTab::OnEventLoggingCheckStateChanged(ECheckBoxState NewState)
 	{
 		Settings->bEnableEventSystemLogging = (NewState == ECheckBoxState::Checked);
 		Settings->TryUpdateDefaultConfigFile();
-		UE_LOG(LogModulusEditor, Log, TEXT("Event System Logging %s"),
+		UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::OnEventLoggingCheckStateChanged -- event system logging %s"),
 			Settings->bEnableEventSystemLogging ? TEXT("enabled") : TEXT("disabled"));
 	}
 #endif
@@ -609,7 +609,7 @@ void SModulusHubTab::OnUIDebugOverlayCheckStateChanged(ECheckBoxState NewState)
 	{
 		Settings->bShowUILayerDebugOverlay = (NewState == ECheckBoxState::Checked);
 		Settings->TryUpdateDefaultConfigFile();
-		UE_LOG(LogModulusEditor, Log, TEXT("UI Layer Debug Overlay %s"),
+		UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::OnUIDebugOverlayCheckStateChanged -- UI layer debug overlay %s"),
 			Settings->bShowUILayerDebugOverlay ? TEXT("enabled") : TEXT("disabled"));
 	}
 #endif
@@ -671,14 +671,14 @@ FReply SModulusHubTab::OnEditThemeAssetClicked()
 	const UMCore_CoreSettings* Settings = UMCore_CoreSettings::Get();
 	if (!Settings || !Settings->IsValidThemeIndex(Settings->DefaultThemeIndex))
 	{
-		UE_LOG(LogModulusEditor, Warning, TEXT("No active theme configured. Configure a theme in Project Settings > Game > Modulus Core"));
+		UE_LOG(LogModulusEditor, Warning, TEXT("ModulusHubTab::OnEditThemeAssetClicked -- no active theme configured, configure a theme in Project Settings > Game > Modulus Core"));
 		return FReply::Handled();
 	}
 
 	const FMCore_ThemeEntry& ThemeEntry = Settings->AvailableThemes[Settings->DefaultThemeIndex];
 	if (ThemeEntry.ThemeAsset.IsNull())
 	{
-		UE_LOG(LogModulusEditor, Warning, TEXT("Active theme entry has no asset assigned"));
+		UE_LOG(LogModulusEditor, Warning, TEXT("ModulusHubTab::OnEditThemeAssetClicked -- active theme entry has no asset assigned"));
 		return FReply::Handled();
 	}
 
@@ -688,7 +688,7 @@ FReply SModulusHubTab::OnEditThemeAssetClicked()
 		if (GEditor)
 		{
 			GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(ThemeAsset);
-			UE_LOG(LogModulusEditor, Log, TEXT("Opened theme asset: %s"), *ThemeAsset->GetName());
+			UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::OnEditThemeAssetClicked -- opened theme asset: %s"), *ThemeAsset->GetName());
 		}
 	}
 
@@ -710,20 +710,20 @@ void SModulusHubTab::RefreshInstalledPlugins()
 		}
 	}
 
-	UE_LOG(LogModulusEditor, Log, TEXT("[Refresh Plugins] Found %d Modulus plugin(s)"), InstalledPluginNames.Num());
+	UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::RefreshInstalledPlugins -- found %d Modulus plugin(s)"), InstalledPluginNames.Num());
 }
 
 FReply SModulusHubTab::OnQuickStartClicked()
 {
 	// TODO: Add actual documentation URL when available
-	UE_LOG(LogModulusEditor, Log, TEXT("[Docs] Quick Start Guide requested"));
+	UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::OnQuickStartClicked -- Quick Start Guide requested"));
 	return FReply::Handled();
 }
 
 FReply SModulusHubTab::OnAPIReferenceClicked()
 {
 	// TODO: Add actual documentation URL when available
-	UE_LOG(LogModulusEditor, Log, TEXT("[Docs] API Reference requested"));
+	UE_LOG(LogModulusEditor, Log, TEXT("ModulusHubTab::OnAPIReferenceClicked -- API Reference requested"));
 	return FReply::Handled();
 }
 

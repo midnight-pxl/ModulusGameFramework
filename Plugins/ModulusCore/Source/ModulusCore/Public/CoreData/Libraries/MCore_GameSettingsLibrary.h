@@ -56,16 +56,28 @@ public:
 		const UMCore_DA_SettingDefinition* Setting);
 
 	// ============================================================================
-	// TAG-BASED GETTER
+	// TAG-BASED GETTERS
 	// ============================================================================
 
+	/** Returns effective float value by tag (resolved from CoreSettings::SettingsCollections). */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
+		meta = (WorldContext = "WorldContextObject"))
+	static float GetSettingFloatByTag(const UObject* WorldContextObject,
+		FGameplayTag SettingTag);
+
 	/**
-	 * Returns effective integer value by tag (resolved from CoreSettings::DefaultSettingsCollection).
+	 * Returns effective integer value by tag (resolved from CoreSettings::SettingsCollections).
 	 * Use when the caller has a setting tag but not a definition pointer.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
 		meta = (WorldContext = "WorldContextObject"))
 	static int32 GetSettingIntByTag(const UObject* WorldContextObject,
+		FGameplayTag SettingTag);
+
+	/** Returns effective bool value by tag (resolved from CoreSettings::SettingsCollections). */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings",
+		meta = (WorldContext = "WorldContextObject"))
+	static bool GetSettingBoolByTag(const UObject* WorldContextObject,
 		FGameplayTag SettingTag);
 
 	// ============================================================================
@@ -115,7 +127,7 @@ public:
 		const UMCore_DA_SettingDefinition* Setting);
 
 	/**
-	 * Reset all settings in DefaultSettingsCollection to their DataAsset defaults.
+	 * Reset all settings across all SettingsCollections to their DataAsset defaults.
 	 * Batched with a single GUS flush per type.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
@@ -138,14 +150,38 @@ public:
 
 private:
 	// ============================================================================
+	// INTERNAL HELPERS
+	// ============================================================================
+
+	static UMCore_PlayerSettingsSave* GetPlayerSave(const UObject* WorldContextObject);
+
+	static void BroadcastSettingChanged(const UObject* WorldContextObject,
+		const FGameplayTag& SettingTag);
+
+	template<typename TChangeStruct, typename TValue>
+	static void ApplySettingChanges_Internal(
+		const UObject* WorldContextObject,
+		const TArray<TChangeStruct>& Changes,
+		bool bBypassConfirmation,
+		TFunctionRef<TValue(const UMCore_DA_SettingDefinition*, TValue)> ClampValue,
+		TFunctionRef<TValue(const UMCore_DA_SettingDefinition*)> GetDefault,
+		TFunctionRef<bool(UMCore_PlayerSettingsSave*, const FString&, TValue&)> GetCommitted,
+		TFunctionRef<void(UMCore_PlayerSettingsSave*, const FString&, TValue)> SetCommitted,
+		TFunctionRef<void(const UMCore_DA_SettingDefinition*, TValue)> ApplyToEngine,
+		TFunctionRef<FString(TValue)> ValueToString);
+
+	template<typename TValue>
+	static TValue GetSettingByTag_Internal(
+		const UObject* WorldContextObject,
+		const FGameplayTag& SettingTag,
+		TFunctionRef<TValue(const UObject*, const UMCore_DA_SettingDefinition*)> TypedGetter,
+		TValue DefaultReturn,
+		const TCHAR* FunctionName);
+
+	// ============================================================================
 	// ENGINE APPLY HELPERS
 	// ============================================================================
 
-	/**
-	 * Apply a single setting value to its configured engine targets.
-	 * Reads GameUserSettingsProperty, ConsoleVariable, and SoundClass
-	 * from the DataAsset to determine where to write.
-	 */
 	static void ApplySettingToEngine(const UMCore_DA_SettingDefinition* Setting,
 		float FloatValue, int32 IntValue, bool BoolValue);
 
@@ -158,11 +194,6 @@ private:
 	static void ApplyToConsoleVariable(const FName& CVarName, bool Value);
 
 	static void ApplyToSoundClass(const TSoftObjectPtr<USoundClass>& SoundClassRef, float Volume);
-
-	static void BroadcastSettingChanged(const UObject* WorldContextObject,
-		const FGameplayTag& SettingTag);
-
-	static UMCore_PlayerSettingsSave* GetPlayerSave(const UObject* WorldContextObject);
 
 	static void ResetDefinitionsToDefault(const UObject* WorldContextObject,
 		const TArray<UMCore_DA_SettingDefinition*>& Definitions);

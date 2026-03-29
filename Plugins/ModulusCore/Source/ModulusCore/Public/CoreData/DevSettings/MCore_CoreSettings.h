@@ -5,7 +5,7 @@
  *
  * Developer settings for the Modulus Game Framework, accessible via
  * Project Settings > Game > Modulus Core. Configures themes, UI layout,
- * settings collection, and editor-only debug options.
+ * settings collections, and editor-only debug options.
  */
 
 #pragma once
@@ -14,6 +14,7 @@
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "CoreData/Types/UI/MCore_MenuTabTypes.h"
 #include "Engine/DeveloperSettings.h"
+#include "GameplayTagContainer.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
 #include "MCore_CoreSettings.generated.h"
 
@@ -27,7 +28,7 @@ class UMCore_KeyBindingPanel_Base;
 
 /**
  * Developer settings for the Modulus Game Framework (Project Settings > Game > Modulus Core).
- * Configures themes, UI layout class overrides, default settings collection,
+ * Configures themes, UI layout class overrides, settings collections,
  * and editor-only debug options.
  */
 UCLASS(Config=ModulusCore, DefaultConfig, meta=(DisplayName="Modulus Core"))
@@ -108,16 +109,17 @@ public:
 	int32 DefaultThemeIndex{0};
 
 	// ============================================================================
-	// SETTINGS COLLECTION
+	// SETTINGS COLLECTIONS
 	// ============================================================================
 
 	/**
-	 * The default settings collection for this project.
-	 * Used by tag-based setting accessors and bulk reset operations
-	 * when no explicit collection reference is provided.
+	 * Settings collections for this project. All collections aggregate into a unified
+	 * settings inventory. Categories with the same GameplayTag merge across collections.
+	 * Settings sort by SortOrder within merged categories.
 	 */
-	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
-	TSoftObjectPtr<UMCore_DA_SettingsCollection> DefaultSettingsCollection;
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings",
+		meta=(DisplayName="Settings Collections"))
+	TArray<TSoftObjectPtr<UMCore_DA_SettingsCollection>> SettingsCollections;
 	
 	/** Widget class used to render Slider-type settings. */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
@@ -175,12 +177,43 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Modulus|Theme")
 	UMCore_PDA_UITheme_Base* GetDefaultTheme() const;
 	
-	/** Returns the loaded collection, or nullptr if unset/invalid. */
-	UFUNCTION(BlueprintPure, Category = "Settings")
-	UMCore_DA_SettingsCollection* GetDefaultSettingsCollection() const
-	{
-		return DefaultSettingsCollection.LoadSynchronous();
-	}
+	// ============================================================================
+	// SETTINGS AGGREGATION HELPERS
+	// ============================================================================
+
+	/** Returns all loaded settings collections. Resolves soft references on first call, caches results. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Settings")
+	const TArray<UMCore_DA_SettingsCollection*>& GetAllSettingsCollections() const;
+
+	/** Searches all collections for a setting definition matching the tag. Returns first match. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Settings")
+	UMCore_DA_SettingDefinition* FindSettingDefinitionByTag(const FGameplayTag& SettingTag) const;
+
+	/** Returns all settings across all collections for a category, sorted by SortOrder. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Settings")
+	TArray<UMCore_DA_SettingDefinition*> GetSettingsForCategory(const FGameplayTag& CategoryTag) const;
+
+	/** Returns all unique category tags across all collections, sorted by minimum SortOrder per category. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Settings")
+	TArray<FGameplayTag> GetAllSettingsCategories() const;
+
+	/** Searches all collections for a category display name. Returns tag leaf segment as fallback. */
+	FText GetCategoryDisplayName(const FGameplayTag& CategoryTag) const;
+
+	/** Returns true if at least one collection is assigned and loadable. */
+	UFUNCTION(BlueprintPure, Category = "Modulus|Settings")
+	bool HasValidSettingsCollections() const;
+
+	/** Clears the resolved collection cache. Next GetAllSettingsCollections() call will re-resolve. */
+	void InvalidateCollectionCache();
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
+	// ============================================================================
+	// THEME HELPERS
+	// ============================================================================
 
 	/**
 	 * Returns the default theme for design-time preview (static, no UISubsystem needed).
@@ -191,4 +224,8 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Modulus|Theme")
 	bool IsValidThemeIndex(int32 Index) const;
+
+private:
+	mutable TArray<TObjectPtr<UMCore_DA_SettingsCollection>> ResolvedCollections;
+	mutable bool bCollectionsCacheValid{false};
 };

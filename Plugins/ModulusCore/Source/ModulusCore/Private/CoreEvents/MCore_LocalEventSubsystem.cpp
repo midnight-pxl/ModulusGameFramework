@@ -21,12 +21,14 @@
 void UMCore_LocalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	UE_LOG(LogModulusEvent, Log, TEXT("LocalEventSubsystem::Initialize -- initialized"));
 }
 
 void UMCore_LocalEventSubsystem::Deinitialize()
 {
+	UE_LOG(LogModulusEvent, Log, TEXT("LocalEventSubsystem::Deinitialize -- cleaning up, %d listener(s)"), LocalListeners.Num());
 	LocalListeners.Empty();
-	
+
 	Super::Deinitialize();
 }
 
@@ -35,7 +37,7 @@ void UMCore_LocalEventSubsystem::RegisterLocalListener(UMCore_EventListenerComp*
 	if (IsValid(ListenerComponent))
 	{
 		LocalListeners.AddUnique(ListenerComponent);
-		MCORE_EVENT_LOG(TEXT("Registered local event listener: %s"),
+		MCORE_EVENT_LOG(TEXT("LocalEventSubsystem::RegisterLocalListener -- registered: %s"),
 			*ListenerComponent->GetName());
 	}
 }
@@ -50,7 +52,7 @@ void UMCore_LocalEventSubsystem::UnregisterLocalListener(UMCore_EventListenerCom
 	
 	if (RemovedCount > 0)
 	{
-		MCORE_EVENT_LOG(TEXT("Unregistered local event listener: %s"),
+		MCORE_EVENT_LOG(TEXT("LocalEventSubsystem::UnregisterLocalListener -- unregistered: %s"),
 			ListenerComponent ? *ListenerComponent->GetName() : TEXT("Unknown"));
 	}
 }
@@ -59,7 +61,7 @@ void UMCore_LocalEventSubsystem::BroadcastLocalEvent(const FMCore_EventData& Eve
 {
 	if (LocalListeners.Num() == 0 || !EventData.IsValid()) { return; }
 
-	MCORE_EVENT_LOG(TEXT("Broadcasting local event: %s"),
+	MCORE_EVENT_LOG(TEXT("LocalEventSubsystem::BroadcastLocalEvent -- broadcasting: %s"),
 		*EventData.EventTag.ToString());
 	
 	for (int32 i = LocalListeners.Num() - 1; i >= 0; --i)

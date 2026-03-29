@@ -105,17 +105,20 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	/**
 	 * Load player settings from disk (synchronous).
 	 * Returns existing save if found, or creates new instance with defaults.
-	 * Does NOT cache internally -- caching is handled by UMCore_UISubsystem.
+	 * Caches the slot name on the returned object for use by SaveSettings().
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-	static UMCore_PlayerSettingsSave* LoadPlayerSettings();
+	static UMCore_PlayerSettingsSave* LoadPlayerSettings(const FString& SlotName);
 
 	/**
 	 * Load player settings from disk (asynchronous).
 	 * Falls back to synchronous creation if no save file exists.
+	 * Caches the slot name on the returned object for use by SaveSettings().
 	 */
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-	static void LoadPlayerSettingsAsync(FOnPlayerSettingsLoaded OnLoaded);
+	static void LoadPlayerSettingsAsync(const FString& SlotName, FOnPlayerSettingsLoaded OnLoaded);
+
+	const FString& GetCachedSlotName() const { return CachedSlotName; }
 
 	// ========================================================================
 	// FRAMEWORK CONVENIENCE
@@ -150,8 +153,7 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 	void ValidateSettings();
 
 private:
-	static FString GetSaveSlotName() { return TEXT("ModulusPlayerSettings"); }
-	static int32 GetUserIndex() { return 0; }
+	FString CachedSlotName;
 
 	void ApplyUIScale();
 };

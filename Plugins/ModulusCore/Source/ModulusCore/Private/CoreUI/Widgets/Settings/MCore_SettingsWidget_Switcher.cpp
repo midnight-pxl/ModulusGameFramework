@@ -1,14 +1,16 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Switcher.h"
+
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
-#include "CoreData/Logging/LogModulusUI.h"
+#include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
-#include "CommonTextBlock.h"
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
+
+#include "CommonTextBlock.h"
 
 // ============================================================================
 // LIFECYCLE
@@ -64,6 +66,8 @@ void UMCore_SettingsWidget_Switcher::OnDefinitionSet_Implementation(
 
 	ReadCurrentValue();
 	UpdateDisplay();
+
+	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsWidget_Switcher::OnDefinitionSet -- configured %d options, toggle=%s, current=%d, widget=%s"), Options.Num(), bIsToggleMode ? TEXT("true") : TEXT("false"), CurrentIndex, *GetNameSafe(this));
 }
 
 // ============================================================================
@@ -193,6 +197,8 @@ void UMCore_SettingsWidget_Switcher::ResetToDefault_Implementation()
 
 	ReadCurrentValue();
 	UpdateDisplay();
+
+	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsWidget_Switcher::ResetToDefault -- reset to index %d, widget=%s"), CurrentIndex, *GetNameSafe(this));
 }
 
 void UMCore_SettingsWidget_Switcher::RefreshValueFromSettings_Implementation()

@@ -42,8 +42,8 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 	if (!PC || !ScrollBox_Bindings || !KeyBindingRowClass)
 	{
 		UE_LOG(LogModulusUI, Warning,
-			TEXT("[%s] PopulateBindings: Missing PC, ScrollBox, or KeyBindingRowClass"),
-			*GetName());
+			TEXT("KeyBindingPanel_Base::PopulateBindings -- missing PC, ScrollBox, or KeyBindingRowClass [%s]"),
+			*GetNameSafe(this));
 		return;
 	}
 
@@ -61,7 +61,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 
 	if (AllMappings.IsEmpty())
 	{
-		UE_LOG(LogModulusUI, Log, TEXT("[%s] No remappable actions found"), *GetName());
+		UE_LOG(LogModulusUI, Log, TEXT("KeyBindingPanel_Base::PopulateBindings -- no remappable actions found [%s]"), *GetNameSafe(this));
 		return;
 	}
 
@@ -116,8 +116,8 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 			if (!Action)
 			{
 				UE_LOG(LogModulusUI, Warning,
-					TEXT("[%s] Mapping '%s' has no associated InputAction"),
-					*GetName(), *Mapping->GetMappingName().ToString());
+					TEXT("KeyBindingPanel_Base::PopulateBindings -- mapping '%s' has no associated InputAction [%s]"),
+					*Mapping->GetMappingName().ToString(), *GetNameSafe(this));
 				continue;
 			}
 
@@ -131,8 +131,8 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 		}
 	}
 
-	UE_LOG(LogModulusUI, Log, TEXT("[%s] Populated %d binding rows across %d categories"),
-		*GetName(), AllRows.Num(), SortedCategories.Num());
+	UE_LOG(LogModulusUI, Log, TEXT("KeyBindingPanel_Base::PopulateBindings -- populated %d binding rows across %d categories [%s]"),
+		AllRows.Num(), SortedCategories.Num(), *GetNameSafe(this));
 }
 
 void UMCore_KeyBindingPanel_Base::RefreshAllRows()

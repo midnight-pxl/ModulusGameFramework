@@ -2,9 +2,8 @@
 
 #include "CoreUI/MCore_UIExtensionSubsystem.h"
 #include "CoreData/Types/UI/MCore_UIExtensionTypes.h"
+#include "CoreData/Logging/LogModulusUI.h"
 #include "Blueprint/UserWidget.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogMCoreUIExtension, Log, All);
 
 // ============================================================================
 // INITIALIZATION
@@ -16,7 +15,7 @@ void UMCore_UIExtensionSubsystem::Initialize(FSubsystemCollectionBase& Collectio
 	
 	NextHandleID = 1;
 	
-	UE_LOG(LogMCoreUIExtension, Verbose, TEXT("UIExtension subsystem initialized"));
+	UE_LOG(LogModulusUI, Verbose, TEXT("UIExtensionSubsystem::Initialize -- initialized"));
 }
 
 void UMCore_UIExtensionSubsystem::Deinitialize()
@@ -27,7 +26,7 @@ void UMCore_UIExtensionSubsystem::Deinitialize()
 	ExtensionHandles.Empty();
 	NextHandleID = 1;
 	
-	UE_LOG(LogMCoreUIExtension, Verbose, TEXT("UIExtension subsystem deinitialized"));
+	UE_LOG(LogModulusUI, Verbose, TEXT("UIExtensionSubsystem::Deinitialize -- deinitialized"));
 	
 	Super::Deinitialize();
 }
@@ -49,15 +48,15 @@ FMCore_UIExtensionPointHandle UMCore_UIExtensionSubsystem::RegisterExtensionPoin
 {
 	if (!ExtensionPointTag.IsValid())
 	{
-		UE_LOG(LogMCoreUIExtension, Error, 
-			TEXT("RegisterExtensionPoint: Invalid ExtensionPointTag"));
+		UE_LOG(LogModulusUI, Error,
+			TEXT("UIExtensionSubsystem::RegisterExtensionPoint -- invalid ExtensionPointTag"));
 		return FMCore_UIExtensionPointHandle();
 	}
 
 	if (!ExtensionCallback.IsBound())
 	{
-		UE_LOG(LogMCoreUIExtension, Warning,
-			TEXT("RegisterExtensionPoint: Callback not bound for tag '%s'"), 
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("UIExtensionSubsystem::RegisterExtensionPoint -- callback not bound for Tag='%s'"),
 			*ExtensionPointTag.ToString());
 	}
 
@@ -73,8 +72,8 @@ FMCore_UIExtensionPointHandle UMCore_UIExtensionSubsystem::RegisterExtensionPoin
 
 	NotifyExtensionPointOfExtensions(ExtensionPoint.Get());
 
-	UE_LOG(LogMCoreUIExtension, Verbose,
-		TEXT("Registered extension point: Tag='%s', Context=%s, HandleID=%u"),
+	UE_LOG(LogModulusUI, Verbose,
+		TEXT("UIExtensionSubsystem::RegisterExtensionPoint -- registered: Tag='%s', Context=%s, HandleID=%u"),
 		*ExtensionPointTag.ToString(),
 		ContextObject ? *ContextObject->GetName() : TEXT("Global"),
 		HandleID);
@@ -95,8 +94,8 @@ void UMCore_UIExtensionSubsystem::UnregisterExtensionPoint(
 	TSharedPtr<FMCore_UIExtensionPoint>* FoundPoint = ExtensionPointHandles.Find(HandleID);
 	if (!FoundPoint)
 	{
-		UE_LOG(LogMCoreUIExtension, Warning,
-			TEXT("UnregisterExtensionPoint: Handle %u not found"), HandleID);
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("UIExtensionSubsystem::UnregisterExtensionPoint -- Handle %u not found"), HandleID);
 		ExtensionPointHandle.Invalidate();
 		return;
 	}
@@ -115,8 +114,8 @@ void UMCore_UIExtensionSubsystem::UnregisterExtensionPoint(
 	ExtensionPointHandles.Remove(HandleID);
 	ExtensionPointHandle.Invalidate();
 
-	UE_LOG(LogMCoreUIExtension, Verbose,
-		TEXT("Unregistered extension point: HandleID=%u"), HandleID);
+	UE_LOG(LogModulusUI, Verbose,
+		TEXT("UIExtensionSubsystem::UnregisterExtensionPoint -- unregistered: HandleID=%u"), HandleID);
 }
 
 // ============================================================================
@@ -138,15 +137,15 @@ FMCore_UIExtensionHandle UMCore_UIExtensionSubsystem::RegisterExtension(
 {
 	if (!ExtensionPointTag.IsValid())
 	{
-		UE_LOG(LogMCoreUIExtension, Error,
-			TEXT("RegisterExtension: Invalid ExtensionPointTag"));
+		UE_LOG(LogModulusUI, Error,
+			TEXT("UIExtensionSubsystem::RegisterExtension -- invalid ExtensionPointTag"));
 		return FMCore_UIExtensionHandle();
 	}
 
 	if (!WidgetClass)
 	{
-		UE_LOG(LogMCoreUIExtension, Error,
-			TEXT("RegisterExtension: Invalid WidgetClass for tag '%s'"),
+		UE_LOG(LogModulusUI, Error,
+			TEXT("UIExtensionSubsystem::RegisterExtension -- invalid WidgetClass for Tag='%s'"),
 			*ExtensionPointTag.ToString());
 		return FMCore_UIExtensionHandle();
 	}
@@ -165,8 +164,8 @@ FMCore_UIExtensionHandle UMCore_UIExtensionSubsystem::RegisterExtension(
 
 	NotifyExtensionPointsOfExtension(EMCore_UIExtensionAction::Added, Extension.Get());
 
-	UE_LOG(LogMCoreUIExtension, Verbose,
-		TEXT("Registered extension: Tag='%s', Widget=%s, Priority=%d, Context=%s, HandleID=%u"),
+	UE_LOG(LogModulusUI, Verbose,
+		TEXT("UIExtensionSubsystem::RegisterExtension -- registered: Tag='%s', Widget=%s, Priority=%d, Context=%s, HandleID=%u"),
 		*ExtensionPointTag.ToString(),
 		*WidgetClass->GetName(),
 		Priority,
@@ -188,8 +187,8 @@ void UMCore_UIExtensionSubsystem::UnregisterExtension(FMCore_UIExtensionHandle& 
 	TSharedPtr<FMCore_UIExtension>* FoundExtension = ExtensionHandles.Find(HandleID);
 	if (!FoundExtension)
 	{
-		UE_LOG(LogMCoreUIExtension, Warning,
-			TEXT("UnregisterExtension: Handle %u not found"), HandleID);
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("UIExtensionSubsystem::UnregisterExtension -- Handle %u not found"), HandleID);
 		ExtensionHandle.Invalidate();
 		return;
 	}
@@ -210,8 +209,8 @@ void UMCore_UIExtensionSubsystem::UnregisterExtension(FMCore_UIExtensionHandle& 
 	ExtensionHandles.Remove(HandleID);
 	ExtensionHandle.Invalidate();
 
-	UE_LOG(LogMCoreUIExtension, Verbose,
-		TEXT("Unregistered extension: HandleID=%u"), HandleID);
+	UE_LOG(LogModulusUI, Verbose,
+		TEXT("UIExtensionSubsystem::UnregisterExtension -- unregistered: HandleID=%u"), HandleID);
 }
 
 // ============================================================================

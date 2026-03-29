@@ -8,6 +8,7 @@
 #include "Components/Image.h"
 #include "Components/NamedSlot.h"
 #include "Engine/Texture2D.h"
+#include "CoreData/Logging/LogModulusUI.h"
 
 UMCore_ContainerBase::UMCore_ContainerBase()
 {
@@ -24,6 +25,8 @@ void UMCore_ContainerBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	UE_LOG(LogModulusUI, Verbose, TEXT("ContainerBase::NativeOnInitialized -- initialized, widget=%s"), *GetNameSafe(this));
+
 	BindThemeDelegate();
 
 	if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
@@ -37,6 +40,8 @@ void UMCore_ContainerBase::NativeOnInitialized()
 
 void UMCore_ContainerBase::NativeDestruct()
 {
+	UE_LOG(LogModulusUI, Verbose, TEXT("ContainerBase::NativeDestruct -- destructing, widget=%s"), *GetNameSafe(this));
+
 	UnbindThemeDelegate();
 
 	Super::NativeDestruct();
@@ -84,6 +89,11 @@ void UMCore_ContainerBase::SetContentPadding(FMargin InPadding)
 
 void UMCore_ContainerBase::ApplyTheme_Implementation(UMCore_PDA_UITheme_Base* Theme)
 {
+	if (Theme)
+	{
+		UE_LOG(LogModulusUI, Verbose, TEXT("ContainerBase::ApplyTheme -- theme applied, widget=%s"), *GetNameSafe(this));
+	}
+
 	K2_OnThemeApplied(Theme);
 }
 
