@@ -1,10 +1,12 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreEvents/MCore_EventListenerComp.h"
+
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
+
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 
@@ -28,7 +30,7 @@ void UMCore_EventListenerComp::BeginPlay()
 		return;
 	}
 
-	// Register with local event subsystem (per-LocalPlayer, split-screen safe)
+	/* Register with local event subsystem (per-LocalPlayer, split-screen safe) */
 	if (bReceiveLocalEvents)
 	{
 		if (ULocalPlayer* LocalPlayer = ResolveOwningLocalPlayer())
@@ -45,7 +47,7 @@ void UMCore_EventListenerComp::BeginPlay()
 		}
 	}
 
-	// Register with global event subsystem (GameInstance-scoped)
+	/* Register with global event subsystem (GameInstance-scoped) */
 	if (bReceiveGlobalEvents)
 	{
 		if (UGameInstance* GameInstance = World->GetGameInstance())
@@ -72,45 +74,45 @@ ULocalPlayer* UMCore_EventListenerComp::ResolveOwningLocalPlayer() const
 {
 	if (AActor* Owner = GetOwner())
 	{
-		if (const APlayerController* PC = Cast<APlayerController>(Owner))
+		if (const APlayerController* PlayerController = Cast<APlayerController>(Owner))
 		{
-			return PC->GetLocalPlayer();
+			return PlayerController->GetLocalPlayer();
 		}
 
 		if (const APawn* Pawn = Cast<APawn>(Owner))
 		{
-			if (const APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+			if (const APlayerController* PlayerController = Cast<APlayerController>(Pawn->GetController()))
 			{
-				return PC->GetLocalPlayer();
+				return PlayerController->GetLocalPlayer();
 			}
 		}
 
 		if (const APawn* Instigator = Owner->GetInstigator())
 		{
-			if (const APlayerController* PC = Cast<APlayerController>(Instigator->GetController()))
+			if (const APlayerController* PlayerController = Cast<APlayerController>(Instigator->GetController()))
 			{
-				return PC->GetLocalPlayer();
+				return PlayerController->GetLocalPlayer();
 			}
 		}
 
-		// Walk owner chain (covers PlayerState, HUD, etc. that set Owner to the PC)
+		/* Walk owner chain (covers PlayerState, HUD, etc. that set Owner to the PlayerController) */
 		AActor* OwnerActor = Owner->GetOwner();
 		while (OwnerActor)
 		{
-			if (const APlayerController* PC = Cast<APlayerController>(OwnerActor))
+			if (const APlayerController* PlayerController = Cast<APlayerController>(OwnerActor))
 			{
-				return PC->GetLocalPlayer();
+				return PlayerController->GetLocalPlayer();
 			}
 			OwnerActor = OwnerActor->GetOwner();
 		}
 	}
 
-	// Fallback for non-player-owned actors (world actors, GameState, etc.)
+	/* Fallback for non-player-owned actors (world actors, GameState, etc.) */
 	if (const UWorld* World = GetWorld())
 	{
-		if (const UGameInstance* GI = World->GetGameInstance())
+		if (const UGameInstance* GameInstance = World->GetGameInstance())
 		{
-			return GI->GetFirstGamePlayer();
+			return GameInstance->GetFirstGamePlayer();
 		}
 	}
 
@@ -119,7 +121,7 @@ ULocalPlayer* UMCore_EventListenerComp::ResolveOwningLocalPlayer() const
 
 void UMCore_EventListenerComp::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Unregister from both subsystems
+	/* Unregister from both subsystems */
 	if (UMCore_LocalEventSubsystem* LocalEventSys = CachedLocalSubsystem.Get())
 	{
 		LocalEventSys->UnregisterLocalListener(this);
@@ -150,7 +152,7 @@ bool UMCore_EventListenerComp::ShouldReceiveEvent(const FMCore_EventData& EventD
 	if (bIsGlobalEvent && !bReceiveGlobalEvents) { return false; }
 	if (!bIsGlobalEvent && !bReceiveLocalEvents) { return false; }
 
-	// Empty subscription list means receive all events
+	/* Empty subscription list means receive all events */
 	if (!SubscribedEvents.IsEmpty())
 	{
 		return EventData.EventTag.MatchesAny(SubscribedEvents);

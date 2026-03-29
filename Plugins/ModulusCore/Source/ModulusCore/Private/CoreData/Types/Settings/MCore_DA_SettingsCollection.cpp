@@ -1,6 +1,7 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
+
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 
 #if WITH_EDITOR
@@ -75,7 +76,7 @@ UMCore_DA_SettingDefinition* UMCore_DA_SettingsCollection::FindSettingByTag(cons
 
 int32 UMCore_DA_SettingsCollection::GetSettingCount() const
 {
-	int32 Count = 0;
+	int32 Count{0};
 
 	for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Settings)
 	{
@@ -104,7 +105,7 @@ EDataValidationResult UMCore_DA_SettingsCollection::IsDataValid(FDataValidationC
 		Result = EDataValidationResult::Invalid;
 	}
 
-	// Check for duplicates and null tags
+	/* Check for duplicates and null tags */
 	TSet<FGameplayTag> SeenTags;
 
 	for (int32 idx = 0; idx < Settings.Num(); ++idx)

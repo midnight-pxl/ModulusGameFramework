@@ -71,7 +71,7 @@ struct MODULUSCORE_API FMCore_EventData
 		EventParams.Reserve(InEventParams.Num());
 		for (const auto& Pair : InEventParams)
 		{
-			// Skip invalid entries
+			/* Skip invalid entries */
 			if (!Pair.Key.IsEmpty())
 			{
 				EventParams.Emplace(Pair.Key, Pair.Value);
@@ -84,7 +84,7 @@ struct MODULUSCORE_API FMCore_EventData
 	/* Parameter lookup by key, returns DefaultValue if not found */
 	FString GetParameter(const FString& Key, const FString& DefaultValue = TEXT("")) const
 	{
-		// Linear search is optimal for typical 1-8 parameters
+		/* Linear search is optimal for typical 1-8 parameters */
 		for (const FMCore_EventParameter& Param : EventParams)
 		{
 			if (Param.Key == Key)

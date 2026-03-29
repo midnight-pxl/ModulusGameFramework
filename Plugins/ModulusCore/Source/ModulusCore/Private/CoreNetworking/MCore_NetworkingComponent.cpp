@@ -3,6 +3,7 @@
 #include "CoreNetworking/MCore_NetworkingComponent.h"
 
 #include "CoreData/Logging/LogModulusNetworking.h"
+
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 
@@ -34,7 +35,7 @@ void UMCore_NetworkingComponent::EndPlay(const EEndPlayReason::Type EndPlayReaso
 template <typename TOperation>
 bool UMCore_NetworkingComponent::ExecuteWithAuthority(TOperation&& Operation, bool bRequireServerAuthority)
 {
-	// Scheduled for completion with first cross-plugin authority use case.
+	/* Scheduled for completion with first cross-plugin authority use case. */
 	checkNoEntry();
 	return false;
 }
@@ -48,7 +49,7 @@ void UMCore_NetworkingComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 void UMCore_NetworkingComponent::DetectNetworkingSystem()
 {
-	// Iris replication detection - currently disabled. Enable when Iris is configured at project level.
+	/* Iris replication detection - currently disabled. Enable when Iris is configured at project level. */
 	bIrisDetected = false;
 }
 
@@ -59,7 +60,7 @@ bool UMCore_NetworkingComponent::IsUsingIrisReplication() const
 
 bool UMCore_NetworkingComponent::IsIrisAvailable() const
 {
-	// Iris availability check - implement when Iris replication is needed.
+	/* Iris availability check - implement when Iris replication is needed. */
 	return false;
 }
 

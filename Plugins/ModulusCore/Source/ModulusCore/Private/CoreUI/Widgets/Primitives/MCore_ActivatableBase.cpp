@@ -1,11 +1,13 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Primitives/MCore_ActivatableBase.h"
-#include "GameplayTagAssetInterface.h"
+
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreUI/MCore_UISubsystem.h"
+
+#include "GameplayTagAssetInterface.h"
 #include "Input/CommonUIInputTypes.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/PanelWidget.h"
@@ -46,10 +48,10 @@ UMCore_ActivatableBase::UMCore_ActivatableBase(const FObjectInitializer& ObjectI
 
 void UMCore_ActivatableBase::NativeConstruct()
 {
-	// Widget stacks manage activation via HandleActiveIndexChanged -> ActivateWidget().
-	// If bAutoActivate is true, NativeConstruct auto-activates BEFORE the stack calls
-	// ActivateWidget, making the stack's call a no-op (bIsActive already true).
-	// This silently prevents NativeOnActivated and BP_OnActivated from ever firing.
+	/* Widget stacks manage activation via HandleActiveIndexChanged -> ActivateWidget().
+	 * If bAutoActivate is true, NativeConstruct auto-activates BEFORE the stack calls
+	 * ActivateWidget, making the stack's call a no-op (bIsActive already true).
+	 * This silently prevents NativeOnActivated and BP_OnActivated from ever firing. */
 	if (bAutoActivate)
 	{
 		UE_LOG(LogModulusUI, Error,
@@ -123,7 +125,7 @@ void UMCore_ActivatableBase::UnregisterAllBindings()
 
 	for (FUIActionBindingHandle& Handle : IABindingHandles)
 	{
-		if (Handle.IsValid()){ Handle.Unregister(); }
+		if (Handle.IsValid()) { Handle.Unregister(); }
 	}
 
 	IABindingHandles.Empty();
@@ -133,7 +135,7 @@ void UMCore_ActivatableBase::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	// Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem.
+	/* Apply design-time theme for UMG editor preview. Runtime re-applies from UISubsystem. */
 	ApplyTheme(UMCore_CoreSettings::GetDesignTimeTheme());
 }
 
@@ -141,12 +143,12 @@ void UMCore_ActivatableBase::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	// Guard: Reset stale bIsActive from Blueprint CDO serialization.
-	// bIsActive is a non-Transient UPROPERTY in CommonActivatableWidget.
-	// If a Blueprint was saved while its widget preview was in an active state,
-	// bIsActive=true gets baked into the CDO. Every new instance then starts
-	// "already activated", causing the stack's ActivateWidget() to silently
-	// skip InternalProcessActivation -> NativeOnActivated -> BP_OnActivated.
+	/* Guard: Reset stale bIsActive from Blueprint CDO serialization.
+	 * bIsActive is a non-Transient UPROPERTY in CommonActivatableWidget.
+	 * If a Blueprint was saved while its widget preview was in an active state,
+	 * bIsActive=true gets baked into the CDO. Every new instance then starts
+	 * "already activated", causing the stack's ActivateWidget() to silently
+	 * skip InternalProcessActivation -> NativeOnActivated -> BP_OnActivated. */
 	if (IsActivated())
 	{
 		UE_LOG(LogModulusUI, Log,
@@ -205,14 +207,14 @@ void UMCore_ActivatableBase::NativeOnActivated()
 
 void UMCore_ActivatableBase::NativeOnDeactivated()
 {
-	// Save focused descendant before input cleanup shifts focus
+	/* Save focused descendant before input cleanup shifts focus */
 	SavedFocusTarget = nullptr;
 	if (WidgetTree && WidgetTree->RootWidget)
 	{
 		SavedFocusTarget = FindFocusedDescendant(WidgetTree->RootWidget);
 	}
 
-	// Cleanup input bindings BEFORE calling Super to prevent memory leaks
+	/* Cleanup input bindings BEFORE calling Super to prevent memory leaks */
 	UnregisterAllBindings();
 
 	Super::NativeOnDeactivated();
@@ -320,12 +322,12 @@ void UMCore_ActivatableBase::ValidateCompiledWidgetTree(const UWidgetTree& Bluep
 
 	if (GetClass()->ClassGeneratedBy == nullptr) { return; }
 
-	// CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function
+	/* CommonUI exposes BP_GetDesiredFocusTarget as the Blueprint-overridable function */
 	static const FName BPGetDesiredFocusTargetName = TEXT("BP_GetDesiredFocusTarget");
 
 	if (!GetClass()->IsFunctionImplementedInScript(BPGetDesiredFocusTargetName))
 	{
-		// Only warn for direct children - intermediate C++ classes may implement it natively
+		/* Only warn for direct children - intermediate C++ classes may implement it natively */
 		const UClass* ParentClass = GetClass()->GetSuperClass();
 		if (ParentClass == UMCore_ActivatableBase::StaticClass())
 		{

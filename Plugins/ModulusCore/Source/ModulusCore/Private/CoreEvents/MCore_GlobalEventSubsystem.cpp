@@ -1,6 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
+
 #include "CoreEvents/MCore_GlobalEventReplicator.h"
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
@@ -24,23 +25,26 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 {
 	if (!EventData.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- attempted to broadcast invalid event"));
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- attempted to broadcast invalid event"));
 		return;
 	}
 	
-	UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- broadcasting: %s"), *EventData.EventTag.ToString());
+	UE_LOG(LogModulusEvent, Verbose,
+		TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- broadcasting: %s"),
+		*EventData.EventTag.ToString());
 	
-	// Route through event replicator if available
+	/* Route through event replicator if available */
 	if (UMCore_GlobalEventReplicator* Replicator = EventReplicator.Get())
 	{
 		Replicator->RequestBroadcast(EventData);
 	}
 	else
 	{
-		// No replicator: not configured or standalone
+		/* No replicator: not configured or standalone */
 		if (HasGlobalEventAuthority())
 		{
-			// Deliver locally
+			/* Deliver locally */
 			DeliverToLocalListeners(EventData);
 			
 			if (IsNetworkedGame())
@@ -53,7 +57,7 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		}
 		else
 		{
-			// Client w/o replicator: cannot request broadcast
+			/* Client w/o replicator: cannot request broadcast */
 			UE_LOG(LogModulusEvent, Warning,
 				TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- not authority and no replicator found; "
 					 "add GlobalEventReplicator to GameState for network support."))
@@ -61,7 +65,9 @@ void UMCore_GlobalEventSubsystem::BroadcastGlobalEvent(const FMCore_EventData& E
 		}
 	}
 
-	UE_LOG(LogModulusEvent, Log, TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- broadcast complete: %s"), *EventData.EventTag.ToString());
+	UE_LOG(LogModulusEvent, Log,
+		TEXT("GlobalEventSubsystem::BroadcastGlobalEvent -- broadcast complete: %s"),
+		*EventData.EventTag.ToString());
 }
 
 void UMCore_GlobalEventSubsystem::RegisterEventReplicator(UMCore_GlobalEventReplicator* Replicator)
@@ -114,7 +120,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 	UE_LOG(LogModulusEvent, Verbose, TEXT("GlobalEventSubsystem::DeliverToLocalListeners -- delivering '%s' to %d listeners"),
 		*EventData.EventTag.ToString(), GlobalListeners.Num());
 	
-	// Reverse traverse to remove stale entries
+	/* Reverse traverse to remove stale entries */
 	for (int32 i = GlobalListeners.Num() - 1; i >= 0; --i)
 	{
 		TWeakObjectPtr<UMCore_EventListenerComp>& CurListener = GlobalListeners[i];
@@ -129,7 +135,7 @@ void UMCore_GlobalEventSubsystem::DeliverToLocalListeners(const FMCore_EventData
 		}
 		else
 		{
-			// Invalid pointer, clean up
+			/* Invalid pointer, clean up */
 			GlobalListeners.RemoveAt(i);
 		}
 	}
@@ -166,7 +172,7 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 		return false;
 	}
 	
-	// Hardcoded param limits. Override ValidateEventRequest() to customize.
+	/* Hardcoded param limits. Override ValidateEventRequest() to customize. */
 	constexpr int32 MaxParams{8};
 	constexpr int32 MaxContextIDLength{64};
 	

@@ -2,19 +2,21 @@
 
 
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
+
 #include "CoreData/Assets/UI/Styles/MCore_PDA_SliderStyle.h"
 #include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Logging/LogModulusUI.h"
+
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Engine/LocalPlayer.h"
-#include "CoreData/Logging/LogModulusUI.h"
 
 void UMCore_ThemeLibrary::ApplyTextStyleFromTheme(const ULocalPlayer* LocalPlayer, UCommonTextBlock* TextBlock,
 	const TArray<TSubclassOf<UCommonTextStyle>>& TextStyleArray)
 {
 	if (!TextBlock || TextStyleArray.IsEmpty()) { return; }
 	
-	int32 SizeIndex = 0;
+	int32 SizeIndex{0};
 	if (LocalPlayer)
 	{
 		if (const UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())

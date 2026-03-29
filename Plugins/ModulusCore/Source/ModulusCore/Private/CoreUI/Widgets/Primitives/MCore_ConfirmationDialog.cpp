@@ -1,9 +1,11 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
+
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
-#include "CommonTextBlock.h"
 #include "CoreData/Logging/LogModulusUI.h"
+
+#include "CommonTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "ModulusCoreUI"
 
@@ -54,7 +56,7 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	// If activation was blocked by BlockTags, Super already deactivated
+	/* If activation was blocked by BlockTags, Super already deactivated */
 	if (!IsActivated()) { return; }
 
 	if (Btn_Confirm)
@@ -106,7 +108,7 @@ void UMCore_ConfirmationDialog::NativeDestruct()
 
 UWidget* UMCore_ConfirmationDialog::NativeGetDesiredFocusTarget() const
 {
-	// Default focus to Cancel for safety (prevent accidental confirms)
+	/* Default focus to Cancel for safety (prevent accidental confirms) */
 	return Btn_Cancel;
 }
 

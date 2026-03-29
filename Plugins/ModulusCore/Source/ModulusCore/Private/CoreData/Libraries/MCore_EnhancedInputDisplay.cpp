@@ -2,15 +2,16 @@
 
 #include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
 
+#include "CoreData/Logging/LogModulusUI.h"
+#include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
+
 #include "EnhancedInputSubsystemInterface.h"
 #include "EnhancedInput/Public/UserSettings/EnhancedInputUserSettings.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/PlayerController.h"
-#include "CoreData/Logging/LogModulusUI.h"
 #include "CommonInputSubsystem.h"
 #include "CommonInputBaseTypes.h"
-#include "CoreUI/MCore_UISubsystem.h"
-#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 
 // ============================================================================
 // PRIVATE HELPERS
@@ -21,14 +22,16 @@ UEnhancedInputLocalPlayerSubsystem* UMCore_EnhancedInputDisplay::GetEnhancedInpu
 {
 	if (!PlayerController)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- PlayerController is null"));
+		UE_LOG(LogModulusUI, Error,
+			TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- PlayerController is null"));
 		return nullptr;
 	}
 
 	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
 	if (!LocalPlayer)
 	{
-		UE_LOG(LogModulusUI, Error, TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- LocalPlayer is null"));
+		UE_LOG(LogModulusUI, Error,
+			TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- LocalPlayer is null"));
 		return nullptr;
 	}
 
@@ -39,10 +42,10 @@ UEnhancedPlayerMappableKeyProfile* UMCore_EnhancedInputDisplay::GetActiveKeyProf
 	APlayerController* PlayerController)
 {
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
-	if (!Subsystem) return nullptr;
+	if (!Subsystem) { return nullptr; }
 
 	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
-	if (!UserSettings) return nullptr;
+	if (!UserSettings) { return nullptr; }
 
 	return UserSettings->GetActiveKeyProfile();
 }
@@ -54,13 +57,13 @@ UEnhancedPlayerMappableKeyProfile* UMCore_EnhancedInputDisplay::GetActiveKeyProf
 FKey UMCore_EnhancedInputDisplay::GetCurrentKeyForAction(APlayerController* PlayerController,
 	UInputAction* InputAction)
 {
-	if (!InputAction) return EKeys::Invalid;
+	if (!InputAction) { return EKeys::Invalid; }
 
 	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
-	if (!Profile) return EKeys::Invalid;
+	if (!Profile) { return EKeys::Invalid; }
 
 	const FKeyMappingRow* KeyRow = Profile->FindKeyMappingRow(InputAction->GetFName());
-	if (!KeyRow) return EKeys::Invalid;
+	if (!KeyRow) { return EKeys::Invalid; }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
 	{
@@ -74,13 +77,13 @@ TArray<FKey> UMCore_EnhancedInputDisplay::GetAllKeysForAction(APlayerController*
 	UInputAction* InputAction)
 {
 	TArray<FKey> Keys;
-	if (!InputAction) return Keys;
+	if (!InputAction) { return Keys; }
 
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
-	if (!KeyProfile) return Keys;
+	if (!KeyProfile) { return Keys; }
 
 	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
-	if (!KeyRow) return Keys;
+	if (!KeyRow) { return Keys; }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
 	{
@@ -97,18 +100,18 @@ TArray<FKey> UMCore_EnhancedInputDisplay::GetAllKeysForAction(APlayerController*
 FText UMCore_EnhancedInputDisplay::GetActionDisplayName(APlayerController* PlayerController,
 	UInputAction* InputAction)
 {
-	if (!InputAction) return FText::FromString(TEXT("Invalid InputAction"));
+	if (!InputAction) { return FText::FromString(TEXT("Invalid InputAction")); }
 
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
-	if (!KeyProfile) return FText::FromString(InputAction->GetName());
+	if (!KeyProfile) { return FText::FromString(InputAction->GetName()); }
 
 	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
-	if (!KeyRow) return FText::FromString(InputAction->GetName());
+	if (!KeyRow) { return FText::FromString(InputAction->GetName()); }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
 	{
 		FText DisplayName = KeyMapping.GetDisplayName();
-		if (!DisplayName.IsEmpty()) return DisplayName;
+		if (!DisplayName.IsEmpty()) { return DisplayName; }
 	}
 
 	return FText::FromString(InputAction->GetName());
@@ -117,18 +120,18 @@ FText UMCore_EnhancedInputDisplay::GetActionDisplayName(APlayerController* Playe
 FText UMCore_EnhancedInputDisplay::GetActionDisplayCategory(APlayerController* PlayerController,
 	UInputAction* InputAction)
 {
-	if (!InputAction) return FText::FromString(TEXT("Invalid InputAction"));
+	if (!InputAction) { return FText::FromString(TEXT("Invalid InputAction")); }
 
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
-	if (!KeyProfile) return FText::FromString(TEXT("General"));
+	if (!KeyProfile) { return FText::FromString(TEXT("General")); }
 
 	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
-	if (!KeyRow) return FText::FromString(TEXT("General"));
+	if (!KeyRow) { return FText::FromString(TEXT("General")); }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
 	{
 		FText DisplayCat = KeyMapping.GetDisplayCategory();
-		if (!DisplayCat.IsEmpty()) return DisplayCat;
+		if (!DisplayCat.IsEmpty()) { return DisplayCat; }
 	}
 
 	return FText::FromString(TEXT("General"));
@@ -137,25 +140,25 @@ FText UMCore_EnhancedInputDisplay::GetActionDisplayCategory(APlayerController* P
 FName UMCore_EnhancedInputDisplay::GetActionMappingName(APlayerController* PlayerController,
 	UInputAction* InputAction)
 {
-	if (!InputAction) return NAME_None;
+	if (!InputAction) { return NAME_None; }
 
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
-	if (!KeyProfile) return NAME_None;
+	if (!KeyProfile) { return NAME_None; }
 
 	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
-	if (!KeyRow) return NAME_None;
+	if (!KeyRow) { return NAME_None; }
 
-	// Row key matches mapping name
+	/* Row key matches mapping name */
 	return InputAction->GetFName();
 }
 
 bool UMCore_EnhancedInputDisplay::IsActionRemappable(APlayerController* PlayerController,
 	UInputAction* InputAction)
 {
-	if (!InputAction) return false;
+	if (!InputAction) { return false; }
 
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
-	if (!KeyProfile) return false;
+	if (!KeyProfile) { return false; }
 
 	return KeyProfile->FindKeyMappingRow(InputAction->GetFName()) != nullptr;
 }
@@ -197,7 +200,7 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 		return false;
 	}
 
-	// Confirm action is remappable before attempt
+	/* Confirm action is remappable before attempt */
 	FName MappingName = InputAction->GetFName();
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = UserSettings->GetActiveKeyProfile();
 	if (!KeyProfile || !KeyProfile->FindKeyMappingRow(MappingName))
@@ -217,14 +220,16 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 	if (FailureReason.IsEmpty())
 	{
 		UserSettings->SaveSettings();
-		UE_LOG(LogModulusUI, Log, TEXT("EnhancedInputDisplay::RemapActionKey -- successfully remapped action %s to key %s"),
-			   *InputAction->GetName(), *NewKey.ToString());
+		UE_LOG(LogModulusUI, Log,
+			TEXT("EnhancedInputDisplay::RemapActionKey -- successfully remapped action %s to key %s"),
+			*InputAction->GetName(), *NewKey.ToString());
 		return true;
 	}
 
 	OutError = FText::FromString(FailureReason.ToString());
-	UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::RemapActionKey -- failed to remap action %s to key %s: %s"),
-		   *InputAction->GetName(), *NewKey.ToString(), *FailureReason.ToString());
+	UE_LOG(LogModulusUI, Warning,
+		TEXT("EnhancedInputDisplay::RemapActionKey -- failed to remap action %s to key %s: %s"),
+		*InputAction->GetName(), *NewKey.ToString(), *FailureReason.ToString());
 	return false;
 }
 
@@ -279,7 +284,8 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetAllRemappableActions(
 	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
 	if (!Profile)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::GetAllRemappableActions -- no active key profile"));
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("EnhancedInputDisplay::GetAllRemappableActions -- no active key profile"));
 		return Result;
 	}
 
@@ -303,7 +309,8 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForDe
 	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
 	if (!Profile)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::GetRemappableActionsForDevice -- no active key profile"));
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("EnhancedInputDisplay::GetRemappableActionsForDevice -- no active key profile"));
 		return Result;
 	}
 
@@ -312,7 +319,7 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForDe
 	{
 		for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
 		{
-			// Use current key for device check; fall back to default if current is invalid
+			/* Use current key for device check; fall back to default if current is invalid */
 			FKey KeyToCheck = Mapping.GetCurrentKey();
 			if (!KeyToCheck.IsValid())
 			{
@@ -354,10 +361,11 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKey(const ULocalPlayer* LocalPl
 {
 	if (!LocalPlayer || !Key.IsValid()) { return false; }
 
-	UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
-	if (!CIS)
+	UCommonInputSubsystem* CommonInputSubsystem = UCommonInputSubsystem::Get(LocalPlayer);
+	if (!CommonInputSubsystem)
 	{
-		UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::GetIconBrushForKey -- CommonInputSubsystem unavailable"));
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("EnhancedInputDisplay::GetIconBrushForKey -- CommonInputSubsystem unavailable"));
 		return false;
 	}
 
@@ -365,7 +373,7 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKey(const ULocalPlayer* LocalPl
 	if (!PlatformSettings) { return false; }
 
 	return PlatformSettings->TryGetInputBrush(
-		OutBrush, Key, CIS->GetCurrentInputType(), CIS->GetCurrentGamepadName());
+		OutBrush, Key, CommonInputSubsystem->GetCurrentInputType(), CommonInputSubsystem->GetCurrentGamepadName());
 }
 
 bool UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(const ULocalPlayer* LocalPlayer,
@@ -376,14 +384,14 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(const ULocalPla
 	UCommonInputPlatformSettings* PlatformSettings = UCommonInputPlatformSettings::Get();
 	if (!PlatformSettings) { return false; }
 
-	// Gamepad icons need the active gamepad name to pick the right controller data
-	FName GamepadName = NAME_None;
+	/* Gamepad icons need the active gamepad name to pick the right controller data */
+	FName GamepadName{NAME_None};
 	if (InputType == ECommonInputType::Gamepad)
 	{
-		UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
-		if (CIS)
+		UCommonInputSubsystem* CommonInputSubsystem = UCommonInputSubsystem::Get(LocalPlayer);
+		if (CommonInputSubsystem)
 		{
-			GamepadName = CIS->GetCurrentGamepadName();
+			GamepadName = CommonInputSubsystem->GetCurrentGamepadName();
 		}
 	}
 
@@ -428,25 +436,25 @@ FName UMCore_EnhancedInputDisplay::GetEffectiveGamepadName(
 {
 	if (!LocalPlayer) { return NAME_None; }
 
-	// Read the player's override index
-	int32 OverrideIndex = 0;
-	UMCore_UISubsystem* UISub = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
-	if (UISub)
+	/* Read the player's override index */
+	int32 OverrideIndex{0};
+	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
+	if (UISubsystem)
 	{
-		if (UMCore_PlayerSettingsSave* Save = UISub->GetPlayerSettings())
+		if (UMCore_PlayerSettingsSave* Save = UISubsystem->GetPlayerSettings())
 		{
 			OverrideIndex = Save->GamepadIconSetIndex;
 		}
 	}
 
-	// 0 = Auto-Detect: use whatever CommonInput reports
+	/* 0 = Auto-Detect: use whatever CommonInput reports */
 	if (OverrideIndex == 0)
 	{
-		UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
-		return CIS ? CIS->GetCurrentGamepadName() : NAME_None;
+		UCommonInputSubsystem* CommonInputSubsystem = UCommonInputSubsystem::Get(LocalPlayer);
+		return CommonInputSubsystem ? CommonInputSubsystem->GetCurrentGamepadName() : NAME_None;
 	}
 
-	// Non-zero: look up the config at (index - 1)
+	/* Non-zero: look up the config at (index - 1) */
 	TArray<FName> Configs = GetAvailableGamepadConfigs(WorldContextObject);
 	const int32 AdjustedIndex = OverrideIndex - 1;
 
@@ -455,9 +463,9 @@ FName UMCore_EnhancedInputDisplay::GetEffectiveGamepadName(
 		return Configs[AdjustedIndex];
 	}
 
-	// Out of range: fall back to auto-detect
-	UCommonInputSubsystem* CIS = UCommonInputSubsystem::Get(LocalPlayer);
-	return CIS ? CIS->GetCurrentGamepadName() : NAME_None;
+	/* Out of range: fall back to auto-detect */
+	UCommonInputSubsystem* CommonInputSubsystem = UCommonInputSubsystem::Get(LocalPlayer);
+	return CommonInputSubsystem ? CommonInputSubsystem->GetCurrentGamepadName() : NAME_None;
 }
 
 // ============================================================================
@@ -531,13 +539,15 @@ bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* Playe
 	if (FailureReason.IsEmpty())
 	{
 		UserSettings->SaveSettings();
-		UE_LOG(LogModulusUI, Log, TEXT("EnhancedInputDisplay::RemapActionKeyForSlot -- remapped action %s (slot %d) to key %s"),
+		UE_LOG(LogModulusUI, Log,
+			TEXT("EnhancedInputDisplay::RemapActionKeyForSlot -- remapped action %s (slot %d) to key %s"),
 			*InputAction->GetName(), static_cast<int32>(Slot), *NewKey.ToString());
 		return true;
 	}
 
 	OutError = FText::FromString(FailureReason.ToString());
-	UE_LOG(LogModulusUI, Warning, TEXT("EnhancedInputDisplay::RemapActionKeyForSlot -- failed to remap action %s (slot %d) to key %s: %s"),
+	UE_LOG(LogModulusUI, Warning,
+		TEXT("EnhancedInputDisplay::RemapActionKeyForSlot -- failed to remap action %s (slot %d) to key %s: %s"),
 		*InputAction->GetName(), static_cast<int32>(Slot), *NewKey.ToString(),
 		*FailureReason.ToString());
 	return false;
@@ -568,7 +578,7 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController*
 		return false;
 	}
 
-	// Find the mapping matching the requested slot and device type
+	/* Find the mapping matching the requested slot and device type */
 	for (const FPlayerKeyMapping& Mapping : Row->Mappings)
 	{
 		if (Mapping.GetSlot() == Slot && Mapping.GetDefaultKey().IsGamepadKey() == bGamepad)

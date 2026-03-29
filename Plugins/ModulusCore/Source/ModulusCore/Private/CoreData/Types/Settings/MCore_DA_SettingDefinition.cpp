@@ -9,7 +9,7 @@
 FString UMCore_DA_SettingDefinition::GetSaveKey() const
 {
 	if (!SettingTag.IsValid()) { return FString(); }
-	// GameplayTag "Audio.SFXVolume" becomes "Audio_SFXVolume"
+	/* GameplayTag "Audio.SFXVolume" becomes "Audio_SFXVolume" */
 	return SettingTag.ToString().Replace(TEXT("."), TEXT("_"));
 }
 

@@ -6,18 +6,18 @@ bool FMCore_UIExtensionPoint::DoesExtensionPassContract(const FMCore_UIExtension
 {
 	if (!Extension) { return false; }
 
-	// Context matching: both nullptr = match, both same object = match, otherwise no match
+	/* Context matching: both nullptr = match, both same object = match, otherwise no match */
 	const bool bExtensionPointHasContext = ContextObject.IsValid();
 	const bool bExtensionHasContext = Extension->ContextObject.IsValid();
 
-	// Both global (no context)
+	/* Both global (no context) */
 	if (!bExtensionPointHasContext && !bExtensionHasContext) { return true; }
 
-	// Both have context - check if same object
+	/* Both have context - check if same object */
 	if (bExtensionPointHasContext && bExtensionHasContext)
 	{
 		return ContextObject.Get() == Extension->ContextObject.Get();
 	}
-	// One has context, other doesn't - no match
+	/* One has context, other doesn't - no match */
 	return false;
 }

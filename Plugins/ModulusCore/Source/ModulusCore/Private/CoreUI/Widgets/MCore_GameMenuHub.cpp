@@ -2,13 +2,14 @@
 
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
 
-#include "GameplayTagContainer.h"
-#include "CommonButtonBase.h"
-#include "CommonAnimatedSwitcher.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreUI/Widgets/Primitives/MCore_TabbedContainer.h"
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/Types/UI/MCore_MenuTabTypes.h"
+
+#include "GameplayTagContainer.h"
+#include "CommonButtonBase.h"
+#include "CommonAnimatedSwitcher.h"
 
 UMCore_GameMenuHub::UMCore_GameMenuHub(const FObjectInitializer& ObjectInitializer)
   : Super(ObjectInitializer)
@@ -120,7 +121,7 @@ void UMCore_GameMenuHub::RebuildTabBar()
 
 bool UMCore_GameMenuHub::SetTabEnabled(FGameplayTag TabID, bool bEnabled)
 {
-    if (!TabbedContainer || !TabID.IsValid()) return false;
+    if (!TabbedContainer || !TabID.IsValid()) { return false; }
 
     FName TabNameID = FName(*TabID.ToString());
     bool bSuccess = TabbedContainer->SetTabEnabled(TabNameID, bEnabled);
@@ -142,7 +143,7 @@ bool UMCore_GameMenuHub::SetTabEnabled(FGameplayTag TabID, bool bEnabled)
 
 bool UMCore_GameMenuHub::SetTabHidden(FGameplayTag TabID, bool bIsHidden)
 {
-    if (!TabbedContainer || !TabID.IsValid()) return false;
+    if (!TabbedContainer || !TabID.IsValid()) { return false; }
 
     FName TabNameID = FName(*TabID.ToString());
     bool bSuccess = TabbedContainer->SetTabHidden(TabNameID, bIsHidden);
@@ -164,14 +165,14 @@ bool UMCore_GameMenuHub::SetTabHidden(FGameplayTag TabID, bool bIsHidden)
 
 bool UMCore_GameMenuHub::IsTabEnabled(FGameplayTag TabID) const
 {
-    if (!TabbedContainer || !TabID.IsValid()) return false;
+    if (!TabbedContainer || !TabID.IsValid()) { return false; }
 
     return TabbedContainer->IsTabEnabled(FName(*TabID.ToString()));
 }
 
 bool UMCore_GameMenuHub::IsTabHidden(FGameplayTag TabID) const
 {
-    if (!TabbedContainer || !TabID.IsValid()) return false;
+    if (!TabbedContainer || !TabID.IsValid()) { return false; }
 
     return TabbedContainer->IsTabHidden(FName(*TabID.ToString()));
 }

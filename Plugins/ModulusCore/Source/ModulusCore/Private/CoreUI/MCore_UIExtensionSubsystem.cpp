@@ -1,8 +1,10 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/MCore_UIExtensionSubsystem.h"
+
 #include "CoreData/Types/UI/MCore_UIExtensionTypes.h"
 #include "CoreData/Logging/LogModulusUI.h"
+
 #include "Blueprint/UserWidget.h"
 
 // ============================================================================
@@ -304,7 +306,7 @@ void UMCore_UIExtensionSubsystem::NotifyExtensionPointOfExtensions(
 		return;
 	}
 
-	// Sort by priority (higher first)
+	/* Sort by priority (higher first) */
 	TArray<TSharedPtr<FMCore_UIExtension>> SortedExtensions = *Extensions;
 	SortedExtensions.Sort([](const TSharedPtr<FMCore_UIExtension>& A,
 	                         const TSharedPtr<FMCore_UIExtension>& B)

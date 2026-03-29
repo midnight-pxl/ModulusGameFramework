@@ -1,12 +1,14 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
-#include "Engine/World.h"
-#include "Engine/LocalPlayer.h"
+
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_GlobalEventSubsystem.h"
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
+
+#include "Engine/World.h"
+#include "Engine/LocalPlayer.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -17,22 +19,22 @@ namespace
 	{
 		if (!WorldContext) { return nullptr; }
 
-		if (const APlayerController* PC = Cast<APlayerController>(WorldContext))
+		if (const APlayerController* PlayerController = Cast<APlayerController>(WorldContext))
 		{
-			return PC->GetLocalPlayer();
+			return PlayerController->GetLocalPlayer();
 		}
 
 		if (const APawn* Pawn = Cast<APawn>(WorldContext))
 		{
-			if (const APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+			if (const APlayerController* PlayerController = Cast<APlayerController>(Pawn->GetController()))
 			{
-				return PC->GetLocalPlayer();
+				return PlayerController->GetLocalPlayer();
 			}
 		}
 
-		if (const UActorComponent* Comp = Cast<UActorComponent>(WorldContext))
+		if (const UActorComponent* Component = Cast<UActorComponent>(WorldContext))
 		{
-			return ResolveLocalPlayer(Comp->GetOwner());
+			return ResolveLocalPlayer(Component->GetOwner());
 		}
 
 		if (const UUserWidget* Widget = Cast<UUserWidget>(WorldContext))
@@ -44,29 +46,29 @@ namespace
 		{
 			if (const APawn* Instigator = Actor->GetInstigator())
 			{
-				if (const APlayerController* PC = Cast<APlayerController>(Instigator->GetController()))
+				if (const APlayerController* PlayerController = Cast<APlayerController>(Instigator->GetController()))
 				{
-					return PC->GetLocalPlayer();
+					return PlayerController->GetLocalPlayer();
 				}
 			}
 
 			AActor* OwnerActor = Actor->GetOwner();
 			while (OwnerActor)
 			{
-				if (const APlayerController* PC = Cast<APlayerController>(OwnerActor))
+				if (const APlayerController* PlayerController = Cast<APlayerController>(OwnerActor))
 				{
-					return PC->GetLocalPlayer();
+					return PlayerController->GetLocalPlayer();
 				}
 				OwnerActor = OwnerActor->GetOwner();
 			}
 		}
 
-		// Fallback for non-player-owned contexts
+		/* Fallback for non-player-owned contexts */
 		if (const UWorld* World = WorldContext->GetWorld())
 		{
-			if (const UGameInstance* GI = World->GetGameInstance())
+			if (const UGameInstance* GameInstance = World->GetGameInstance())
 			{
-				return GI->GetFirstGamePlayer();
+				return GameInstance->GetFirstGamePlayer();
 			}
 		}
 
@@ -84,7 +86,8 @@ void UMCore_EventFunctionLibrary::BroadcastSimpleEvent(const UObject* WorldConte
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::BroadcastSimpleEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("EventFunctionLibrary::BroadcastSimpleEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
 			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
@@ -103,7 +106,8 @@ void UMCore_EventFunctionLibrary::BroadcastEventWithContext(const UObject* World
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::BroadcastEventWithContext -- invalid parameters (WorldContext: %s, Tag: %s)"),
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("EventFunctionLibrary::BroadcastEventWithContext -- invalid parameters (WorldContext: %s, Tag: %s)"),
 			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
@@ -122,8 +126,9 @@ void UMCore_EventFunctionLibrary::BroadcastEvent(const UObject* WorldContext,
 {
 	if (!WorldContext || !EventTag.IsValid())
 	{
-		UE_LOG(LogModulusEvent, Warning, TEXT("EventFunctionLibrary::BroadcastEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
-			   WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("EventFunctionLibrary::BroadcastEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
+			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
 		return;
 	}
 
@@ -213,12 +218,13 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 		}
 		else
 		{
-			UE_LOG(LogModulusEvent, Error, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- failed to get GlobalEventSubsystem"));
+			UE_LOG(LogModulusEvent, Error,
+				TEXT("EventFunctionLibrary::RouteEventToSubsystem -- failed to get GlobalEventSubsystem"));
 		}
 	}
 	else
 	{
-		// Local: resolve the correct LocalPlayer from the calling context (split-screen safe)
+		/* Local: resolve the correct LocalPlayer from the calling context (split-screen safe) */
 		ULocalPlayer* LocalPlayer = ResolveLocalPlayer(WorldContext);
 		if (!LocalPlayer)
 		{
@@ -234,7 +240,8 @@ void UMCore_EventFunctionLibrary::RouteEventToSubsystem(const UObject* WorldCont
 		}
 		else
 		{
-			UE_LOG(LogModulusEvent, Error, TEXT("EventFunctionLibrary::RouteEventToSubsystem -- failed to get LocalEventSubsystem"));
+			UE_LOG(LogModulusEvent, Error,
+				TEXT("EventFunctionLibrary::RouteEventToSubsystem -- failed to get LocalEventSubsystem"));
 		}
 	}
 }

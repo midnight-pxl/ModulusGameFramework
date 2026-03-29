@@ -8,9 +8,10 @@
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
+#include "CoreData/Libraries/MCore_ThemeLibrary.h"
+
 #include "CommonTextBlock.h"
 #include "Components/Slider.h"
-#include "CoreData/Libraries/MCore_ThemeLibrary.h"
 
 // ============================================================================
 // LIFECYCLE
@@ -66,7 +67,9 @@ void UMCore_SettingsWidget_Slider::OnDefinitionSet_Implementation(
 	Slider_Value->SetValue(ClampedValue);
 	bIsUpdatingSlider = false;
 
-	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsWidget_Slider::OnDefinitionSet -- configured range [%.2f, %.2f] step=%.2f, current=%.2f, widget=%s"), Definition->MinValue, Definition->MaxValue, Definition->StepSize, ClampedValue, *GetNameSafe(this));
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("SettingsWidget_Slider::OnDefinitionSet -- configured range [%.2f, %.2f] step=%.2f, current=%.2f, widget=%s"),
+		Definition->MinValue, Definition->MaxValue, Definition->StepSize, ClampedValue, *GetNameSafe(this));
 
 	if (Txt_ValueDisplay)
 	{
@@ -232,7 +235,9 @@ void UMCore_SettingsWidget_Slider::ResetToDefault_Implementation()
 	ApplyValueToEngine(DefaultVal);
 	SyncSliderAndDisplay(DefaultVal);
 
-	UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsWidget_Slider::ResetToDefault -- reset to %.2f, widget=%s"), DefaultVal, *GetNameSafe(this));
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("SettingsWidget_Slider::ResetToDefault -- reset to %.2f, widget=%s"),
+		DefaultVal, *GetNameSafe(this));
 }
 
 void UMCore_SettingsWidget_Slider::RefreshValueFromSettings_Implementation()

@@ -1,6 +1,7 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
+
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
@@ -101,7 +102,9 @@ const TArray<UMCore_DA_SettingsCollection*>& UMCore_CoreSettings::GetAllSettings
 			}
 		}
 		bCollectionsCacheValid = true;
-		UE_LOG(LogModulusSettings, Log, TEXT("CoreSettings::GetAllSettingsCollections -- loaded %d collection(s)"), ResolvedCollections.Num());
+		UE_LOG(LogModulusSettings, Log,
+			TEXT("CoreSettings::GetAllSettingsCollections -- loaded %d collection(s)"),
+			ResolvedCollections.Num());
 	}
 	return ResolvedCollections;
 }
@@ -174,7 +177,7 @@ FText UMCore_CoreSettings::GetCategoryDisplayName(const FGameplayTag& CategoryTa
 			return *Name;
 		}
 	}
-	// Fallback: last segment of the tag path
+	/* Fallback: last segment of the tag path */
 	const FString TagStr = CategoryTag.ToString();
 	int32 LastDot;
 	if (TagStr.FindLastChar(TEXT('.'), LastDot))
@@ -193,7 +196,8 @@ void UMCore_CoreSettings::InvalidateCollectionCache()
 {
 	ResolvedCollections.Reset();
 	bCollectionsCacheValid = false;
-	UE_LOG(LogModulusSettings, Log, TEXT("CoreSettings::InvalidateCollectionCache -- collection cache invalidated"));
+	UE_LOG(LogModulusSettings, Log,
+		TEXT("CoreSettings::InvalidateCollectionCache -- collection cache invalidated"));
 }
 
 #if WITH_EDITOR

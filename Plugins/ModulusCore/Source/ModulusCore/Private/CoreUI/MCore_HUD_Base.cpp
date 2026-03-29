@@ -30,10 +30,10 @@ void AMCore_HUD_Base::DrawHUD()
 {
 	Super::DrawHUD();
 
-	// Override in subclass for canvas-based drawing:
-	// - Debug visualization
-	// - Crosshairs that need sub-frame precision
-	// - Performance overlays
-	//
-	// For widget-based UI, use UMCore_UISubsystem instead.
+	/* Override in subclass for canvas-based drawing:
+	 * - Debug visualization
+	 * - Crosshairs that need sub-frame precision
+	 * - Performance overlays
+	 *
+	 * For widget-based UI, use UMCore_UISubsystem instead. */
 }

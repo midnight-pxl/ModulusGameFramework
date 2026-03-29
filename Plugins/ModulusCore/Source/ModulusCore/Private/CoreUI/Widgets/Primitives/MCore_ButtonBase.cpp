@@ -1,15 +1,17 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
+
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
+#include "CoreData/Libraries/MCore_ThemeLibrary.h"
+#include "CoreData/Logging/LogModulusUI.h"
+
 #include "CommonTextBlock.h"
 #include "CommonButtonBase.h"
 #include "Components/Image.h"
-#include "CoreData/Libraries/MCore_ThemeLibrary.h"
 #include "Engine/Texture2D.h"
-#include "CoreData/Logging/LogModulusUI.h"
 
 UMCore_ButtonBase::UMCore_ButtonBase()
 {
@@ -104,7 +106,7 @@ void UMCore_ButtonBase::SetButtonIconSoft(TSoftObjectPtr<UTexture2D> InIcon)
 		return;
 	}
 
-	// Synchronous load - for async, use StreamableManager pattern
+	/* Synchronous load - for async, use StreamableManager pattern */
 	SetButtonIcon(InIcon.LoadSynchronous());
 }
 

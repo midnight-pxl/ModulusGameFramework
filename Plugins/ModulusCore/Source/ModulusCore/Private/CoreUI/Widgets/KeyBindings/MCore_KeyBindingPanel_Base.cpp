@@ -1,10 +1,12 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingPanel_Base.h"
+
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingRow.h"
 #include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Logging/LogModulusUI.h"
+
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/PlayerController.h"
@@ -47,7 +49,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 		return;
 	}
 
-	// Clear previous state
+	/* Clear previous state */
 	ScrollBox_Bindings->ClearChildren();
 	for (UMCore_KeyBindingRow* Row : AllRows)
 	{
@@ -55,7 +57,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 	}
 	AllRows.Reset();
 
-	// Query all remappable actions
+	/* Query all remappable actions */
 	TArray<FPlayerKeyMapping> AllMappings =
 		UMCore_EnhancedInputDisplay::GetAllRemappableActions(PC);
 
@@ -65,7 +67,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 		return;
 	}
 
-	// Deduplicate by mapping name (multiple entries per action for different slots/devices)
+	/* Deduplicate by mapping name (multiple entries per action for different slots/devices) */
 	TMap<FName, const FPlayerKeyMapping*> UniqueActions;
 	for (const FPlayerKeyMapping& Mapping : AllMappings)
 	{
@@ -76,7 +78,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 		}
 	}
 
-	// Group by display category
+	/* Group by display category */
 	TMap<FString, TArray<const FPlayerKeyMapping*>> CategorizedActions;
 	for (const auto& Pair : UniqueActions)
 	{
@@ -85,7 +87,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 		CategorizedActions.FindOrAdd(CategoryKey).Add(Pair.Value);
 	}
 
-	// Sort categories alphabetically
+	/* Sort categories alphabetically */
 	TArray<FString> SortedCategories;
 	CategorizedActions.GetKeys(SortedCategories);
 	SortedCategories.Sort();
@@ -94,7 +96,7 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* PC)
 		? UMCore_CoreSettings::Get()->bShowSecondaryBindings
 		: false;
 
-	// Build the ScrollBox content
+	/* Build the ScrollBox content */
 	for (const FString& CategoryKey : SortedCategories)
 	{
 		const FText CategoryDisplayName = FText::FromString(CategoryKey);

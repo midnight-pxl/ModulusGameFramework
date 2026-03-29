@@ -2,10 +2,11 @@
 
 #include "CoreUI/Widgets/Primitives/MCore_TabbedContainer.h"
 
+#include "CoreData/Logging/LogModulusUI.h"
+
 #include "CommonButtonBase.h"
 #include "CommonTabListWidgetBase.h"
 #include "CommonAnimatedSwitcher.h"
-#include "CoreData/Logging/LogModulusUI.h"
 
 UMCore_TabbedContainer::UMCore_TabbedContainer()
 {
@@ -86,7 +87,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		return false;
 	}
 
-	// Store remaining tabs preserving insertion order via iteration
+	/* Store remaining tabs preserving insertion order via iteration */
 	TArray<TPair<FName, TObjectPtr<UWidget>>> RemainingTabs;
 	for (auto& Pair : PageWidgets)
 	{
@@ -96,7 +97,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		}
 	}
 
-	// Clear and rebuild to maintain correct indices
+	/* Clear and rebuild to maintain correct indices */
 	TabList->RemoveAllTabs();
 	PageSwitcher->ClearChildren();
 	PageWidgets.Empty();
@@ -131,8 +132,8 @@ void UMCore_TabbedContainer::ClearAllTabs()
 {
 	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::ClearAllTabs -- this=%p, TabCount=%d"), this, GetTabCount());
 
-	// Self-heal: if this container went through NativeDestruct and was reused
-	// without NativeOnInitialized firing again, the internal delegate is dead.
+	/* Self-heal: if this container went through NativeDestruct and was reused
+	 * without NativeOnInitialized firing again, the internal delegate is dead. */
 	if (TabList && !TabList->OnTabSelected.IsBound())
 	{
 		TabList->OnTabSelected.AddDynamic(this, &ThisClass::HandleTabSelected);
@@ -225,7 +226,7 @@ bool UMCore_TabbedContainer::SetTabHidden(FName TabID, bool bIsHidden)
 bool UMCore_TabbedContainer::IsTabEnabled(FName TabID) const
 {
 	UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabID);
-	if (!TabButton) return false;
+	if (!TabButton) { return false; }
 
 	return TabButton->GetIsEnabled();
 }
@@ -233,7 +234,7 @@ bool UMCore_TabbedContainer::IsTabEnabled(FName TabID) const
 bool UMCore_TabbedContainer::IsTabHidden(FName TabID) const
 {
 	UCommonButtonBase* TabButton = TabList->GetTabButtonBaseByID(TabID);
-	if (!TabButton) return false;
+	if (!TabButton) { return false; }
 
 	return !TabButton->IsVisible();
 }

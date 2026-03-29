@@ -1,13 +1,15 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Base.h"
+
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreUI/MCore_UISubsystem.h"
-#include "CommonTextBlock.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
+
+#include "CommonTextBlock.h"
 
 // ============================================================================
 // INITIALIZATION

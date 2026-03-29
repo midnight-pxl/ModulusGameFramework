@@ -1,6 +1,7 @@
 ﻿// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
 #include "CoreEvents/MCore_LocalEventSubsystem.h"
+
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreEvents/MCore_EventListenerComp.h"

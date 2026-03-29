@@ -14,7 +14,7 @@ void UMCore_PrimaryGameLayout::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	// Validate BindWidget properties
+	/* Validate BindWidget properties */
 	const bool bAllLayersValid = MCore_GameLayer && MCore_GameMenuLayer && MCore_MenuLayer && MCore_ModalLayer;
 
 	if (bAllLayersValid)

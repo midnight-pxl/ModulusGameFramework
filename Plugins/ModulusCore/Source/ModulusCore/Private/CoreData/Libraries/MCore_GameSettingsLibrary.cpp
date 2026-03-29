@@ -217,21 +217,23 @@ void UMCore_GameSettingsLibrary::ApplySettingChanges_Internal(
 	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
 	if (!Save)
 	{
-		UE_LOG(LogModulusSettings, Warning, TEXT("GameSettingsLibrary::ApplySettingChanges -- failed to get PlayerSettingsSave"));
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GameSettingsLibrary::ApplySettingChanges -- failed to get PlayerSettingsSave"));
 		return;
 	}
 
 	TArray<FString> AffectedTags;
 	TArray<FString> PreviousValues;
 	TArray<FGameplayTag> ProcessedTags;
-	float LongestRevertDelay = 0.f;
-	bool bAnyRequiresConfirmation = false;
+	float LongestRevertDelay{0.f};
+	bool bAnyRequiresConfirmation{false};
 
 	for (const TChangeStruct& Change : Changes)
 	{
 		if (!Change.Setting)
 		{
-			UE_LOG(LogModulusSettings, Warning, TEXT("GameSettingsLibrary::ApplySettingChanges -- null Setting in Changes, skipping"));
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("GameSettingsLibrary::ApplySettingChanges -- null Setting in Changes, skipping"));
 			continue;
 		}
 
@@ -402,8 +404,8 @@ void UMCore_GameSettingsLibrary::ResetSettingToDefault(const UObject* WorldConte
 {
 	if (!Setting) { return; }
 
-	// const_cast safe: DataAsset from asset registry; const parameter is
-	// caller-side guarantee; change struct needs non-const for UPROPERTY serialization
+	/* const_cast safe: DataAsset from asset registry; const parameter is
+	   caller-side guarantee; change struct needs non-const for UPROPERTY serialization */
 	UMCore_DA_SettingDefinition* MutableSetting =
 		const_cast<UMCore_DA_SettingDefinition*>(Setting);
 
