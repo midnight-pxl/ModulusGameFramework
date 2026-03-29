@@ -4,7 +4,7 @@
 
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreData/Logging/LogModulusSettings.h"
-#include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
+#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"

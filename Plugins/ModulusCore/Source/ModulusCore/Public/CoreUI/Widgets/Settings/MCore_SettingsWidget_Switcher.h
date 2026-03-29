@@ -10,7 +10,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CoreUI/Widgets/MCore_SettingsWidget_Base.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Base.h"
 #include "MCore_SettingsWidget_Switcher.generated.h"
 
 class UMCore_ButtonBase;

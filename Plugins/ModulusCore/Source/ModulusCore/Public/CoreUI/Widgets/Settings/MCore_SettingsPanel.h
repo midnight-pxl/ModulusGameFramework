@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Primitives/MCore_ActivatableBase.h"
 #include "GameplayTagContainer.h"
+#include "CoreUI/Widgets/Primitives/MCore_ActivatableBase.h"
 #include "MCore_SettingsPanel.generated.h"
 
 class UMCore_TabbedContainer;

@@ -1,6 +1,6 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUI/Widgets/MCore_SettingsWidget_Switcher.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Switcher.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"

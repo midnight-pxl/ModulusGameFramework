@@ -10,7 +10,7 @@
 #include "CommonInputSubsystem.h"
 #include "CommonInputBaseTypes.h"
 #include "CoreUI/MCore_UISubsystem.h"
-#include "CoreUI/Settings/MCore_PlayerSettingsSave.h"
+#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 
 // ============================================================================
 // PRIVATE HELPERS

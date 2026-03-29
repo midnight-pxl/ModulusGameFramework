@@ -1,6 +1,6 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Slider.h"
 
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"

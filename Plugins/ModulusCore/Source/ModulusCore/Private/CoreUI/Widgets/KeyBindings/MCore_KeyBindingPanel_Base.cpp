@@ -1,7 +1,7 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUI/Widgets/MCore_KeyBindingPanel_Base.h"
-#include "CoreUI/Widgets/MCore_KeyBindingRow.h"
+#include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingPanel_Base.h"
+#include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingRow.h"
 #include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Logging/LogModulusUI.h"

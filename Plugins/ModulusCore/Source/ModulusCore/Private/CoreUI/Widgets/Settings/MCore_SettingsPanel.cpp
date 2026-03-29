@@ -1,6 +1,6 @@
 ﻿// Copyright Midnight Pixel Studio LLC. All Rights Reserved.
 
-#include "CoreUI/Widgets/MCore_SettingsPanel.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsPanel.h"
 
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
@@ -9,17 +9,16 @@
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/Widgets/Primitives/MCore_TabbedContainer.h"
-#include "CoreUI/Widgets/MCore_SettingsWidget_Base.h"
-#include "CoreUI/Widgets/MCore_SettingsWidget_Slider.h"
-#include "CoreUI/Widgets/MCore_SettingsWidget_Switcher.h"
-#include "CoreUI/Widgets/MCore_KeyBindingPanel_Base.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Base.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Slider.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Switcher.h"
+#include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingPanel_Base.h"
 #include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CommonTextBlock.h"
 #include "Components/ScrollBox.h"
 #include "Components/SizeBox.h"
-#include "GameplayTagsManager.h"
 
 // ============================================================================
 // FILE-LOCAL HELPERS
