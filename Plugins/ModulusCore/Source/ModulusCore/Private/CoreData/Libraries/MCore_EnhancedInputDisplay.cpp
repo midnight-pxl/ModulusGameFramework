@@ -9,6 +9,8 @@
 #include "EnhancedInputSubsystemInterface.h"
 #include "EnhancedInput/Public/UserSettings/EnhancedInputUserSettings.h"
 #include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
 #include "GameFramework/PlayerController.h"
 #include "CommonInputSubsystem.h"
 #include "CommonInputBaseTypes.h"
@@ -590,4 +592,163 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController*
 
 	OutError = FText::FromString(TEXT("No matching mapping found for slot and device type"));
 	return false;
+}
+
+// ============================================================================
+// CONTEXT-SCOPED QUERIES
+// ============================================================================
+
+TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForContext(
+	APlayerController* PlayerController, const UInputMappingContext* MappingContext)
+{
+	TArray<FPlayerKeyMapping> Result;
+
+	if (!MappingContext)
+	{
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("EnhancedInputDisplay::GetRemappableActionsForContext -- MappingContext is null"));
+		return Result;
+	}
+
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile) { return Result; }
+
+	const TMap<FName, FKeyMappingRow>& AllRows = Profile->GetPlayerMappingRows();
+
+	/* Collect InputActions from this IMC that are remappable */
+	TSet<FName> SeenMappingNames;
+
+	for (const FEnhancedActionKeyMapping& ActionMapping : MappingContext->GetMappings())
+	{
+		const UInputAction* Action = ActionMapping.Action;
+		if (!Action) { continue; }
+
+		const FName MappingName = Action->GetFName();
+
+		/* Action is remappable only if it exists in the key profile */
+		if (!AllRows.Contains(MappingName)) { continue; }
+
+		/* Deduplicate: same action may appear multiple times in the IMC */
+		if (SeenMappingNames.Contains(MappingName)) { continue; }
+		SeenMappingNames.Add(MappingName);
+
+		/* Look up the player's current mappings from the key profile */
+		const FKeyMappingRow* Row = AllRows.Find(MappingName);
+		if (!Row) { continue; }
+
+		for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+		{
+			Result.Add(Mapping);
+		}
+	}
+
+	return Result;
+}
+
+// ============================================================================
+// BULK RESET OPERATIONS
+// ============================================================================
+
+void UMCore_EnhancedInputDisplay::ResetAllBindingsToDefault(APlayerController* PlayerController)
+{
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile)
+	{
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("EnhancedInputDisplay::ResetAllBindingsToDefault -- no active key profile"));
+		return;
+	}
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	if (!Subsystem) { return; }
+
+	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+	if (!UserSettings) { return; }
+
+	const TMap<FName, FKeyMappingRow>& AllRows = Profile->GetPlayerMappingRows();
+	int32 ResetCount{0};
+
+	for (const TPair<FName, FKeyMappingRow>& Pair : AllRows)
+	{
+		for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
+		{
+			FMapPlayerKeyArgs KeyArgs;
+			KeyArgs.MappingName = Pair.Key;
+			KeyArgs.Slot = Mapping.GetSlot();
+			KeyArgs.NewKey = Mapping.GetDefaultKey();
+
+			FGameplayTagContainer FailureReason;
+			UserSettings->MapPlayerKey(KeyArgs, FailureReason);
+
+			if (FailureReason.IsEmpty()) { ++ResetCount; }
+		}
+	}
+
+	UserSettings->SaveSettings();
+
+	UE_LOG(LogModulusUI, Log,
+		TEXT("EnhancedInputDisplay::ResetAllBindingsToDefault -- reset %d bindings to defaults"),
+		ResetCount);
+}
+
+void UMCore_EnhancedInputDisplay::ResetBindingsForContext(APlayerController* PlayerController,
+	const UInputMappingContext* MappingContext)
+{
+	if (!MappingContext)
+	{
+		UE_LOG(LogModulusUI, Warning,
+			TEXT("EnhancedInputDisplay::ResetBindingsForContext -- MappingContext is null"));
+		return;
+	}
+
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	if (!Profile) { return; }
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	if (!Subsystem) { return; }
+
+	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+	if (!UserSettings) { return; }
+
+	const TMap<FName, FKeyMappingRow>& AllRows = Profile->GetPlayerMappingRows();
+
+	/* Collect remappable action names from this IMC */
+	TSet<FName> ContextActionNames;
+	for (const FEnhancedActionKeyMapping& ActionMapping : MappingContext->GetMappings())
+	{
+		const UInputAction* Action = ActionMapping.Action;
+		if (!Action) { continue; }
+		
+		/* Only include actions that exist in the key profile */
+		if (!AllRows.Find(Action->GetFName())) { continue; }
+		
+		ContextActionNames.Add(Action->GetFName());
+	}
+
+	int32 ResetCount{0};
+
+	for (const FName& ActionName : ContextActionNames)
+	{
+		const FKeyMappingRow* Row = AllRows.Find(ActionName);
+		if (!Row) { continue; }
+
+		for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+		{
+			FMapPlayerKeyArgs KeyArgs;
+			KeyArgs.MappingName = ActionName;
+			KeyArgs.Slot = Mapping.GetSlot();
+			KeyArgs.NewKey = Mapping.GetDefaultKey();
+
+			FGameplayTagContainer FailureReason;
+			UserSettings->MapPlayerKey(KeyArgs, FailureReason);
+
+			if (FailureReason.IsEmpty()) { ++ResetCount; }
+		}
+	}
+
+	UserSettings->SaveSettings();
+
+	UE_LOG(LogModulusUI, Log,
+		TEXT("EnhancedInputDisplay::ResetBindingsForContext -- reset %d bindings for context '%s'"),
+		ResetCount, *MappingContext->GetName());
 }

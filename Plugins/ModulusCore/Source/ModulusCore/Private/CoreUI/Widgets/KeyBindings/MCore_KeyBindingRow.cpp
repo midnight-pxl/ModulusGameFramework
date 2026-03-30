@@ -8,8 +8,6 @@
 
 #include "InputAction.h"
 #include "CommonTextBlock.h"
-#include "Engine/World.h"
-#include "TimerManager.h"
 
 // ============================================================================
 // LIFECYCLE
@@ -22,31 +20,46 @@ void UMCore_KeyBindingRow::NativeOnInitialized()
 	if (Btn_KBM_Primary)
 	{
 		Btn_KBM_Primary->OnRebindComplete.AddDynamic(this, &ThisClass::HandleRebindComplete);
+		Btn_KBM_Primary->OnCaptureStateChanged.AddDynamic(this, &ThisClass::HandleCaptureStateChanged);
 	}
 	if (Btn_KBM_Secondary)
 	{
 		Btn_KBM_Secondary->OnRebindComplete.AddDynamic(this, &ThisClass::HandleRebindComplete);
+		Btn_KBM_Secondary->OnCaptureStateChanged.AddDynamic(this, &ThisClass::HandleCaptureStateChanged);
 	}
 	if (Btn_Gamepad_Primary)
 	{
 		Btn_Gamepad_Primary->OnRebindComplete.AddDynamic(this, &ThisClass::HandleRebindComplete);
+		Btn_Gamepad_Primary->OnCaptureStateChanged.AddDynamic(this, &ThisClass::HandleCaptureStateChanged);
 	}
 	if (Btn_Gamepad_Secondary)
 	{
 		Btn_Gamepad_Secondary->OnRebindComplete.AddDynamic(this, &ThisClass::HandleRebindComplete);
+		Btn_Gamepad_Secondary->OnCaptureStateChanged.AddDynamic(this, &ThisClass::HandleCaptureStateChanged);
 	}
 }
 
 void UMCore_KeyBindingRow::NativeDestruct()
 {
-	if (Btn_KBM_Primary) { Btn_KBM_Primary->OnRebindComplete.RemoveAll(this); }
-	if (Btn_KBM_Secondary) { Btn_KBM_Secondary->OnRebindComplete.RemoveAll(this); }
-	if (Btn_Gamepad_Primary) { Btn_Gamepad_Primary->OnRebindComplete.RemoveAll(this); }
-	if (Btn_Gamepad_Secondary) { Btn_Gamepad_Secondary->OnRebindComplete.RemoveAll(this); }
-
-	if (UWorld* World = GetWorld())
+	if (Btn_KBM_Primary)
 	{
-		World->GetTimerManager().ClearTimer(ErrorFadeTimerHandle);
+		Btn_KBM_Primary->OnRebindComplete.RemoveAll(this);
+		Btn_KBM_Primary->OnCaptureStateChanged.RemoveAll(this);
+	}
+	if (Btn_KBM_Secondary)
+	{
+		Btn_KBM_Secondary->OnRebindComplete.RemoveAll(this);
+		Btn_KBM_Secondary->OnCaptureStateChanged.RemoveAll(this);
+	}
+	if (Btn_Gamepad_Primary)
+	{
+		Btn_Gamepad_Primary->OnRebindComplete.RemoveAll(this);
+		Btn_Gamepad_Primary->OnCaptureStateChanged.RemoveAll(this);
+	}
+	if (Btn_Gamepad_Secondary)
+	{
+		Btn_Gamepad_Secondary->OnRebindComplete.RemoveAll(this);
+		Btn_Gamepad_Secondary->OnCaptureStateChanged.RemoveAll(this);
 	}
 
 	Super::NativeDestruct();
@@ -91,11 +104,6 @@ void UMCore_KeyBindingRow::InitFromAction(APlayerController* PC, UInputAction* A
 
 	UE_LOG(LogModulusUI, Verbose, TEXT("KeyBindingRow::InitFromAction -- %s initialized for action [%s]"),
 		*GetNameSafe(this), *GetNameSafe(BoundAction));
-
-	if (Txt_ErrorMessage)
-	{
-		Txt_ErrorMessage->SetVisibility(ESlateVisibility::Collapsed);
-	}
 }
 
 void UMCore_KeyBindingRow::RefreshDisplay()
@@ -116,7 +124,6 @@ void UMCore_KeyBindingRow::HandleRebindComplete(bool bSuccess, FText ErrorMessag
 	{
 		UE_LOG(LogModulusUI, Warning, TEXT("KeyBindingRow::HandleRebindComplete -- %s rebind rejected: %s"),
 			*GetNameSafe(this), *ErrorMessage.ToString());
-		ShowError(ErrorMessage);
 	}
 	else if (bSuccess)
 	{
@@ -124,30 +131,12 @@ void UMCore_KeyBindingRow::HandleRebindComplete(bool bSuccess, FText ErrorMessag
 			*GetNameSafe(this));
 	}
 
+	OnRowRebindResult.Broadcast(bSuccess, ErrorMessage);
 	RefreshDisplay();
 	OnRowRebindCompleted.Broadcast();
 }
 
-void UMCore_KeyBindingRow::ShowError(const FText& ErrorMessage)
+void UMCore_KeyBindingRow::HandleCaptureStateChanged(UMCore_KeyBindingButton* Button, bool bCapturing)
 {
-	if (Txt_ErrorMessage)
-	{
-		Txt_ErrorMessage->SetText(ErrorMessage);
-		Txt_ErrorMessage->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-	}
-
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(ErrorFadeTimerHandle);
-		World->GetTimerManager().SetTimer(
-			ErrorFadeTimerHandle, this, &ThisClass::HideError, 3.0f, false);
-	}
-}
-
-void UMCore_KeyBindingRow::HideError()
-{
-	if (Txt_ErrorMessage)
-	{
-		Txt_ErrorMessage->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	OnRowCaptureStateChanged.Broadcast(Button, bCapturing);
 }

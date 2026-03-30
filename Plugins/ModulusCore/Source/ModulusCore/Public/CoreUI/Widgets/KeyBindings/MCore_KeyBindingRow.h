@@ -20,12 +20,19 @@ class APlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRowRebindCompleted);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRowCaptureStateChanged,
+	UMCore_KeyBindingButton*, Button, bool, bCapturing);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRowRebindResult,
+	bool, bSuccess, FText, ErrorMessage);
+
 /**
  * Single action row with KBM and Gamepad binding slots.
- * Owns 4 KeyBindingButtons and an error toast that auto-hides after 3 seconds.
+ * Owns 4 KeyBindingButtons and routes capture state and rebind results
+ * upward to the owning panel.
  *
  * Requires BindWidget: Txt_ActionName, Btn_KBM_Primary, Btn_KBM_Secondary,
- * Btn_Gamepad_Primary, Btn_Gamepad_Secondary, Txt_ErrorMessage.
+ * Btn_Gamepad_Primary, Btn_Gamepad_Secondary.
  */
 UCLASS(Abstract, Blueprintable, ClassGroup = "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_KeyBindingRow : public UCommonUserWidget
@@ -53,6 +60,14 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "UI|KeyBinding")
 	FOnRowRebindCompleted OnRowRebindCompleted;
 
+	/** Fires when a button enters or exits capture mode. Panel binds for centralized prompt display. */
+	UPROPERTY(BlueprintAssignable, Category = "UI|KeyBinding")
+	FOnRowCaptureStateChanged OnRowCaptureStateChanged;
+
+	/** Fires after a rebind attempt with success/failure status. Panel binds for centralized error display. */
+	UPROPERTY(BlueprintAssignable, Category = "UI|KeyBinding")
+	FOnRowRebindResult OnRowRebindResult;
+
 protected:
 
 	// ====================================================================
@@ -62,20 +77,17 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> Txt_ActionName;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UMCore_KeyBindingButton> Btn_KBM_Primary;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UMCore_KeyBindingButton> Btn_KBM_Secondary;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UMCore_KeyBindingButton> Btn_Gamepad_Primary;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UMCore_KeyBindingButton> Btn_Gamepad_Secondary;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Txt_ErrorMessage;
 
 	// ====================================================================
 	// LIFECYCLE
@@ -93,10 +105,8 @@ private:
 	UFUNCTION()
 	void HandleRebindComplete(bool bSuccess, FText ErrorMessage);
 
-	void ShowError(const FText& ErrorMessage);
-
 	UFUNCTION()
-	void HideError();
+	void HandleCaptureStateChanged(UMCore_KeyBindingButton* Button, bool bCapturing);
 
 	// ====================================================================
 	// STATE
@@ -106,6 +116,4 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> BoundAction;
-
-	FTimerHandle ErrorFadeTimerHandle;
 };

@@ -3,7 +3,8 @@
 /**
  * MCore_KeyBindingPanel_Base.h
  *
- * Key binding panel that queries remappable actions and builds grouped rows.
+ * Key binding panel that queries remappable actions per InputMappingContext
+ * and builds grouped rows inside a tabbed container.
  * Displayed inline in the Settings Panel's KeyBinding category tab.
  */
 
@@ -14,15 +15,24 @@
 #include "MCore_KeyBindingPanel_Base.generated.h"
 
 class UScrollBox;
+class UMCore_TabbedContainer;
+class UMCore_ButtonBase;
 class UMCore_KeyBindingRow;
+class UMCore_KeyBindingButton;
+class UMCore_KeyBindingCaptureDialog;
+class UMCore_ConfirmationDialog;
+class UMCore_PDA_UITheme_Base;
+class UCommonTextBlock;
 class UInputAction;
+class UInputMappingContext;
 class APlayerController;
 
 /**
- * Key binding panel that populates a ScrollBox with category headers and binding rows.
- * Self-populates on initialization using the active Enhanced Input key profile.
+ * Key binding panel that populates a TabbedContainer with one tab per InputMappingContext.
+ * Each tab contains category headers and binding rows in a ScrollBox.
+ * Falls back to a single flat page if no KeyBindingContexts are configured in CoreSettings.
  *
- * Requires BindWidget: ScrollBox_Bindings.
+ * Requires BindWidget: TabbedContainer_Contexts.
  */
 UCLASS(Abstract, Blueprintable)
 class MODULUSCORE_API UMCore_KeyBindingPanel_Base : public UCommonUserWidget
@@ -35,9 +45,9 @@ public:
 	// PUBLIC API
 	// ====================================================================
 
-	/** Query all remappable actions, group by category, and spawn rows into the ScrollBox. */
+	/** Query all remappable actions, group by IMC and category, and spawn rows into tabs. */
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
-	void PopulateBindings(APlayerController* PC);
+	void PopulateBindings(APlayerController* OwningPlayer);
 
 	/** Refresh all spawned rows to reflect current bindings. */
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
@@ -47,12 +57,17 @@ public:
 	// BLUEPRINT HOOKS
 	// ====================================================================
 
-	/** Fires after each category header is added to the ScrollBox. */
+	/** Fires after each IMC tab is created and registered in the TabbedContainer. */
+	UFUNCTION(BlueprintNativeEvent, Category = "UI|KeyBinding")
+	void OnContextTabCreated(FName TabID, UWidget* PageWidget, const FText& ContextDisplayName);
+	virtual void OnContextTabCreated_Implementation(FName TabID, UWidget* PageWidget, const FText& ContextDisplayName) {}
+
+	/** Fires after each category header is added to a tab's ScrollBox. */
 	UFUNCTION(BlueprintNativeEvent, Category = "UI|KeyBinding")
 	void OnCategoryHeaderCreated(const FText& CategoryDisplayName, UWidget* HeaderWidget);
 	virtual void OnCategoryHeaderCreated_Implementation(const FText& CategoryDisplayName, UWidget* HeaderWidget) {}
 
-	/** Fires after each row is created and added to the ScrollBox. */
+	/** Fires after each row is created and added to a tab's ScrollBox. */
 	UFUNCTION(BlueprintNativeEvent, Category = "UI|KeyBinding")
 	void OnRowCreated(UMCore_KeyBindingRow* Row);
 	virtual void OnRowCreated_Implementation(UMCore_KeyBindingRow* Row) {}
@@ -64,7 +79,13 @@ protected:
 	// ====================================================================
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UScrollBox> ScrollBox_Bindings;
+	TObjectPtr<UMCore_TabbedContainer> TabbedContainer_Bindings;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ButtonBase> Btn_ResetAllBindings;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ButtonBase> Btn_ResetCategory;
 
 	// ====================================================================
 	// CONFIGURATION
@@ -73,23 +94,99 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
 	TSubclassOf<UMCore_KeyBindingRow> KeyBindingRowClass;
 
+	/** Dialog class pushed to modal layer during key capture. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
+	TSubclassOf<UMCore_KeyBindingCaptureDialog> CaptureDialogClass;
+
+	/** Text shown during KBM key capture. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
+	FText CapturePromptText;
+
+	/** Text shown during gamepad button capture. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
+	FText CapturePromptGamepadText;
+
+	// ====================================================================
+	// THEME
+	// ====================================================================
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Theme")
+	void ApplyTheme(UMCore_PDA_UITheme_Base* NewTheme);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Theme",
+		meta = (DisplayName = "On Theme Applied"))
+	void K2_OnThemeApplied(UMCore_PDA_UITheme_Base* Theme);
+
+	UPROPERTY(Transient)
+	mutable TWeakObjectPtr<UMCore_PDA_UITheme_Base> CachedTheme;
+
 	// ====================================================================
 	// LIFECYCLE
 	// ====================================================================
 
+	virtual void NativePreConstruct() override;
 	virtual void NativeOnInitialized() override;
 	virtual void NativeDestruct() override;
 
 private:
 
 	// ====================================================================
-	// HELPERS
+	// PANEL BUILD
 	// ====================================================================
 
-	UWidget* CreateCategoryHeader(const FText& CategoryDisplayName);
+	UScrollBox* BuildContextPage(APlayerController* PC, const UInputMappingContext* MappingContext);
+	UScrollBox* BuildFallbackPage(APlayerController* PC);
+	UCommonTextBlock* CreateThemedCategoryHeader(const FText& CategoryDisplayName);
+
+	// ====================================================================
+	// TAB CALLBACKS
+	// ====================================================================
+
+	UFUNCTION()
+	void HandleContextTabSelected(FName TabID);
+
+	// ====================================================================
+	// RESET HANDLERS
+	// ====================================================================
+
+	UFUNCTION()
+	void HandleResetAllClicked();
+
+	UFUNCTION()
+	void HandleResetAllConfirmResult(bool bConfirmed);
+
+	UFUNCTION()
+	void HandleResetCategoryClicked();
+
+	UFUNCTION()
+	void HandleResetCategoryConfirmResult(bool bConfirmed);
 
 	UFUNCTION()
 	void HandleRowRebindCompleted();
+
+	UFUNCTION()
+	void HandleRowCaptureStateChanged(UMCore_KeyBindingButton* Button, bool bCapturing);
+
+	UFUNCTION()
+	void HandleRowRebindResult(bool bSuccess, FText ErrorMessage);
+
+	UFUNCTION()
+	void HandleCaptureDialogDismissed();
+
+	UFUNCTION()
+	void HandleCaptureDialogReadyForCapture();
+
+	// ====================================================================
+	// THEME INTERNALS
+	// ====================================================================
+
+	void BindThemeDelegate();
+	void UnbindThemeDelegate();
+
+	UFUNCTION()
+	void HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme);
+
+	bool bThemeDelegateBound{false};
 
 	// ====================================================================
 	// STATE
@@ -97,4 +194,15 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UMCore_KeyBindingRow>> AllRows;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UCommonTextBlock>> SpawnedHeaders;
+
+	TWeakObjectPtr<UMCore_ConfirmationDialog> PendingConfirmationDialog;
+
+	TWeakObjectPtr<UMCore_KeyBindingCaptureDialog> ActiveCaptureDialog;
+
+	TWeakObjectPtr<UMCore_KeyBindingButton> ActiveCaptureButton;
+
+	FName ActiveContextTabID;
 };

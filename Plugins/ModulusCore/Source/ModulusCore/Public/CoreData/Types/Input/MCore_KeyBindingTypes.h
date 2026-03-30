@@ -1,0 +1,31 @@
+// Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
+
+/**
+ * MCore_KeyBindingTypes.h
+ *
+ * Data types for the key binding panel configuration.
+ */
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "InputMappingContext.h"
+#include "MCore_KeyBindingTypes.generated.h"
+
+/**
+ * Associates an InputMappingContext with a display name for the key binding panel.
+ * Each entry becomes a tab in the tabbed key binding layout.
+ */
+USTRUCT(BlueprintType)
+struct MODULUSCORE_API FMCore_KeyBindingContext
+{
+	GENERATED_BODY()
+
+	/** Tab display name shown in the key binding panel. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Key Binding")
+	FText DisplayName;
+
+	/** The InputMappingContext whose remappable actions populate this tab. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Key Binding")
+	TSoftObjectPtr<UInputMappingContext> MappingContext;
+};

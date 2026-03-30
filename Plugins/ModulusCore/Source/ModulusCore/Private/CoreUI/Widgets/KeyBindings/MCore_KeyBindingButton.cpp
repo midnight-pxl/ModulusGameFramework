@@ -6,7 +6,6 @@
 #include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
 #include "CoreData/Logging/LogModulusUI.h"
 
-#include "CommonTextBlock.h"
 #include "Components/Image.h"
 #include "CommonInputTypeEnum.h"
 #include "Framework/Application/SlateApplication.h"
@@ -93,6 +92,11 @@ void UMCore_KeyBindingButton::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	if (UnboundText.IsEmpty())
+	{
+		UnboundText = NSLOCTEXT("ModulusCore", "Unbound", "None");
+	}
+
 	if (Btn_Capture)
 	{
 		Btn_Capture->OnButtonClicked.AddDynamic(this, &ThisClass::HandleButtonPressed);
@@ -133,20 +137,13 @@ void UMCore_KeyBindingButton::InitForSlot(APlayerController* PC, UInputAction* A
 
 void UMCore_KeyBindingButton::RefreshKeyDisplay()
 {
-	if (Txt_CapturePrompt)
-	{
-		Txt_CapturePrompt->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	if (!Btn_Capture) { return; }
 
 	APlayerController* PlayerController = OwningPC.Get();
 	if (!PlayerController || !BoundAction)
 	{
-		if (Img_KeyIcon) { Img_KeyIcon->SetVisibility(ESlateVisibility::Collapsed); }
-		if (Txt_KeyName)
-		{
-			Txt_KeyName->SetText(FText::FromString(TEXT("---")));
-			Txt_KeyName->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		}
+		Btn_Capture->SetButtonText(UnboundText);
+		Btn_Capture->SetDisplayMode(EMCore_ButtonDisplayMode::TextOnly);
 		CurrentState = EMCore_KeyBindingButtonState::Unbound;
 		return;
 	}
@@ -165,32 +162,23 @@ void UMCore_KeyBindingButton::RefreshKeyDisplay()
 		const bool bHasIcon = LocalPlayer && UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(
 			LocalPlayer, BoundKey, DeviceType, IconBrush);
 
-		if (bHasIcon && Img_KeyIcon)
+		if (bHasIcon && Btn_Capture->Img_BtnIcon)
 		{
-			Img_KeyIcon->SetBrush(IconBrush);
-			Img_KeyIcon->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-			if (Txt_KeyName) { Txt_KeyName->SetVisibility(ESlateVisibility::Collapsed); }
+			Btn_Capture->Img_BtnIcon->SetBrush(IconBrush);
+			Btn_Capture->SetDisplayMode(EMCore_ButtonDisplayMode::IconOnly);
 		}
 		else
 		{
-			if (Img_KeyIcon) { Img_KeyIcon->SetVisibility(ESlateVisibility::Collapsed); }
-			if (Txt_KeyName)
-			{
-				Txt_KeyName->SetText(BoundKey.GetDisplayName());
-				Txt_KeyName->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-			}
+			Btn_Capture->SetButtonText(BoundKey.GetDisplayName());
+			Btn_Capture->SetDisplayMode(EMCore_ButtonDisplayMode::TextOnly);
 		}
 
 		CurrentState = EMCore_KeyBindingButtonState::Bound;
 	}
 	else
 	{
-		if (Img_KeyIcon) { Img_KeyIcon->SetVisibility(ESlateVisibility::Collapsed); }
-		if (Txt_KeyName)
-		{
-			Txt_KeyName->SetText(FText::FromString(TEXT("---")));
-			Txt_KeyName->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-		}
+		Btn_Capture->SetButtonText(UnboundText);
+		Btn_Capture->SetDisplayMode(EMCore_ButtonDisplayMode::TextOnly);
 		CurrentState = EMCore_KeyBindingButtonState::Unbound;
 	}
 }
@@ -212,11 +200,9 @@ void UMCore_KeyBindingButton::EnterCaptureMode()
 	UE_LOG(LogModulusUI, Verbose,
 		TEXT("KeyBindingButton::EnterCaptureMode -- %s entering capture mode"),
 		*GetNameSafe(this));
-	CurrentState = EMCore_KeyBindingButtonState::Capturing;
 
-	if (Img_KeyIcon) { Img_KeyIcon->SetVisibility(ESlateVisibility::Collapsed); }
-	if (Txt_KeyName) { Txt_KeyName->SetVisibility(ESlateVisibility::Collapsed); }
-	if (Txt_CapturePrompt) { Txt_CapturePrompt->SetVisibility(ESlateVisibility::SelfHitTestInvisible); }
+	CurrentState = EMCore_KeyBindingButtonState::Capturing;
+	OnCaptureStateChanged.Broadcast(this, true);
 
 	if (FSlateApplication::IsInitialized())
 	{
@@ -230,12 +216,14 @@ void UMCore_KeyBindingButton::ExitCaptureMode()
 	UE_LOG(LogModulusUI, Verbose,
 		TEXT("KeyBindingButton::ExitCaptureMode -- %s exiting capture mode"),
 		*GetNameSafe(this));
+
 	if (KeyCaptureProcessor.IsValid() && FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().UnregisterInputPreProcessor(KeyCaptureProcessor);
 		KeyCaptureProcessor.Reset();
 	}
 
+	OnCaptureStateChanged.Broadcast(this, false);
 	RefreshKeyDisplay();
 }
 

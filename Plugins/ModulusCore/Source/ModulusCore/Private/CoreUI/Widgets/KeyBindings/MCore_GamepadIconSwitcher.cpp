@@ -1,6 +1,6 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreUI/Widgets/MCore_GamepadIconSwitcher.h"
+#include "CoreUI/Widgets/KeyBindings/MCore_GamepadIconSwitcher.h"
 
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/MCore_UISubsystem.h"

@@ -3,7 +3,7 @@
 /**
  * MCore_KeyBindingButton.h
  *
- * Single key binding slot button with icon display and key capture via IInputProcessor.
+ * Single key binding slot button with icon display via ButtonBase and key capture via IInputProcessor.
  * Registers a Slate input preprocessor during capture to intercept keys before CommonUI.
  */
 
@@ -14,8 +14,6 @@
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "MCore_KeyBindingButton.generated.h"
 
-class UImage;
-class UCommonTextBlock;
 class UMCore_ButtonBase;
 class UInputAction;
 class APlayerController;
@@ -32,19 +30,20 @@ enum class EMCore_KeyBindingButtonState : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRebindComplete, bool, bSuccess, FText, ErrorMessage);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCaptureStateChanged, UMCore_KeyBindingButton*, Button, bool, bCapturing);
 
 /**
- * Single key binding slot with icon display and inline key capture.
+ * Single key binding slot using ButtonBase as the display surface.
  * Uses a Slate IInputProcessor to intercept keys before CommonUI's action router
  * can consume them during capture mode.
  *
- * Requires BindWidget: Btn_Capture, Img_KeyIcon, Txt_KeyName, Txt_CapturePrompt.
+ * Requires BindWidget: Btn_Capture.
  */
 UCLASS(Abstract, Blueprintable, ClassGroup = "ModulusUI", meta = (DisableNativeTick))
 class MODULUSCORE_API UMCore_KeyBindingButton : public UCommonUserWidget
 {
 	GENERATED_BODY()
-	
+
 	friend class FMCore_KeyCaptureProcessor;
 
 public:
@@ -57,7 +56,7 @@ public:
 	void InitForSlot(APlayerController* PC, UInputAction* Action,
 		EPlayerMappableKeySlot InSlot, bool bInIsGamepad);
 
-	/** Re-read the current binding and update visuals. */
+	/** Re-read the current binding and update visuals via ButtonBase. */
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
 	void RefreshKeyDisplay();
 
@@ -69,8 +68,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
 	void ExitCaptureMode();
 
+	UFUNCTION(BlueprintPure, Category = "UI|KeyBinding")
+	bool IsGamepadSlot() const { return bIsGamepad; }
+
+	UFUNCTION(BlueprintPure, Category = "UI|KeyBinding")
+	UInputAction* GetInputAction() const { return BoundAction; }
+
+	UFUNCTION(BlueprintPure, Category = "UI|KeyBinding")
+	EPlayerMappableKeySlot GetSlot() const { return Slot; }
+
 	UPROPERTY(BlueprintAssignable, Category = "UI|KeyBinding")
 	FOnRebindComplete OnRebindComplete;
+
+	UPROPERTY(BlueprintAssignable, Category = "UI|KeyBinding")
+	FOnCaptureStateChanged OnCaptureStateChanged;
 
 	UPROPERTY(BlueprintReadOnly, Category = "UI|KeyBinding")
 	EMCore_KeyBindingButtonState CurrentState = EMCore_KeyBindingButtonState::Unbound;
@@ -83,15 +94,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMCore_ButtonBase> Btn_Capture;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UImage> Img_KeyIcon;
+	// ====================================================================
+	// CONFIGURATION
+	// ====================================================================
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Txt_KeyName;
+	/** Text shown when no key is bound for this slot. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
+	FText UnboundText;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> Txt_CapturePrompt;
-	
 	// ====================================================================
 	// HANDLERS
 	// ====================================================================
@@ -106,7 +116,7 @@ protected:
 
 	void OnKeyCaptured(FKey NewKey);
 	void OnCaptureCancelled();
-	
+
 	// ====================================================================
 	// LIFECYCLE
 	// ====================================================================

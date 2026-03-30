@@ -16,6 +16,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "GameplayTagContainer.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingsCollection.h"
+#include "CoreData/Types/Input/MCore_KeyBindingTypes.h"
 #include "MCore_CoreSettings.generated.h"
 
 class UMCore_PDA_UITheme_Base;
@@ -136,6 +137,15 @@ public:
 	/** Show secondary binding columns in the key binding panel. */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	bool bShowSecondaryBindings = false;
+
+	/**
+	 * Input mapping contexts to display as tabs in the key binding panel.
+	 * Each entry becomes a tab with the given display name.
+	 * Order determines tab order. If empty, the panel falls back to a flat list.
+	 */
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings",
+		meta=(DisplayName="Key Binding Contexts"))
+	TArray<FMCore_KeyBindingContext> KeyBindingContexts;
 
 	/** Dialog class used for destructive action confirmations (Reset All, etc). */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")

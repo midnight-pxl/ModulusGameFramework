@@ -20,6 +20,7 @@ class UEnhancedInputLocalPlayerSubsystem;
 class UEnhancedPlayerMappableKeyProfile;
 class APlayerController;
 class UInputAction;
+class UInputMappingContext;
 class ULocalPlayer;
 
 /**
@@ -145,6 +146,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
 	static bool ResetActionToDefaultForSlot(APlayerController* PlayerController, UInputAction* InputAction,
 		EPlayerMappableKeySlot Slot, bool bGamepad, FText& OutError);
+
+	// ============================================================================
+	// CONTEXT-SCOPED QUERIES
+	// ============================================================================
+
+	/** Returns deduplicated remappable actions that belong to the given InputMappingContext. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static TArray<FPlayerKeyMapping> GetRemappableActionsForContext(
+		APlayerController* PlayerController, const UInputMappingContext* MappingContext);
+
+	// ============================================================================
+	// BULK RESET OPERATIONS
+	// ============================================================================
+
+	/** Reset all key bindings across all actions in the active key profile to defaults. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static void ResetAllBindingsToDefault(APlayerController* PlayerController);
+
+	/** Reset key bindings for all remappable actions within a specific InputMappingContext. */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
+	static void ResetBindingsForContext(APlayerController* PlayerController,
+		const UInputMappingContext* MappingContext);
 
 private:
 	/* Resolve Enhanced Input subsystem from PlayerController with validation */
