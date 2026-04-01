@@ -1,6 +1,6 @@
 // Copyright 2025, Midnight Pixel Studio LLC. All Rights Reserved
 
-#include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
+#include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreUI/MCore_UISubsystem.h"
@@ -19,17 +19,39 @@
 // PRIVATE HELPERS
 // ============================================================================
 
-UEnhancedInputLocalPlayerSubsystem* UMCore_EnhancedInputDisplay::GetEnhancedInputSubsystem(
-	APlayerController* PlayerController)
+/**
+ * Resolve a UInputAction* to its profile MappingName by iterating rows
+ * and matching on GetAssociatedInputAction(). Returns NAME_None on failure.
+ */
+static FName FindMappingNameForAction(
+	const UEnhancedPlayerMappableKeyProfile* Profile,
+	const UInputAction* InputAction)
 {
-	if (!PlayerController)
+	const TMap<FName, FKeyMappingRow>& AllRows = Profile->GetPlayerMappingRows();
+	for (const auto& Pair : AllRows)
+	{
+		for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
+		{
+			if (Mapping.GetAssociatedInputAction() == InputAction)
+			{
+				return Pair.Key;
+			}
+		}
+	}
+	return NAME_None;
+}
+
+UEnhancedInputLocalPlayerSubsystem* UMCore_InputDisplayLibrary::GetEnhancedInputSubsystem(
+	APlayerController* OwningPlayer)
+{
+	if (!OwningPlayer)
 	{
 		UE_LOG(LogModulusUI, Error,
-			TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- PlayerController is null"));
+			TEXT("EnhancedInputDisplay::GetEnhancedInputSubsystem -- OwningPlayer is null"));
 		return nullptr;
 	}
 
-	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	ULocalPlayer* LocalPlayer = OwningPlayer->GetLocalPlayer();
 	if (!LocalPlayer)
 	{
 		UE_LOG(LogModulusUI, Error,
@@ -40,10 +62,10 @@ UEnhancedInputLocalPlayerSubsystem* UMCore_EnhancedInputDisplay::GetEnhancedInpu
 	return LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 }
 
-UEnhancedPlayerMappableKeyProfile* UMCore_EnhancedInputDisplay::GetActiveKeyProfile(
-	APlayerController* PlayerController)
+UEnhancedPlayerMappableKeyProfile* UMCore_InputDisplayLibrary::GetActiveKeyProfile(
+	APlayerController* OwningPlayer)
 {
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(OwningPlayer);
 	if (!Subsystem) { return nullptr; }
 
 	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
@@ -56,15 +78,16 @@ UEnhancedPlayerMappableKeyProfile* UMCore_EnhancedInputDisplay::GetActiveKeyProf
 // KEY QUERIES
 // ============================================================================
 
-FKey UMCore_EnhancedInputDisplay::GetCurrentKeyForAction(APlayerController* PlayerController,
+FKey UMCore_InputDisplayLibrary::GetCurrentKeyForAction(APlayerController* OwningPlayer,
 	UInputAction* InputAction)
 {
 	if (!InputAction) { return EKeys::Invalid; }
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile) { return EKeys::Invalid; }
 
-	const FKeyMappingRow* KeyRow = Profile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(Profile, InputAction);
+	const FKeyMappingRow* KeyRow = MappingName.IsNone() ? nullptr : Profile->FindKeyMappingRow(MappingName);
 	if (!KeyRow) { return EKeys::Invalid; }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
@@ -75,16 +98,17 @@ FKey UMCore_EnhancedInputDisplay::GetCurrentKeyForAction(APlayerController* Play
 	return EKeys::Invalid;
 }
 
-TArray<FKey> UMCore_EnhancedInputDisplay::GetAllKeysForAction(APlayerController* PlayerController,
+TArray<FKey> UMCore_InputDisplayLibrary::GetAllKeysForAction(APlayerController* OwningPlayer,
 	UInputAction* InputAction)
 {
 	TArray<FKey> Keys;
 	if (!InputAction) { return Keys; }
 
-	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(OwningPlayer);
 	if (!KeyProfile) { return Keys; }
 
-	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	const FKeyMappingRow* KeyRow = MappingName.IsNone() ? nullptr : KeyProfile->FindKeyMappingRow(MappingName);
 	if (!KeyRow) { return Keys; }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
@@ -99,15 +123,16 @@ TArray<FKey> UMCore_EnhancedInputDisplay::GetAllKeysForAction(APlayerController*
 // ACTION METADATA
 // ============================================================================
 
-FText UMCore_EnhancedInputDisplay::GetActionDisplayName(APlayerController* PlayerController,
+FText UMCore_InputDisplayLibrary::GetActionDisplayName(APlayerController* OwningPlayer,
 	UInputAction* InputAction)
 {
 	if (!InputAction) { return FText::FromString(TEXT("Invalid InputAction")); }
 
-	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(OwningPlayer);
 	if (!KeyProfile) { return FText::FromString(InputAction->GetName()); }
 
-	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	const FKeyMappingRow* KeyRow = MappingName.IsNone() ? nullptr : KeyProfile->FindKeyMappingRow(MappingName);
 	if (!KeyRow) { return FText::FromString(InputAction->GetName()); }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
@@ -119,15 +144,16 @@ FText UMCore_EnhancedInputDisplay::GetActionDisplayName(APlayerController* Playe
 	return FText::FromString(InputAction->GetName());
 }
 
-FText UMCore_EnhancedInputDisplay::GetActionDisplayCategory(APlayerController* PlayerController,
+FText UMCore_InputDisplayLibrary::GetActionDisplayCategory(APlayerController* OwningPlayer,
 	UInputAction* InputAction)
 {
 	if (!InputAction) { return FText::FromString(TEXT("Invalid InputAction")); }
 
-	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(OwningPlayer);
 	if (!KeyProfile) { return FText::FromString(TEXT("General")); }
 
-	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	const FKeyMappingRow* KeyRow = MappingName.IsNone() ? nullptr : KeyProfile->FindKeyMappingRow(MappingName);
 	if (!KeyRow) { return FText::FromString(TEXT("General")); }
 
 	for (const FPlayerKeyMapping& KeyMapping : KeyRow->Mappings)
@@ -139,30 +165,30 @@ FText UMCore_EnhancedInputDisplay::GetActionDisplayCategory(APlayerController* P
 	return FText::FromString(TEXT("General"));
 }
 
-FName UMCore_EnhancedInputDisplay::GetActionMappingName(APlayerController* PlayerController,
+FName UMCore_InputDisplayLibrary::GetActionMappingName(APlayerController* OwningPlayer,
 	UInputAction* InputAction)
 {
 	if (!InputAction) { return NAME_None; }
 
-	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(OwningPlayer);
 	if (!KeyProfile) { return NAME_None; }
 
-	const FKeyMappingRow* KeyRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	const FKeyMappingRow* KeyRow = MappingName.IsNone() ? nullptr : KeyProfile->FindKeyMappingRow(MappingName);
 	if (!KeyRow) { return NAME_None; }
 
-	/* Row key matches mapping name */
-	return InputAction->GetFName();
+	return MappingName;
 }
 
-bool UMCore_EnhancedInputDisplay::IsActionRemappable(APlayerController* PlayerController,
+bool UMCore_InputDisplayLibrary::IsActionRemappable(APlayerController* OwningPlayer,
 	UInputAction* InputAction)
 {
 	if (!InputAction) { return false; }
 
-	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(OwningPlayer);
 	if (!KeyProfile) { return false; }
 
-	return KeyProfile->FindKeyMappingRow(InputAction->GetFName()) != nullptr;
+	return !FindMappingNameForAction(KeyProfile, InputAction).IsNone();
 }
 
 // ============================================================================
@@ -175,7 +201,7 @@ bool UMCore_EnhancedInputDisplay::IsActionRemappable(APlayerController* PlayerCo
  * @param MappingSlot   Slot index (0 = primary, 1 = secondary, etc.).
  * @return              True if rebind succeeded, false if action is not remappable or key is invalid.
  */
-bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerController,
+bool UMCore_InputDisplayLibrary::RemapActionKey(APlayerController* OwningPlayer,
 	UInputAction* InputAction,
 	FKey NewKey,
 	FText& OutError)
@@ -188,7 +214,7 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 		return false;
 	}
 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(OwningPlayer);
 	if (!Subsystem)
 	{
 		OutError = FText::FromString(TEXT("Enhanced Input subsystem not available"));
@@ -203,9 +229,14 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 	}
 
 	/* Confirm action is remappable before attempt */
-	FName MappingName = InputAction->GetFName();
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = UserSettings->GetActiveKeyProfile();
-	if (!KeyProfile || !KeyProfile->FindKeyMappingRow(MappingName))
+	if (!KeyProfile)
+	{
+		OutError = FText::FromString(TEXT("Action not remappable or mapping invalid"));
+		return false;
+	}
+	FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	if (MappingName.IsNone())
 	{
 		OutError = FText::FromString(TEXT("Action not remappable or mapping invalid"));
 		return false;
@@ -238,7 +269,7 @@ bool UMCore_EnhancedInputDisplay::RemapActionKey(APlayerController* PlayerContro
 /**
  * @param MappingSlot  Slot index to reset (0 = primary, 1 = secondary).
  */
-bool UMCore_EnhancedInputDisplay::ResetActionToDefault(APlayerController* PlayerController,
+bool UMCore_InputDisplayLibrary::ResetActionToDefault(APlayerController* OwningPlayer,
 	UInputAction* InputAction,
 	FText& OutError)
 {
@@ -250,14 +281,15 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefault(APlayerController* Player
 		return false;
 	}
 
-	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* KeyProfile = GetActiveKeyProfile(OwningPlayer);
 	if (!KeyProfile)
 	{
 		OutError = FText::FromString(TEXT("No active key profile"));
 		return false;
 	}
 
-	const FKeyMappingRow* MappingRow = KeyProfile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	const FKeyMappingRow* MappingRow = MappingName.IsNone() ? nullptr : KeyProfile->FindKeyMappingRow(MappingName);
 	if (!MappingRow)
 	{
 		OutError = FText::FromString(TEXT("Action not found in key profile"));
@@ -267,7 +299,7 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefault(APlayerController* Player
 	for (const FPlayerKeyMapping& Mapping : MappingRow->Mappings)
 	{
 		FKey DefaultKey = Mapping.GetDefaultKey();
-		return RemapActionKey(PlayerController, InputAction, DefaultKey, OutError);
+		return RemapActionKey(OwningPlayer, InputAction, DefaultKey, OutError);
 	}
 
 	OutError = FText::FromString(TEXT("No mappings found for action"));
@@ -278,12 +310,12 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefault(APlayerController* Player
 // REMAPPABLE ACTION QUERIES
 // ============================================================================
 
-TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetAllRemappableActions(
-	APlayerController* PlayerController)
+TArray<FPlayerKeyMapping> UMCore_InputDisplayLibrary::GetAllRemappableActions(
+	APlayerController* OwningPlayer)
 {
 	TArray<FPlayerKeyMapping> Result;
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile)
 	{
 		UE_LOG(LogModulusUI, Warning,
@@ -303,12 +335,12 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetAllRemappableActions(
 	return Result;
 }
 
-TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForDevice(
-	APlayerController* PlayerController, ECommonInputType DeviceType)
+TArray<FPlayerKeyMapping> UMCore_InputDisplayLibrary::GetRemappableActionsForDevice(
+	APlayerController* OwningPlayer, ECommonInputType DeviceType)
 {
 	TArray<FPlayerKeyMapping> Result;
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile)
 	{
 		UE_LOG(LogModulusUI, Warning,
@@ -358,7 +390,7 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForDe
 // ICON RESOLUTION
 // ============================================================================
 
-bool UMCore_EnhancedInputDisplay::GetIconBrushForKey(const ULocalPlayer* LocalPlayer,
+bool UMCore_InputDisplayLibrary::GetIconBrushForKey(const ULocalPlayer* LocalPlayer,
 	FKey Key, FSlateBrush& OutBrush)
 {
 	if (!LocalPlayer || !Key.IsValid()) { return false; }
@@ -378,7 +410,7 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKey(const ULocalPlayer* LocalPl
 		OutBrush, Key, CommonInputSubsystem->GetCurrentInputType(), CommonInputSubsystem->GetCurrentGamepadName());
 }
 
-bool UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(const ULocalPlayer* LocalPlayer,
+bool UMCore_InputDisplayLibrary::GetIconBrushForKeyByDeviceType(const ULocalPlayer* LocalPlayer,
 	FKey Key, ECommonInputType InputType, FSlateBrush& OutBrush)
 {
 	if (!LocalPlayer || !Key.IsValid()) { return false; }
@@ -404,7 +436,7 @@ bool UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(const ULocalPla
 // GAMEPAD CONFIG HELPERS
 // ============================================================================
 
-TArray<FName> UMCore_EnhancedInputDisplay::GetAvailableGamepadConfigs(
+TArray<FName> UMCore_InputDisplayLibrary::GetAvailableGamepadConfigs(
 	const UObject* WorldContextObject)
 {
 	TArray<FName> Result;
@@ -433,7 +465,7 @@ TArray<FName> UMCore_EnhancedInputDisplay::GetAvailableGamepadConfigs(
 /**
  * @param LocalPlayer  Used to access PlayerSettingsSave and CommonInputSubsystem.
  */
-FName UMCore_EnhancedInputDisplay::GetEffectiveGamepadName(
+FName UMCore_InputDisplayLibrary::GetEffectiveGamepadName(
 	const UObject* WorldContextObject, const ULocalPlayer* LocalPlayer)
 {
 	if (!LocalPlayer) { return NAME_None; }
@@ -474,15 +506,16 @@ FName UMCore_EnhancedInputDisplay::GetEffectiveGamepadName(
 // SLOT-BASED OPERATIONS
 // ============================================================================
 
-FKey UMCore_EnhancedInputDisplay::GetBoundKeyForSlot(APlayerController* PlayerController,
+FKey UMCore_InputDisplayLibrary::GetBoundKeyForSlot(APlayerController* OwningPlayer,
 	UInputAction* InputAction, EPlayerMappableKeySlot Slot, bool bGamepad)
 {
 	if (!InputAction) { return EKeys::Invalid; }
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile) { return EKeys::Invalid; }
 
-	const FKeyMappingRow* Row = Profile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(Profile, InputAction);
+	const FKeyMappingRow* Row = MappingName.IsNone() ? nullptr : Profile->FindKeyMappingRow(MappingName);
 	if (!Row) { return EKeys::Invalid; }
 
 	for (const FPlayerKeyMapping& Mapping : Row->Mappings)
@@ -496,7 +529,7 @@ FKey UMCore_EnhancedInputDisplay::GetBoundKeyForSlot(APlayerController* PlayerCo
 	return EKeys::Invalid;
 }
 
-bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* PlayerController,
+bool UMCore_InputDisplayLibrary::RemapActionKeyForSlot(APlayerController* OwningPlayer,
 	UInputAction* InputAction, FKey NewKey, EPlayerMappableKeySlot Slot, FText& OutError)
 {
 	OutError = FText::GetEmpty();
@@ -507,7 +540,7 @@ bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* Playe
 		return false;
 	}
 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(OwningPlayer);
 	if (!Subsystem)
 	{
 		OutError = FText::FromString(TEXT("Enhanced Input subsystem not available"));
@@ -521,9 +554,14 @@ bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* Playe
 		return false;
 	}
 
-	FName MappingName = InputAction->GetFName();
 	UEnhancedPlayerMappableKeyProfile* KeyProfile = UserSettings->GetActiveKeyProfile();
-	if (!KeyProfile || !KeyProfile->FindKeyMappingRow(MappingName))
+	if (!KeyProfile)
+	{
+		OutError = FText::FromString(TEXT("Action not remappable or mapping invalid"));
+		return false;
+	}
+	FName MappingName = FindMappingNameForAction(KeyProfile, InputAction);
+	if (MappingName.IsNone())
 	{
 		OutError = FText::FromString(TEXT("Action not remappable or mapping invalid"));
 		return false;
@@ -555,7 +593,7 @@ bool UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(APlayerController* Playe
 	return false;
 }
 
-bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController* PlayerController,
+bool UMCore_InputDisplayLibrary::ResetActionToDefaultForSlot(APlayerController* OwningPlayer,
 	UInputAction* InputAction, EPlayerMappableKeySlot Slot, bool bGamepad, FText& OutError)
 {
 	OutError = FText::GetEmpty();
@@ -566,14 +604,15 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController*
 		return false;
 	}
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile)
 	{
 		OutError = FText::FromString(TEXT("No active key profile"));
 		return false;
 	}
 
-	const FKeyMappingRow* Row = Profile->FindKeyMappingRow(InputAction->GetFName());
+	const FName MappingName = FindMappingNameForAction(Profile, InputAction);
+	const FKeyMappingRow* Row = MappingName.IsNone() ? nullptr : Profile->FindKeyMappingRow(MappingName);
 	if (!Row)
 	{
 		OutError = FText::FromString(TEXT("Action not found in key profile"));
@@ -585,7 +624,7 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController*
 	{
 		if (Mapping.GetSlot() == Slot && Mapping.GetDefaultKey().IsGamepadKey() == bGamepad)
 		{
-			return RemapActionKeyForSlot(PlayerController, InputAction,
+			return RemapActionKeyForSlot(OwningPlayer, InputAction,
 				Mapping.GetDefaultKey(), Slot, OutError);
 		}
 	}
@@ -598,46 +637,44 @@ bool UMCore_EnhancedInputDisplay::ResetActionToDefaultForSlot(APlayerController*
 // CONTEXT-SCOPED QUERIES
 // ============================================================================
 
-TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForContext(
-	APlayerController* PlayerController, const UInputMappingContext* MappingContext)
+TArray<FPlayerKeyMapping> UMCore_InputDisplayLibrary::GetRemappableActionsForContext(
+	APlayerController* OwningPlayer, const UInputMappingContext* MappingContext)
 {
 	TArray<FPlayerKeyMapping> Result;
 
 	if (!MappingContext)
 	{
 		UE_LOG(LogModulusUI, Warning,
-			TEXT("EnhancedInputDisplay::GetRemappableActionsForContext -- MappingContext is null"));
+			TEXT("InputDisplayLibrary::GetRemappableActionsForContext -- MappingContext is null"));
 		return Result;
 	}
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile) { return Result; }
 
-	const TMap<FName, FKeyMappingRow>& AllRows = Profile->GetPlayerMappingRows();
-
-	/* Collect InputActions from this IMC that are remappable */
-	TSet<FName> SeenMappingNames;
-
+	/* Build a set of InputActions that belong to this IMC */
+	TSet<TObjectPtr<const UInputAction>> ContextActions;
 	for (const FEnhancedActionKeyMapping& ActionMapping : MappingContext->GetMappings())
 	{
-		const UInputAction* Action = ActionMapping.Action;
-		if (!Action) { continue; }
-
-		const FName MappingName = Action->GetFName();
-
-		/* Action is remappable only if it exists in the key profile */
-		if (!AllRows.Contains(MappingName)) { continue; }
-
-		/* Deduplicate: same action may appear multiple times in the IMC */
-		if (SeenMappingNames.Contains(MappingName)) { continue; }
-		SeenMappingNames.Add(MappingName);
-
-		/* Look up the player's current mappings from the key profile */
-		const FKeyMappingRow* Row = AllRows.Find(MappingName);
-		if (!Row) { continue; }
-
-		for (const FPlayerKeyMapping& Mapping : Row->Mappings)
+		if (ActionMapping.Action)
 		{
+			ContextActions.Add(ActionMapping.Action);
+		}
+	}
+
+	if (ContextActions.IsEmpty()) { return Result; }
+
+	/* Iterate all profile rows -- include any whose associated action is in this IMC */
+	const TMap<FName, FKeyMappingRow>& AllRows = Profile->GetPlayerMappingRows();
+
+	for (const auto& Pair : AllRows)
+	{
+		for (const FPlayerKeyMapping& Mapping : Pair.Value.Mappings)
+		{
+			const UInputAction* Action = Mapping.GetAssociatedInputAction();
+			if (!Action) { continue; }
+			if (!ContextActions.Contains(Action)) { continue; }
+
 			Result.Add(Mapping);
 		}
 	}
@@ -649,9 +686,9 @@ TArray<FPlayerKeyMapping> UMCore_EnhancedInputDisplay::GetRemappableActionsForCo
 // BULK RESET OPERATIONS
 // ============================================================================
 
-void UMCore_EnhancedInputDisplay::ResetAllBindingsToDefault(APlayerController* PlayerController)
+void UMCore_InputDisplayLibrary::ResetAllBindingsToDefault(APlayerController* OwningPlayer)
 {
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile)
 	{
 		UE_LOG(LogModulusUI, Warning,
@@ -659,7 +696,7 @@ void UMCore_EnhancedInputDisplay::ResetAllBindingsToDefault(APlayerController* P
 		return;
 	}
 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(OwningPlayer);
 	if (!Subsystem) { return; }
 
 	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
@@ -691,7 +728,7 @@ void UMCore_EnhancedInputDisplay::ResetAllBindingsToDefault(APlayerController* P
 		ResetCount);
 }
 
-void UMCore_EnhancedInputDisplay::ResetBindingsForContext(APlayerController* PlayerController,
+void UMCore_InputDisplayLibrary::ResetBindingsForContext(APlayerController* OwningPlayer,
 	const UInputMappingContext* MappingContext)
 {
 	if (!MappingContext)
@@ -701,10 +738,10 @@ void UMCore_EnhancedInputDisplay::ResetBindingsForContext(APlayerController* Pla
 		return;
 	}
 
-	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(PlayerController);
+	UEnhancedPlayerMappableKeyProfile* Profile = GetActiveKeyProfile(OwningPlayer);
 	if (!Profile) { return; }
 
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(PlayerController);
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = GetEnhancedInputSubsystem(OwningPlayer);
 	if (!Subsystem) { return; }
 
 	UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
@@ -720,9 +757,10 @@ void UMCore_EnhancedInputDisplay::ResetBindingsForContext(APlayerController* Pla
 		if (!Action) { continue; }
 		
 		/* Only include actions that exist in the key profile */
-		if (!AllRows.Find(Action->GetFName())) { continue; }
-		
-		ContextActionNames.Add(Action->GetFName());
+		FName MappingName = FindMappingNameForAction(Profile, Action);
+		if (MappingName.IsNone()) { continue; }
+
+		ContextActionNames.Add(MappingName);
 	}
 
 	int32 ResetCount{0};

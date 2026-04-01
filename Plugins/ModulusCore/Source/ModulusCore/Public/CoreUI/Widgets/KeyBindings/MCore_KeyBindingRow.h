@@ -47,7 +47,7 @@ public:
 
 	/** Configure this row for a specific action. Sets display name and inits all buttons. */
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
-	void InitFromAction(APlayerController* PC, UInputAction* Action, bool bShowSecondary);
+	void InitFromAction(APlayerController* OwningPlayer, UInputAction* Action, bool bShowSecondary);
 
 	/** Re-read current bindings and update all 4 buttons. */
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
@@ -112,7 +112,7 @@ private:
 	// STATE
 	// ====================================================================
 
-	TWeakObjectPtr<APlayerController> OwningPC;
+	TWeakObjectPtr<APlayerController> PlayerRef;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> BoundAction;

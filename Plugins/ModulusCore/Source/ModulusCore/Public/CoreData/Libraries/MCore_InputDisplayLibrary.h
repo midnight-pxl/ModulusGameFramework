@@ -14,7 +14,7 @@
 #include "CommonInputTypeEnum.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "Styling/SlateBrush.h"
-#include "MCore_EnhancedInputDisplay.generated.h"
+#include "MCore_InputDisplayLibrary.generated.h"
 
 class UEnhancedInputLocalPlayerSubsystem;
 class UEnhancedPlayerMappableKeyProfile;
@@ -29,7 +29,7 @@ class ULocalPlayer;
  * Enhanced Input's native PlayerMappableKeySettings system.
  */
 UCLASS()
-class MODULUSCORE_API UMCore_EnhancedInputDisplay : public UBlueprintFunctionLibrary
+class MODULUSCORE_API UMCore_InputDisplayLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
@@ -41,11 +41,11 @@ public:
 
 	/** Returns the first bound key for the given input action, or Invalid if unbound. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
-	static FKey GetCurrentKeyForAction(APlayerController* PlayerController, UInputAction* InputAction);
+	static FKey GetCurrentKeyForAction(APlayerController* OwningPlayer, UInputAction* InputAction);
 
 	/** Returns all bound keys for the given input action. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
-	static TArray<FKey> GetAllKeysForAction(APlayerController* PlayerController, UInputAction* InputAction);
+	static TArray<FKey> GetAllKeysForAction(APlayerController* OwningPlayer, UInputAction* InputAction);
 
 	// ============================================================================
 	// ACTION METADATA
@@ -53,19 +53,19 @@ public:
 
 	/** Returns the display name from PlayerMappableKeySettings, or empty if not configured. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
-	static FText GetActionDisplayName(APlayerController* PlayerController, UInputAction* InputAction);
+	static FText GetActionDisplayName(APlayerController* OwningPlayer, UInputAction* InputAction);
 
 	/** Returns the display category from PlayerMappableKeySettings, or empty if not configured. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
-	static FText GetActionDisplayCategory(APlayerController* PlayerController, UInputAction* InputAction);
+	static FText GetActionDisplayCategory(APlayerController* OwningPlayer, UInputAction* InputAction);
 
 	/** Returns true if the input action has PlayerMappableKeySettings and is marked remappable. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
-	static bool IsActionRemappable(APlayerController* PlayerController, UInputAction* InputAction);
+	static bool IsActionRemappable(APlayerController* OwningPlayer, UInputAction* InputAction);
 
 	/** Returns the mapping name from PlayerMappableKeySettings for Data Table display. */
 	UFUNCTION(BlueprintPure, Category = "Enhanced Input Display")
-	static FName GetActionMappingName(APlayerController* PlayerController, UInputAction* InputAction);
+	static FName GetActionMappingName(APlayerController* OwningPlayer, UInputAction* InputAction);
 
 	// ============================================================================
 	// REBINDING OPERATIONS
@@ -76,14 +76,14 @@ public:
 	 * and handles slot-based binding through the active key profile.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Display")
-	static bool RemapActionKey(APlayerController* PlayerController,
+	static bool RemapActionKey(APlayerController* OwningPlayer,
 							  UInputAction* InputAction,
 							  FKey NewKey,
 							  FText& OutError);
 
 	/** Resets a specific mapping slot for an action to its default binding. */
 	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Display")
-	static bool ResetActionToDefault(APlayerController* PlayerController,
+	static bool ResetActionToDefault(APlayerController* OwningPlayer,
 									UInputAction* InputAction,
 									UPARAM(DisplayName = "Error Message") FText& OutError);
 
@@ -93,12 +93,12 @@ public:
 
 	/** Returns all player-mappable key mappings from the active key profile. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
-	static TArray<FPlayerKeyMapping> GetAllRemappableActions(APlayerController* PlayerController);
+	static TArray<FPlayerKeyMapping> GetAllRemappableActions(APlayerController* OwningPlayer);
 
 	/** Returns player-mappable key mappings filtered to a specific device type. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
 	static TArray<FPlayerKeyMapping> GetRemappableActionsForDevice(
-		APlayerController* PlayerController, ECommonInputType DeviceType);
+		APlayerController* OwningPlayer, ECommonInputType DeviceType);
 
 	// ============================================================================
 	// ICON RESOLUTION
@@ -134,17 +134,17 @@ public:
 
 	/** Returns the bound key for a specific action, slot, and device type. */
 	UFUNCTION(BlueprintPure, Category = "Modulus|Input Display")
-	static FKey GetBoundKeyForSlot(APlayerController* PlayerController, UInputAction* InputAction,
+	static FKey GetBoundKeyForSlot(APlayerController* OwningPlayer, UInputAction* InputAction,
 		EPlayerMappableKeySlot Slot, bool bGamepad);
 
 	/** Remap an action to a new key in a specific slot. Device derived from NewKey. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
-	static bool RemapActionKeyForSlot(APlayerController* PlayerController, UInputAction* InputAction,
+	static bool RemapActionKeyForSlot(APlayerController* OwningPlayer, UInputAction* InputAction,
 		FKey NewKey, EPlayerMappableKeySlot Slot, FText& OutError);
 
 	/** Reset an action's binding to default for a specific slot and device type. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
-	static bool ResetActionToDefaultForSlot(APlayerController* PlayerController, UInputAction* InputAction,
+	static bool ResetActionToDefaultForSlot(APlayerController* OwningPlayer, UInputAction* InputAction,
 		EPlayerMappableKeySlot Slot, bool bGamepad, FText& OutError);
 
 	// ============================================================================
@@ -154,7 +154,7 @@ public:
 	/** Returns deduplicated remappable actions that belong to the given InputMappingContext. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
 	static TArray<FPlayerKeyMapping> GetRemappableActionsForContext(
-		APlayerController* PlayerController, const UInputMappingContext* MappingContext);
+		APlayerController* OwningPlayer, const UInputMappingContext* MappingContext);
 
 	// ============================================================================
 	// BULK RESET OPERATIONS
@@ -162,17 +162,17 @@ public:
 
 	/** Reset all key bindings across all actions in the active key profile to defaults. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
-	static void ResetAllBindingsToDefault(APlayerController* PlayerController);
+	static void ResetAllBindingsToDefault(APlayerController* OwningPlayer);
 
 	/** Reset key bindings for all remappable actions within a specific InputMappingContext. */
 	UFUNCTION(BlueprintCallable, Category = "Modulus|Input Display")
-	static void ResetBindingsForContext(APlayerController* PlayerController,
+	static void ResetBindingsForContext(APlayerController* OwningPlayer,
 		const UInputMappingContext* MappingContext);
 
 private:
 	/* Resolve Enhanced Input subsystem from PlayerController with validation */
-	static UEnhancedInputLocalPlayerSubsystem* GetEnhancedInputSubsystem(APlayerController* PlayerController);
+	static UEnhancedInputLocalPlayerSubsystem* GetEnhancedInputSubsystem(APlayerController* OwningPlayer);
 
 	/* Resolve the active key profile (Subsystem -> UserSettings -> Profile) */
-	static UEnhancedPlayerMappableKeyProfile* GetActiveKeyProfile(APlayerController* PlayerController);
+	static UEnhancedPlayerMappableKeyProfile* GetActiveKeyProfile(APlayerController* OwningPlayer);
 };

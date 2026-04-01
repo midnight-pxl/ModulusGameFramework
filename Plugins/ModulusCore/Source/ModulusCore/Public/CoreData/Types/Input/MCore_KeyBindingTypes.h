@@ -22,10 +22,10 @@ struct MODULUSCORE_API FMCore_KeyBindingContext
 	GENERATED_BODY()
 
 	/** Tab display name shown in the key binding panel. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Key Binding")
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "Key Binding")
 	FText DisplayName;
 
 	/** The InputMappingContext whose remappable actions populate this tab. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Key Binding")
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "Key Binding")
 	TSoftObjectPtr<UInputMappingContext> MappingContext;
 };

@@ -16,9 +16,9 @@ bool AMCore_HUD_Base::HasValidPrimaryGameLayout() const
 
 UMCore_UISubsystem* AMCore_HUD_Base::GetUISubsystem() const
 {
-	if (const APlayerController* PlayerController = GetOwningPlayerController())
+	if (const APlayerController* OwningPlayer = GetOwningPlayerController())
 	{
-		if (const ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer())
+		if (const ULocalPlayer* LocalPlayer = OwningPlayer->GetLocalPlayer())
 		{
 			return LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
 		}

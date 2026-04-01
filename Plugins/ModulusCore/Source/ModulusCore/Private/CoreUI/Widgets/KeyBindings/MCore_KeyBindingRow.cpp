@@ -3,7 +3,7 @@
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingRow.h"
 
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingButton.h"
-#include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
+#include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 #include "CoreData/Logging/LogModulusUI.h"
 
 #include "InputAction.h"
@@ -69,35 +69,35 @@ void UMCore_KeyBindingRow::NativeDestruct()
 // PUBLIC API
 // ============================================================================
 
-void UMCore_KeyBindingRow::InitFromAction(APlayerController* PC, UInputAction* Action,
+void UMCore_KeyBindingRow::InitFromAction(APlayerController* OwningPlayer, UInputAction* Action,
 	bool bShowSecondary)
 {
-	OwningPC = PC;
+	this->PlayerRef = OwningPlayer;
 	BoundAction = Action;
 
-	if (Txt_ActionName && PC && Action)
+	if (Txt_ActionName && OwningPlayer && Action)
 	{
 		Txt_ActionName->SetText(
-			UMCore_EnhancedInputDisplay::GetActionDisplayName(PC, Action));
+			UMCore_InputDisplayLibrary::GetActionDisplayName(OwningPlayer, Action));
 	}
 
 	if (Btn_KBM_Primary)
 	{
-		Btn_KBM_Primary->InitForSlot(PC, Action, EPlayerMappableKeySlot::First, false);
+		Btn_KBM_Primary->InitForSlot(OwningPlayer, Action, EPlayerMappableKeySlot::First, false);
 	}
 	if (Btn_KBM_Secondary)
 	{
-		Btn_KBM_Secondary->InitForSlot(PC, Action, EPlayerMappableKeySlot::Second, false);
+		Btn_KBM_Secondary->InitForSlot(OwningPlayer, Action, EPlayerMappableKeySlot::Second, false);
 		Btn_KBM_Secondary->SetVisibility(
 			bShowSecondary ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 	}
 	if (Btn_Gamepad_Primary)
 	{
-		Btn_Gamepad_Primary->InitForSlot(PC, Action, EPlayerMappableKeySlot::First, true);
+		Btn_Gamepad_Primary->InitForSlot(OwningPlayer, Action, EPlayerMappableKeySlot::First, true);
 	}
 	if (Btn_Gamepad_Secondary)
 	{
-		Btn_Gamepad_Secondary->InitForSlot(PC, Action, EPlayerMappableKeySlot::Second, true);
+		Btn_Gamepad_Secondary->InitForSlot(OwningPlayer, Action, EPlayerMappableKeySlot::Second, true);
 		Btn_Gamepad_Secondary->SetVisibility(
 			bShowSecondary ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 	}

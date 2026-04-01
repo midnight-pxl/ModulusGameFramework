@@ -53,7 +53,7 @@ public:
 
 	/** Configure this button for a specific action, slot, and device type. */
 	UFUNCTION(BlueprintCallable, Category = "UI|KeyBinding")
-	void InitForSlot(APlayerController* PC, UInputAction* Action,
+	void InitForSlot(APlayerController* OwningPlayer, UInputAction* Action,
 		EPlayerMappableKeySlot InSlot, bool bInIsGamepad);
 
 	/** Re-read the current binding and update visuals via ButtonBase. */
@@ -129,7 +129,7 @@ private:
 	// STATE
 	// ====================================================================
 
-	TWeakObjectPtr<APlayerController> OwningPC;
+	TWeakObjectPtr<APlayerController> PlayerRef;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> BoundAction;

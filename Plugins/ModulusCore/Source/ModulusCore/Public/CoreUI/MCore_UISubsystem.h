@@ -201,7 +201,7 @@ private:
 	/* Creates and adds PrimaryGameLayout to viewport */
 	void CreatePrimaryGameLayout();
 	/* Deferred layout creation once PlayerController is ready */
-	void OnPlayerControllerReady(APlayerController* PlayerController);
+	void OnPlayerControllerReady(APlayerController* OwningPlayer);
 	
 	FDelegateHandle PlayerControllerReadyHandle;
 	

@@ -3,7 +3,7 @@
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingButton.h"
 
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
-#include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
+#include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 #include "CoreData/Logging/LogModulusUI.h"
 
 #include "Components/Image.h"
@@ -124,10 +124,10 @@ void UMCore_KeyBindingButton::NativeDestruct()
 // PUBLIC API
 // ============================================================================
 
-void UMCore_KeyBindingButton::InitForSlot(APlayerController* PC, UInputAction* Action,
+void UMCore_KeyBindingButton::InitForSlot(APlayerController* OwningPlayer, UInputAction* Action,
 	EPlayerMappableKeySlot InSlot, bool bInIsGamepad)
 {
-	OwningPC = PC;
+	this->PlayerRef = OwningPlayer;
 	BoundAction = Action;
 	Slot = InSlot;
 	bIsGamepad = bInIsGamepad;
@@ -139,8 +139,8 @@ void UMCore_KeyBindingButton::RefreshKeyDisplay()
 {
 	if (!Btn_Capture) { return; }
 
-	APlayerController* PlayerController = OwningPC.Get();
-	if (!PlayerController || !BoundAction)
+	APlayerController* Player = PlayerRef.Get();
+	if (!Player || !BoundAction)
 	{
 		Btn_Capture->SetButtonText(UnboundText);
 		Btn_Capture->SetDisplayMode(EMCore_ButtonDisplayMode::TextOnly);
@@ -148,18 +148,18 @@ void UMCore_KeyBindingButton::RefreshKeyDisplay()
 		return;
 	}
 
-	const FKey BoundKey = UMCore_EnhancedInputDisplay::GetBoundKeyForSlot(
-		PlayerController, BoundAction, Slot, bIsGamepad);
+	const FKey BoundKey = UMCore_InputDisplayLibrary::GetBoundKeyForSlot(
+		Player, BoundAction, Slot, bIsGamepad);
 
 	if (BoundKey.IsValid())
 	{
-		const ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+		const ULocalPlayer* LocalPlayer = Player->GetLocalPlayer();
 		const ECommonInputType DeviceType = bIsGamepad
 			? ECommonInputType::Gamepad
 			: ECommonInputType::MouseAndKeyboard;
 
 		FSlateBrush IconBrush;
-		const bool bHasIcon = LocalPlayer && UMCore_EnhancedInputDisplay::GetIconBrushForKeyByDeviceType(
+		const bool bHasIcon = LocalPlayer && UMCore_InputDisplayLibrary::GetIconBrushForKeyByDeviceType(
 			LocalPlayer, BoundKey, DeviceType, IconBrush);
 
 		if (bHasIcon && Btn_Capture->Img_BtnIcon)
@@ -241,12 +241,12 @@ void UMCore_KeyBindingButton::HandleButtonPressed()
 
 void UMCore_KeyBindingButton::AttemptRebind(FKey NewKey)
 {
-	APlayerController* PlayerController = OwningPC.Get();
-	if (!PlayerController || !BoundAction)
+	APlayerController* Player = PlayerRef.Get();
+	if (!Player || !BoundAction)
 	{
 		UE_LOG(LogModulusUI, Warning,
-			TEXT("KeyBindingButton::AttemptRebind -- %s rebind failed, invalid state (PlayerController=%s, Action=%s)"),
-			*GetNameSafe(this), *GetNameSafe(PlayerController), *GetNameSafe(BoundAction.Get()));
+			TEXT("KeyBindingButton::AttemptRebind -- %s rebind failed, invalid state (OwningPlayer=%s, Action=%s)"),
+			*GetNameSafe(this), *GetNameSafe(Player), *GetNameSafe(BoundAction.Get()));
 		ExitCaptureMode();
 		OnRebindComplete.Broadcast(false, FText::FromString(TEXT("Invalid state")));
 		return;
@@ -257,8 +257,8 @@ void UMCore_KeyBindingButton::AttemptRebind(FKey NewKey)
 		*GetNameSafe(this), *NewKey.ToString());
 
 	FText OutError;
-	const bool bSuccess = UMCore_EnhancedInputDisplay::RemapActionKeyForSlot(
-		PlayerController, BoundAction, NewKey, Slot, OutError);
+	const bool bSuccess = UMCore_InputDisplayLibrary::RemapActionKeyForSlot(
+		Player, BoundAction, NewKey, Slot, OutError);
 
 	if (!bSuccess)
 	{

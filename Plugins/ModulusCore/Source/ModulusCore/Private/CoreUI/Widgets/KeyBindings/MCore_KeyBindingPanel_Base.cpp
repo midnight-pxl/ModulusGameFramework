@@ -9,7 +9,7 @@
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
 #include "CoreUI/MCore_UISubsystem.h"
-#include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
+#include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
@@ -18,6 +18,7 @@
 #include "CoreData/Logging/LogModulusUI.h"
 
 #include "CommonTextBlock.h"
+#include "EnhancedInputSubsystems.h"
 #include "Components/ScrollBox.h"
 #include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
@@ -131,81 +132,102 @@ void UMCore_KeyBindingPanel_Base::NativeDestruct()
 
 void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* OwningPlayer)
 {
-	if (!OwningPlayer || !TabbedContainer_Bindings || !KeyBindingRowClass)
-	{
-		UE_LOG(LogModulusUI, Warning,
-			TEXT("KeyBindingPanel_Base::PopulateBindings -- missing PC, TabbedContainer, or KeyBindingRowClass [%s]"),
-			*GetNameSafe(this));
-		return;
-	}
+    if (!OwningPlayer || !TabbedContainer_Bindings || !KeyBindingRowClass)
+    {
+       UE_LOG(LogModulusUI, Warning,
+          TEXT("KeyBindingPanel_Base::PopulateBindings -- missing PC, TabbedContainer, or KeyBindingRowClass [%s]"),
+          *GetNameSafe(this));
+       return;
+    }
 
-	/* Clear previous state */
-	TabbedContainer_Bindings->ClearAllTabs();
-	for (UMCore_KeyBindingRow* Row : AllRows)
-	{
-		if (Row)
-		{
-			Row->OnRowRebindCompleted.RemoveAll(this);
-			Row->OnRowCaptureStateChanged.RemoveAll(this);
-			Row->OnRowRebindResult.RemoveAll(this);
-		}
-	}
-	AllRows.Reset();
-	SpawnedHeaders.Reset();
+    /* Clear previous state */
+    TabbedContainer_Bindings->ClearAllTabs();
+    for (UMCore_KeyBindingRow* Row : AllRows)
+    {
+       if (Row)
+       {
+          Row->OnRowRebindCompleted.RemoveAll(this);
+          Row->OnRowCaptureStateChanged.RemoveAll(this);
+          Row->OnRowRebindResult.RemoveAll(this);
+       }
+    }
+    AllRows.Reset();
+    SpawnedHeaders.Reset();
 
-	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	FName FirstTabID{NAME_None};
-	int32 ContextCount{0};
+    const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+    FName FirstTabID{NAME_None};
+    int32 ContextCount{0};
 
-	if (CoreSettings && CoreSettings->KeyBindingContexts.Num() > 0)
-	{
-		/* Tabbed mode: one tab per configured InputMappingContext */
-		for (const FMCore_KeyBindingContext& Context : CoreSettings->KeyBindingContexts)
-		{
-			UInputMappingContext* IMC = Context.MappingContext.LoadSynchronous();
-			if (!IMC) { continue; }
+    if (CoreSettings && CoreSettings->KeyBindingContexts.Num() > 0)
+    {
+       /* Register all configured IMCs with EnhancedInputUserSettings so
+        * profile rows exist before BuildContextPage queries them.
+        * Idempotent -- safe on repeated calls. */
+       if (const ULocalPlayer* LocalPlayer = OwningPlayer->GetLocalPlayer())
+       {
+          if (UEnhancedInputLocalPlayerSubsystem* EISubsystem =
+             LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+          {
+             if (UEnhancedInputUserSettings* UserSettings = EISubsystem->GetUserSettings())
+             {
+                for (const FMCore_KeyBindingContext& Context : CoreSettings->KeyBindingContexts)
+                {
+                   if (UInputMappingContext* IMC = Context.MappingContext.LoadSynchronous())
+                   {
+                      UserSettings->RegisterInputMappingContext(IMC);
+                   }
+                }
+             }
+          }
+       }
 
-			UScrollBox* Page = BuildContextPage(OwningPlayer, IMC);
-			if (!Page || Page->GetChildrenCount() == 0) { continue; }
+       /* Tabbed mode: one tab per configured InputMappingContext */
+       for (const FMCore_KeyBindingContext& Context : CoreSettings->KeyBindingContexts)
+       {
+          UInputMappingContext* IMC = Context.MappingContext.LoadSynchronous();
+          if (!IMC) { continue; }
 
-			const FName TabID = FName(*IMC->GetName());
-			if (TabbedContainer_Bindings->AddTab(TabID, Page))
-			{
-				/* Set tab button label from context display name */
-				if (UMCore_ButtonBase* TabButton = Cast<UMCore_ButtonBase>(
-					TabbedContainer_Bindings->GetTabButton(TabID)))
-				{
-					TabButton->SetButtonText(Context.DisplayName);
-				}
+          UScrollBox* Page = BuildContextPage(OwningPlayer, IMC);
+          if (!Page || Page->GetChildrenCount() == 0) { continue; }
 
-				OnContextTabCreated(TabID, Page, Context.DisplayName);
-				++ContextCount;
+          const FName TabID = FName(*IMC->GetName());
+          if (TabbedContainer_Bindings->AddTab(TabID, Page))
+          {
+             /* Set tab button label from context display name */
+             if (UMCore_ButtonBase* TabButton = Cast<UMCore_ButtonBase>(
+                TabbedContainer_Bindings->GetTabButton(TabID)))
+             {
+                TabButton->SetButtonText(Context.DisplayName);
+             }
 
-				if (FirstTabID.IsNone()) { FirstTabID = TabID; }
-			}
-		}
-	}
-	else
-	{
-		/* Fallback: single flat page using GetAllRemappableActions */
-		UScrollBox* Page = BuildFallbackPage(OwningPlayer);
-		if (Page && Page->GetChildrenCount() > 0)
-		{
-			const FName TabID{TEXT("AllBindings")};
-			TabbedContainer_Bindings->AddTab(TabID, Page);
-			FirstTabID = TabID;
-			ContextCount = 1;
-		}
-	}
+             OnContextTabCreated(TabID, Page, Context.DisplayName);
+             ++ContextCount;
 
-	if (!FirstTabID.IsNone())
-	{
-		TabbedContainer_Bindings->SelectTab(FirstTabID);
-	}
+             if (FirstTabID.IsNone()) { FirstTabID = TabID; }
+          }
+       }
+    }
+    else
+    {
+       /* Fallback: single flat page using GetAllRemappableActions */
+       UScrollBox* Page = BuildFallbackPage(OwningPlayer);
+       if (Page && Page->GetChildrenCount() > 0)
+       {
+          const FName TabID{TEXT("AllBindings")};
+          TabbedContainer_Bindings->AddTab(TabID, Page);
+          FirstTabID = TabID;
+          ContextCount = 1;
+       }
+    }
 
-	UE_LOG(LogModulusUI, Log,
-		TEXT("KeyBindingPanel_Base::PopulateBindings -- populated %d binding rows across %d context tabs [%s]"),
-		AllRows.Num(), ContextCount, *GetNameSafe(this));
+    if (!FirstTabID.IsNone())
+    {
+       TabbedContainer_Bindings->SelectTab(FirstTabID);
+    }
+
+    UE_LOG(LogModulusUI, Log,
+       TEXT("KeyBindingPanel_Base::PopulateBindings -- populated %d binding rows across %d context tabs [%s]"),
+       AllRows.Num(), ContextCount, *GetNameSafe(this));
 }
 
 void UMCore_KeyBindingPanel_Base::RefreshAllRows()
@@ -220,90 +242,98 @@ void UMCore_KeyBindingPanel_Base::RefreshAllRows()
 // PANEL BUILD
 // ============================================================================
 
-UScrollBox* UMCore_KeyBindingPanel_Base::BuildContextPage(APlayerController* PC,
+UScrollBox* UMCore_KeyBindingPanel_Base::BuildContextPage(APlayerController* OwningPlayer,
 	const UInputMappingContext* MappingContext)
 {
 	TArray<FPlayerKeyMapping> AllMappings =
-		UMCore_EnhancedInputDisplay::GetRemappableActionsForContext(PC, MappingContext);
+		UMCore_InputDisplayLibrary::GetRemappableActionsForContext(OwningPlayer, MappingContext);
 
-	if (AllMappings.IsEmpty()) { return nullptr; }
+    if (AllMappings.IsEmpty()) { return nullptr; }
 
-	/* Deduplicate by mapping name */
-	TMap<FName, const FPlayerKeyMapping*> UniqueActions;
-	for (const FPlayerKeyMapping& Mapping : AllMappings)
-	{
-		const FName Name = Mapping.GetMappingName();
-		if (!UniqueActions.Contains(Name))
-		{
-			UniqueActions.Add(Name, &Mapping);
-		}
-	}
+    /* Deduplicate by InputAction. Multiple profile rows may reference the same action */
+    TMap<TObjectPtr<const UInputAction>, const FPlayerKeyMapping*> UniqueActions;
+    for (const FPlayerKeyMapping& Mapping : AllMappings)
+    {
+       const UInputAction* Action = Mapping.GetAssociatedInputAction();
+       if (!Action) { continue; }
 
-	/* Group by display category */
-	TMap<FString, TArray<const FPlayerKeyMapping*>> CategorizedActions;
-	for (const auto& Pair : UniqueActions)
-	{
-		const FText Category = Pair.Value->GetDisplayCategory();
-		const FString CategoryKey = Category.ToString();
-		CategorizedActions.FindOrAdd(CategoryKey).Add(Pair.Value);
-	}
+       if (!UniqueActions.Contains(Action))
+       {
+          UniqueActions.Add(Action, &Mapping);
+       }
+    }
 
-	/* Sort categories alphabetically */
+    /* Group by display category */
+    TMap<FString, TArray<const FPlayerKeyMapping*>> CategorizedActions;
+    for (const auto& Pair : UniqueActions)
+    {
+       const FText Category = Pair.Value->GetDisplayCategory();
+       const FString CategoryKey = Category.ToString();
+       CategorizedActions.FindOrAdd(CategoryKey).Add(Pair.Value);
+    }
+
+	/* Sort categories by IMC action ordering */
 	TArray<FString> SortedCategories;
-	CategorizedActions.GetKeys(SortedCategories);
-	SortedCategories.Sort();
-
-	const bool bShowSecondary = UMCore_CoreSettings::Get()
-		? UMCore_CoreSettings::Get()->bShowSecondaryBindings
-		: false;
-
-	UScrollBox* ScrollBox = NewObject<UScrollBox>(this);
-
-	for (const FString& CategoryKey : SortedCategories)
+	for (const FEnhancedActionKeyMapping& ActionMapping : MappingContext->GetMappings())
 	{
-		const FText CategoryDisplayName = FText::FromString(CategoryKey);
+		const UInputAction* Action = ActionMapping.Action;
+		if (!Action || !UniqueActions.Contains(Action)) { continue; }
 
-		UCommonTextBlock* Header = CreateThemedCategoryHeader(CategoryDisplayName);
-		if (Header)
-		{
-			ScrollBox->AddChild(Header);
-			OnCategoryHeaderCreated(CategoryDisplayName, Header);
-		}
-
-		for (const FPlayerKeyMapping* Mapping : CategorizedActions[CategoryKey])
-		{
-			UMCore_KeyBindingRow* Row = CreateWidget<UMCore_KeyBindingRow>(
-				this, KeyBindingRowClass);
-			if (!Row) { continue; }
-
-			const UInputAction* Action = Mapping->GetAssociatedInputAction();
-			if (!Action)
-			{
-				UE_LOG(LogModulusUI, Warning,
-					TEXT("KeyBindingPanel_Base::BuildContextPage -- mapping '%s' has no associated InputAction [%s]"),
-					*Mapping->GetMappingName().ToString(), *GetNameSafe(this));
-				continue;
-			}
-
-			Row->InitFromAction(PC, const_cast<UInputAction*>(Action), bShowSecondary);
-			Row->OnRowRebindCompleted.AddDynamic(this, &ThisClass::HandleRowRebindCompleted);
-			Row->OnRowCaptureStateChanged.AddDynamic(this, &ThisClass::HandleRowCaptureStateChanged);
-			Row->OnRowRebindResult.AddDynamic(this, &ThisClass::HandleRowRebindResult);
-
-			ScrollBox->AddChild(Row);
-			AllRows.Add(Row);
-
-			OnRowCreated(Row);
-		}
+		const FText Category = UniqueActions[Action]->GetDisplayCategory();
+		SortedCategories.AddUnique(Category.ToString());
 	}
 
-	return ScrollBox;
+    const bool bShowSecondary = UMCore_CoreSettings::Get()
+       ? UMCore_CoreSettings::Get()->bShowSecondaryBindings
+       : false;
+
+    UScrollBox* ScrollBox = NewObject<UScrollBox>(this);
+
+    for (const FString& CategoryKey : SortedCategories)
+    {
+       const FText CategoryDisplayName = FText::FromString(CategoryKey);
+
+       UCommonTextBlock* Header = CreateThemedCategoryHeader(CategoryDisplayName);
+       if (Header)
+       {
+          ScrollBox->AddChild(Header);
+          OnCategoryHeaderCreated(CategoryDisplayName, Header);
+       }
+
+       for (const FPlayerKeyMapping* Mapping : CategorizedActions[CategoryKey])
+       {
+          UMCore_KeyBindingRow* Row = CreateWidget<UMCore_KeyBindingRow>(
+             this, KeyBindingRowClass);
+          if (!Row) { continue; }
+
+          const UInputAction* Action = Mapping->GetAssociatedInputAction();
+          if (!Action)
+          {
+             UE_LOG(LogModulusUI, Warning,
+                TEXT("KeyBindingPanel_Base::BuildContextPage -- mapping '%s' has no associated InputAction [%s]"),
+                *Mapping->GetMappingName().ToString(), *GetNameSafe(this));
+             continue;
+          }
+
+          Row->InitFromAction(OwningPlayer, const_cast<UInputAction*>(Action), bShowSecondary);
+          Row->OnRowRebindCompleted.AddDynamic(this, &ThisClass::HandleRowRebindCompleted);
+          Row->OnRowCaptureStateChanged.AddDynamic(this, &ThisClass::HandleRowCaptureStateChanged);
+          Row->OnRowRebindResult.AddDynamic(this, &ThisClass::HandleRowRebindResult);
+
+          ScrollBox->AddChild(Row);
+          AllRows.Add(Row);
+
+          OnRowCreated(Row);
+       }
+    }
+
+    return ScrollBox;	
 }
 
-UScrollBox* UMCore_KeyBindingPanel_Base::BuildFallbackPage(APlayerController* PC)
+UScrollBox* UMCore_KeyBindingPanel_Base::BuildFallbackPage(APlayerController* OwningPlayer)
 {
 	TArray<FPlayerKeyMapping> AllMappings =
-		UMCore_EnhancedInputDisplay::GetAllRemappableActions(PC);
+		UMCore_InputDisplayLibrary::GetAllRemappableActions(OwningPlayer);
 
 	if (AllMappings.IsEmpty())
 	{
@@ -370,7 +400,7 @@ UScrollBox* UMCore_KeyBindingPanel_Base::BuildFallbackPage(APlayerController* PC
 				continue;
 			}
 
-			Row->InitFromAction(PC, const_cast<UInputAction*>(Action), bShowSecondary);
+			Row->InitFromAction(OwningPlayer, const_cast<UInputAction*>(Action), bShowSecondary);
 			Row->OnRowRebindCompleted.AddDynamic(this, &ThisClass::HandleRowRebindCompleted);
 			Row->OnRowCaptureStateChanged.AddDynamic(this, &ThisClass::HandleRowCaptureStateChanged);
 			Row->OnRowRebindResult.AddDynamic(this, &ThisClass::HandleRowRebindResult);
@@ -422,7 +452,7 @@ void UMCore_KeyBindingPanel_Base::HandleResetAllClicked()
 	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
 	{
 		/* No dialog configured, reset directly as fallback */
-		UMCore_EnhancedInputDisplay::ResetAllBindingsToDefault(GetOwningPlayer());
+		UMCore_InputDisplayLibrary::ResetAllBindingsToDefault(GetOwningPlayer());
 		RefreshAllRows();
 		return;
 	}
@@ -459,7 +489,7 @@ void UMCore_KeyBindingPanel_Base::HandleResetAllConfirmResult(bool bConfirmed)
 
 	if (bConfirmed)
 	{
-		UMCore_EnhancedInputDisplay::ResetAllBindingsToDefault(GetOwningPlayer());
+		UMCore_InputDisplayLibrary::ResetAllBindingsToDefault(GetOwningPlayer());
 		RefreshAllRows();
 	}
 }
@@ -495,7 +525,7 @@ void UMCore_KeyBindingPanel_Base::HandleResetCategoryClicked()
 	if (!CoreSettings->ConfirmationDialogClass)
 	{
 		/* No dialog configured, reset directly as fallback */
-		UMCore_EnhancedInputDisplay::ResetBindingsForContext(GetOwningPlayer(), ActiveIMC);
+		UMCore_InputDisplayLibrary::ResetBindingsForContext(GetOwningPlayer(), ActiveIMC);
 		RefreshAllRows();
 		return;
 	}
@@ -541,7 +571,7 @@ void UMCore_KeyBindingPanel_Base::HandleResetCategoryConfirmResult(bool bConfirm
 				UInputMappingContext* IMC = Context.MappingContext.LoadSynchronous();
 				if (IMC && FName(*IMC->GetName()) == ActiveContextTabID)
 				{
-					UMCore_EnhancedInputDisplay::ResetBindingsForContext(GetOwningPlayer(), IMC);
+					UMCore_InputDisplayLibrary::ResetBindingsForContext(GetOwningPlayer(), IMC);
 					break;
 				}
 			}
@@ -592,7 +622,7 @@ void UMCore_KeyBindingPanel_Base::HandleRowCaptureStateChanged(
 		FText ActionName;
 		if (Button && Button->GetInputAction())
 		{
-			ActionName = UMCore_EnhancedInputDisplay::GetActionDisplayName(
+			ActionName = UMCore_InputDisplayLibrary::GetActionDisplayName(
 				GetOwningPlayer(), Button->GetInputAction());
 		}
 

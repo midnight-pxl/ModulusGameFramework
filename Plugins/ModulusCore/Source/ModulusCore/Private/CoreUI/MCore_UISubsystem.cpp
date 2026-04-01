@@ -161,12 +161,12 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	const ULocalPlayer* LocalPlayer = GetLocalPlayer();
 	if (!LocalPlayer) { return; }
 	
-	APlayerController* PlayerController = LocalPlayer->GetPlayerController(GetWorld());
-	if (!PlayerController)
+	APlayerController* OwningPlayer = LocalPlayer->GetPlayerController(GetWorld());
+	if (!OwningPlayer)
 	{
-		/* PlayerController not yet ready, defer creation */
+		/* OwningPlayer not yet ready, defer creation */
 		UE_LOG(LogModulusUI, Verbose,
-			TEXT("UISubsystem::CreatePrimaryGameLayout -- deferring layout creation until PlayerController ready"));
+			TEXT("UISubsystem::CreatePrimaryGameLayout -- deferring layout creation until OwningPlayer ready"));
 		
 		if (ULocalPlayer* ThisPlayer = GetLocalPlayer())
 		{
@@ -177,7 +177,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	}
 	
 	/* Create widget */
-	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(PlayerController, PrimaryGameLayoutClass);
+	PrimaryGameLayout = CreateWidget<UMCore_PrimaryGameLayout>(OwningPlayer, PrimaryGameLayoutClass);
 	if (!IsValid(PrimaryGameLayout))
 	{
 		UE_LOG(LogModulusUI, Error,
@@ -196,7 +196,7 @@ void UMCore_UISubsystem::CreatePrimaryGameLayout()
 	OnPrimaryGameLayoutReady.Broadcast(PrimaryGameLayout);
 }
 
-void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerController)
+void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* OwningPlayer)
 {
 	if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
 	{
@@ -204,10 +204,10 @@ void UMCore_UISubsystem::OnPlayerControllerReady(APlayerController* PlayerContro
 		PlayerControllerReadyHandle.Reset(); 
 	}
 	
-	if (IsValid(PlayerController) && !IsValid(PrimaryGameLayout))
+	if (IsValid(OwningPlayer) && !IsValid(PrimaryGameLayout))
 	{
 		UE_LOG(LogModulusUI, Log,
-			TEXT("UISubsystem::OnPlayerControllerReady -- PlayerController initialized, creating PrimaryGameLayout"));
+			TEXT("UISubsystem::OnPlayerControllerReady -- OwningPlayer initialized, creating PrimaryGameLayout"));
 		CreatePrimaryGameLayout();
 	}
 }

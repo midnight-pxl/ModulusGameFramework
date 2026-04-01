@@ -5,7 +5,7 @@
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
-#include "CoreData/Libraries/MCore_EnhancedInputDisplay.h"
+#include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
 #include "CoreData/Tags/MCore_SettingsTags.h"
 #include "CoreData/Logging/LogModulusUI.h"
@@ -53,7 +53,7 @@ void UMCore_GamepadIconSwitcher::RefreshDisplay()
 	AvailableOptions.Add(LOCTEXT("AutoDetect", "Auto-Detect"));
 
 	/* Pull registered gamepad configs and build display names */
-	TArray<FName> Configs = UMCore_EnhancedInputDisplay::GetAvailableGamepadConfigs(this);
+	TArray<FName> Configs = UMCore_InputDisplayLibrary::GetAvailableGamepadConfigs(this);
 
 	UCommonInputPlatformSettings* PlatformSettings = UCommonInputPlatformSettings::Get();
 	for (const FName& ConfigName : Configs)

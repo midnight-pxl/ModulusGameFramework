@@ -134,8 +134,8 @@ private:
 	// PANEL BUILD
 	// ====================================================================
 
-	UScrollBox* BuildContextPage(APlayerController* PC, const UInputMappingContext* MappingContext);
-	UScrollBox* BuildFallbackPage(APlayerController* PC);
+	UScrollBox* BuildContextPage(APlayerController* OwningPlayer, const UInputMappingContext* MappingContext);
+	UScrollBox* BuildFallbackPage(APlayerController* OwningPlayer);
 	UCommonTextBlock* CreateThemedCategoryHeader(const FText& CategoryDisplayName);
 
 	// ====================================================================
