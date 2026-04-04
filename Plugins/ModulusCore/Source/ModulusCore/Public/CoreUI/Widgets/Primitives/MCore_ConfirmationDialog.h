@@ -94,11 +94,9 @@ private:
 	void HandleCancelClicked();
 
 	UFUNCTION()
-	void HandleConfirmInput(FName ActionName);
-
-	UFUNCTION()
 	void HandleCancelInput(FName ActionName);
 
-	FMCore_InputActionBindingHandle AcceptBindingHandle;
 	FMCore_InputActionBindingHandle BackBindingHandle;
+
+	bool bResolved{false};
 };

@@ -324,8 +324,32 @@ UCommonActivatableWidget* UMCore_UISubsystem::PushWidgetToLayer(
 		return nullptr;
 	}
 	
-	/* AddWidget handles creation; activation is deferred until the stack's animated transition completes */
-	UCommonActivatableWidget* NewWidget = ThisStack->AddWidget<UCommonActivatableWidget>(WidgetClass);
+	UCommonActivatableWidget* NewWidget = nullptr;
+
+	if (LayerTag == MCore_UILayerTags::MCore_UI_Layer_Modal)
+	{
+		/* Modal widgets are single-use: explicit creation with PlayerController as Outer,
+		   then instance-based push so the stack does not manage the widget's lifetime. */
+		const ULocalPlayer* LocalPlayer = GetLocalPlayer();
+		APlayerController* PC = LocalPlayer ? LocalPlayer->GetPlayerController(GetWorld()) : nullptr;
+
+		if (!PC)
+		{
+			UE_LOG(LogModulusUI, Warning, TEXT("UISubsystem::PushWidgetToLayer -- no PlayerController for modal creation"));
+			return nullptr;
+		}
+
+		NewWidget = CreateWidget<UCommonActivatableWidget>(PC, WidgetClass);
+		if (NewWidget)
+		{
+			ThisStack->AddWidgetInstance(*NewWidget);
+		}
+	}
+	else
+	{
+		/* Non-modal layers: stack-managed creation via class-based overload */
+		NewWidget = ThisStack->AddWidget<UCommonActivatableWidget>(WidgetClass);
+	}
 
 	if (NewWidget)
 	{
@@ -351,6 +375,11 @@ UCommonActivatableWidget* UMCore_UISubsystem::OpenScreen(
 {
 	if (!ScreenClass || !HasPrimaryGameLayout()) { return nullptr; }
 
+	// TODO: Temporary diagnostic — remove after modal lifecycle audit
+	UE_LOG(LogModulusUI, Log, TEXT("OpenScreen -- Class=%s Layer=%s TrackedCount=%d"),
+		*GetNameSafe(ScreenClass), *LayerTag.ToString(),
+		TrackedWidgets.Contains(LayerTag) ? TrackedWidgets[LayerTag].Num() : 0);
+
 	if (!bAllowDuplicates)
 	{
 		CompactTrackedWidgets(LayerTag);
@@ -362,6 +391,12 @@ UCommonActivatableWidget* UMCore_UISubsystem::OpenScreen(
 			for (int32 i = Widgets->Num() - 1; i >= 0; --i)
 			{
 				TWeakObjectPtr<UCommonActivatableWidget>& Weak = (*Widgets)[i];
+
+				// TODO: Temporary diagnostic — remove after modal lifecycle audit
+				UE_LOG(LogModulusUI, Log, TEXT("OpenScreen -- Found tracked: %s IsValid=%s IsActivated=%s"),
+					*GetNameSafe(Weak.Get()),
+					Weak.IsValid() ? TEXT("Y") : TEXT("N"),
+					(Weak.IsValid() && Weak->IsActivated()) ? TEXT("Y") : TEXT("N"));
 
 				if (Weak->GetClass() == ScreenClass)
 				{

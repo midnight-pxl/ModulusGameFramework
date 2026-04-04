@@ -59,6 +59,8 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 	/* If activation was blocked by BlockTags, Super already deactivated */
 	if (!IsActivated()) { return; }
 
+	bResolved = false;
+
 	if (Btn_Confirm)
 	{
 		Btn_Confirm->SetButtonText(ConfirmText);
@@ -68,14 +70,7 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 	{
 		Btn_Cancel->SetButtonText(CancelText);
 	}
-
-	if (!AcceptInputAction.IsNull())
-	{
-		FInputActionExecutedDelegate ConfirmDelegate;
-		ConfirmDelegate.BindDynamic(this, &UMCore_ConfirmationDialog::HandleConfirmInput);
-		RegisterBinding(AcceptInputAction, ConfirmDelegate, AcceptBindingHandle);
-	}
-
+	
 	if (!BackInputAction.IsNull())
 	{
 		FInputActionExecutedDelegate CancelDelegate;
@@ -88,6 +83,8 @@ void UMCore_ConfirmationDialog::NativeOnActivated()
 
 void UMCore_ConfirmationDialog::NativeOnDeactivated()
 {
+	OnDialogResult.Clear();
+	bResolved = false;
 	Super::NativeOnDeactivated();
 }
 
@@ -114,6 +111,9 @@ UWidget* UMCore_ConfirmationDialog::NativeGetDesiredFocusTarget() const
 
 void UMCore_ConfirmationDialog::ResolveDialog(bool bConfirmed)
 {
+	if (bResolved) { return; }
+	bResolved = true;
+
 	UE_LOG(LogModulusUI, Log,
 		TEXT("ConfirmationDialog::ResolveDialog -- resolved: %s, widget=%s"),
 		bConfirmed ? TEXT("Confirmed") : TEXT("Cancelled"),
@@ -131,11 +131,6 @@ void UMCore_ConfirmationDialog::HandleConfirmClicked()
 void UMCore_ConfirmationDialog::HandleCancelClicked()
 {
 	ResolveDialog(false);
-}
-
-void UMCore_ConfirmationDialog::HandleConfirmInput(FName ActionName)
-{
-	ResolveDialog(true);
 }
 
 void UMCore_ConfirmationDialog::HandleCancelInput(FName ActionName)
