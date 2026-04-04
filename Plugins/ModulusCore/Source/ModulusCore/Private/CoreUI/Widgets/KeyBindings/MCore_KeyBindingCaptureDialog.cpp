@@ -64,6 +64,7 @@ void UMCore_KeyBindingCaptureDialog::NativeOnActivated()
 
 	if (Btn_Cancel)
 	{
+		Btn_Cancel->OnButtonClicked.RemoveAll(this);
 		Btn_Cancel->OnButtonClicked.AddDynamic(this, &ThisClass::HandleCancelClicked);
 	}
 
@@ -102,6 +103,14 @@ void UMCore_KeyBindingCaptureDialog::NativeOnDeactivated()
 
 void UMCore_KeyBindingCaptureDialog::NativeDestruct()
 {
+	if (ErrorCooldownTimerHandle.IsValid())
+	{
+		if (const UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(ErrorCooldownTimerHandle);
+		}
+	}
+
 	if (Btn_Cancel)
 	{
 		Btn_Cancel->OnButtonClicked.RemoveAll(this);

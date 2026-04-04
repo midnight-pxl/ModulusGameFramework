@@ -147,9 +147,12 @@ public:
 		meta=(DisplayName="Key Binding Contexts"))
 	TArray<FMCore_KeyBindingContext> KeyBindingContexts;
 
-	/** Dialog class used for destructive action confirmations (Reset All, etc). */
+	/**
+	 * Default dialog class used for destructive action confirmations (Reset All, etc).
+	 * used wherever confirmation is required and not locally set for custom functionality
+	 */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
-	TSubclassOf<UMCore_ConfirmationDialog> ConfirmationDialogClass;
+	TSubclassOf<UMCore_ConfirmationDialog> DefaultConfirmationDialogClass;
 
 	// ============================================================================
 	// DEBUG (EDITOR ONLY)

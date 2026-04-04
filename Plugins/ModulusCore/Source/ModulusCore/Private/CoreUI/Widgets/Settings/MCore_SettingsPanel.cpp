@@ -503,10 +503,19 @@ void UMCore_SettingsPanel::FocusFirstWidgetInActivePage()
 
 void UMCore_SettingsPanel::HandleResetAllClicked()
 {
-	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
+	/** Resolve dialog class: per-widget override w/ CoreSettings fallback */
+	TSubclassOf<UMCore_ConfirmationDialog> DialogClass = ResetConfirmationDialogClass;
+	if (!DialogClass)
 	{
-		/* No dialog configured, reset directly as fallback */
+		const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+		if (CoreSettings) { DialogClass = CoreSettings->DefaultConfirmationDialogClass; }
+		UE_LOG(LogModulusSettings, Log,
+			TEXT("SettingsPanel::ResetAllClicked -- No local Dialog set, falling back to CoreSettings."));
+	}
+	
+	if (!DialogClass)
+	{
+		/** No dialog configured, reset directly as safety net */
 		UMCore_GameSettingsLibrary::ResetAllSettingsToDefault(GetOwningLocalPlayer());
 		RefreshAllWidgets();
 		return;
@@ -515,7 +524,7 @@ void UMCore_SettingsPanel::HandleResetAllClicked()
 	if (UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
 	{
 		UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
-			CoreSettings->ConfirmationDialogClass,
+			DialogClass,
 			MCore_UILayerTags::MCore_UI_Layer_Modal);
 
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
@@ -546,9 +555,19 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 {
 	if (!ActiveLeafCategory.IsValid()) { return; }
 
-	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
+	/** Resolve dialog class: per-widget override w/ CoreSettings fallback */
+	TSubclassOf<UMCore_ConfirmationDialog> DialogClass = ResetConfirmationDialogClass;
+	if (!DialogClass)
 	{
+		const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+		if (CoreSettings) { DialogClass = CoreSettings->DefaultConfirmationDialogClass; }
+		UE_LOG(LogModulusSettings, Log,
+			TEXT("SettingsPanel::ResetCategoryClicked -- No local Dialog set, falling back to CoreSettings."));
+	}
+	
+	if (!DialogClass)
+	{
+		/** No dialog configured, reset directly as safety net */
 		UMCore_GameSettingsLibrary::ResetCategoryToDefault(
 			GetOwningLocalPlayer(), ActiveLeafCategory);
 		RefreshAllWidgets();
@@ -558,7 +577,7 @@ void UMCore_SettingsPanel::HandleResetCategoryClicked()
 	if (UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>())
 	{
 		UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
-			CoreSettings->ConfirmationDialogClass,
+			DialogClass,
 			MCore_UILayerTags::MCore_UI_Layer_Modal);
 
 		if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))

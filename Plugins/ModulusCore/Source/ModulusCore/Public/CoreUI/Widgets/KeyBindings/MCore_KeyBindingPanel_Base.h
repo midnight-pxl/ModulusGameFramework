@@ -105,6 +105,13 @@ protected:
 	/** Text shown during gamepad button capture. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
 	FText CapturePromptGamepadText;
+	
+	/** 
+	 * Confirmation dialog class for reset operations. falls back to
+	 * DefaultConfirmationDialogClass in CoreSettings if null
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|KeyBinding")
+	TSubclassOf<UMCore_ConfirmationDialog> ResetConfirmationDialogClass;
 
 	// ====================================================================
 	// THEME
@@ -187,6 +194,13 @@ private:
 	void HandleThemeChanged(UMCore_PDA_UITheme_Base* NewTheme);
 
 	bool bThemeDelegateBound{false};
+
+	// ====================================================================
+	// DIALOG HELPERS
+	// ====================================================================
+
+	void DismissActiveCaptureDialog();
+	void DismissActiveConfirmationDialog();
 
 	// ====================================================================
 	// STATE

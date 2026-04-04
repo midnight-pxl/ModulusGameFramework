@@ -21,6 +21,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "Components/ScrollBox.h"
 #include "InputMappingContext.h"
+#include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
+#include "CoreData/Logging/LogModulusSettings.h"
 #include "GameFramework/PlayerController.h"
 
 // ============================================================================
@@ -108,6 +110,14 @@ void UMCore_KeyBindingPanel_Base::NativeDestruct()
 
 	SpawnedHeaders.Reset();
 
+	DismissActiveCaptureDialog();
+	DismissActiveConfirmationDialog();
+
+	Super::NativeDestruct();
+}
+
+void UMCore_KeyBindingPanel_Base::DismissActiveCaptureDialog()
+{
 	if (ActiveCaptureDialog.IsValid())
 	{
 		ActiveCaptureDialog->OnDialogDismissed.RemoveAll(this);
@@ -116,14 +126,21 @@ void UMCore_KeyBindingPanel_Base::NativeDestruct()
 		ActiveCaptureDialog.Reset();
 	}
 
+	if (ActiveCaptureButton.IsValid())
+	{
+		ActiveCaptureButton->ExitCaptureMode();
+		ActiveCaptureButton.Reset();
+	}
+}
+
+void UMCore_KeyBindingPanel_Base::DismissActiveConfirmationDialog()
+{
 	if (PendingConfirmationDialog.IsValid())
 	{
 		PendingConfirmationDialog->OnDialogResult.RemoveAll(this);
 		PendingConfirmationDialog->DeactivateWidget();
 		PendingConfirmationDialog.Reset();
 	}
-
-	Super::NativeDestruct();
 }
 
 // ============================================================================
@@ -139,6 +156,10 @@ void UMCore_KeyBindingPanel_Base::PopulateBindings(APlayerController* OwningPlay
           *GetNameSafe(this));
        return;
     }
+
+    /* Dismiss any active dialogs before rebuilding */
+    DismissActiveCaptureDialog();
+    DismissActiveConfirmationDialog();
 
     /* Clear previous state */
     TabbedContainer_Bindings->ClearAllTabs();
@@ -448,10 +469,21 @@ void UMCore_KeyBindingPanel_Base::HandleContextTabSelected(FName TabID)
 
 void UMCore_KeyBindingPanel_Base::HandleResetAllClicked()
 {
-	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	if (!CoreSettings || !CoreSettings->ConfirmationDialogClass)
+	DismissActiveConfirmationDialog();
+	
+	/** Resolve dialog class: per-widget override w/ CoreSettings fallback */
+	TSubclassOf<UMCore_ConfirmationDialog> DialogClass = ResetConfirmationDialogClass;
+	if (!DialogClass)
 	{
-		/* No dialog configured, reset directly as fallback */
+		const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+		if (CoreSettings) { DialogClass = CoreSettings->DefaultConfirmationDialogClass; }
+		UE_LOG(LogModulusSettings, Log,
+			TEXT("KeyBindingPanel::ResetAllClicked -- No local Dialog set, falling back to CoreSettings."));
+	}
+	
+	if (!DialogClass)
+	{
+		/** No dialog configured, reset directly as safety net */
 		UMCore_InputDisplayLibrary::ResetAllBindingsToDefault(GetOwningPlayer());
 		RefreshAllRows();
 		return;
@@ -464,7 +496,7 @@ void UMCore_KeyBindingPanel_Base::HandleResetAllClicked()
 	if (!UISubsystem) { return; }
 
 	UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
-		CoreSettings->ConfirmationDialogClass,
+		DialogClass,
 		MCore_UILayerTags::MCore_UI_Layer_Modal);
 
 	if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
@@ -496,6 +528,8 @@ void UMCore_KeyBindingPanel_Base::HandleResetAllConfirmResult(bool bConfirmed)
 
 void UMCore_KeyBindingPanel_Base::HandleResetCategoryClicked()
 {
+	DismissActiveConfirmationDialog();
+
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
 	if (!CoreSettings) { return; }
 
@@ -521,15 +555,24 @@ void UMCore_KeyBindingPanel_Base::HandleResetCategoryClicked()
 			*ActiveContextTabID.ToString(), *GetNameSafe(this));
 		return;
 	}
-
-	if (!CoreSettings->ConfirmationDialogClass)
+	
+	/** Resolve dialog class: per-widget override w/ CoreSettings fallback */
+	TSubclassOf<UMCore_ConfirmationDialog> DialogClass = ResetConfirmationDialogClass;
+	if (!DialogClass)
 	{
-		/* No dialog configured, reset directly as fallback */
+		if (CoreSettings) { DialogClass = CoreSettings->DefaultConfirmationDialogClass; }
+		UE_LOG(LogModulusSettings, Log,
+			TEXT("KeyBindingPanel::ResetAllClicked -- No local Dialog set, falling back to CoreSettings."));
+	}
+	
+	if (!DialogClass)
+	{
+		/** No dialog configured, reset directly as safety net */
 		UMCore_InputDisplayLibrary::ResetBindingsForContext(GetOwningPlayer(), ActiveIMC);
 		RefreshAllRows();
 		return;
 	}
-
+	
 	ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
 	if (!LocalPlayer) { return; }
 
@@ -537,7 +580,7 @@ void UMCore_KeyBindingPanel_Base::HandleResetCategoryClicked()
 	if (!UISubsystem) { return; }
 
 	UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
-		CoreSettings->ConfirmationDialogClass,
+		DialogClass,
 		MCore_UILayerTags::MCore_UI_Layer_Modal);
 
 	if (UMCore_ConfirmationDialog* Dialog = Cast<UMCore_ConfirmationDialog>(CAWidget))
@@ -590,6 +633,8 @@ void UMCore_KeyBindingPanel_Base::HandleRowCaptureStateChanged(
 {
 	if (bCapturing)
 	{
+		DismissActiveCaptureDialog();
+
 		ActiveCaptureButton = Button;
 
 		if (!CaptureDialogClass)

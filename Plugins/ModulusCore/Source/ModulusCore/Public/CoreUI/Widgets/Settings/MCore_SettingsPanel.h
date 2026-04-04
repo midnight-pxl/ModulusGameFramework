@@ -50,6 +50,13 @@ protected:
 	/** Blueprint class spawned at runtime for nested sub-tab containers. */
 	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel")
 	TSubclassOf<UMCore_TabbedContainer> SubTabContainerClass;
+	
+	/** 
+	 * Confirmation dialog class for reset operations. falls back to
+	 * DefaultConfirmationDialogClass in CoreSettings if null
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel")
+	TSubclassOf<UMCore_ConfirmationDialog> ResetConfirmationDialogClass;
  
 	// ============================================================================
 	// BIND WIDGETS
