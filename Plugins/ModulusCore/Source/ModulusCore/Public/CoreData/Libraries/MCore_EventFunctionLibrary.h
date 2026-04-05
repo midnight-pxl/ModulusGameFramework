@@ -99,6 +99,53 @@ public:
 		const FString& Key,
 		float DefaultValue = 0.0f);
 
+// ============================================================================
+// TYPED PAYLOAD
+// ============================================================================
+
+	/**
+	 * Broadcast an event with a typed struct payload.
+	 * The struct must be a USTRUCT(BlueprintType). Receivers extract via
+	 * GetTypedPayload<T>() in C++ or GetTypedPayload node in Blueprint.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Modulus|Events",
+			  meta = (DefaultToSelf = "WorldContext"))
+	static void BroadcastTypedEvent(const UObject* WorldContext,
+		FGameplayTag EventTag,
+		const FInstancedStruct& TypedPayload,
+		EMCore_EventScope EventScope = EMCore_EventScope::Local);
+
+	/**
+	 * C++ convenience: broadcast a typed event from a concrete struct instance.
+	 * Usage: BroadcastTypedEvent(this, Tag, FMyPayload{ItemID, Quantity});
+	 */
+	template<typename T>
+	static void BroadcastTypedEvent(const UObject* WorldContext,
+		FGameplayTag EventTag, const T& Payload,
+		EMCore_EventScope EventScope = EMCore_EventScope::Local)
+	{
+		BroadcastTypedEvent(WorldContext, EventTag,
+			FInstancedStruct::Make<T>(Payload), EventScope);
+	}
+
+	/** Returns true if the event data carries a typed struct payload. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus|Events")
+	static bool HasTypedPayload(const FMCore_EventData& EventData);
+
+	/** Get the typed payload as FInstancedStruct. Check HasTypedPayload() first. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Modulus|Events")
+	static FInstancedStruct GetTypedPayload(const FMCore_EventData& EventData);
+
+	/**
+	 * Extract typed payload with compile-time type safety.
+	 * Returns nullptr if payload is empty or the contained type doesn't match T.
+	 */
+	template<typename T>
+	static const T* GetTypedPayloadAs(const FMCore_EventData& EventData)
+	{
+		return EventData.TypedPayload.GetPtr<T>();
+	}
+
 private:
 	/* Routes event data to the appropriate subsystem based on scope */
 	static void RouteEventToSubsystem(const UObject* WorldContext,

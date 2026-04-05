@@ -185,6 +185,37 @@ float UMCore_EventFunctionLibrary::GetFloatParameter(const FMCore_EventData& Eve
 }
 
 // ============================================================================
+// TYPED PAYLOAD
+// ============================================================================
+
+void UMCore_EventFunctionLibrary::BroadcastTypedEvent(const UObject* WorldContext,
+	FGameplayTag EventTag,
+	const FInstancedStruct& TypedPayload,
+	EMCore_EventScope EventScope)
+{
+	if (!WorldContext || !EventTag.IsValid())
+	{
+		UE_LOG(LogModulusEvent, Warning,
+			TEXT("EventFunctionLibrary::BroadcastTypedEvent -- invalid parameters (WorldContext: %s, Tag: %s)"),
+			WorldContext ? TEXT("Valid") : TEXT("NULL"), *EventTag.ToString());
+		return;
+	}
+
+	FMCore_EventData EventData(EventTag, TypedPayload);
+	RouteEventToSubsystem(WorldContext, EventData, EventScope);
+}
+
+bool UMCore_EventFunctionLibrary::HasTypedPayload(const FMCore_EventData& EventData)
+{
+	return EventData.HasTypedPayload();
+}
+
+FInstancedStruct UMCore_EventFunctionLibrary::GetTypedPayload(const FMCore_EventData& EventData)
+{
+	return EventData.TypedPayload;
+}
+
+// ============================================================================
 // INTERNAL
 // ============================================================================
 

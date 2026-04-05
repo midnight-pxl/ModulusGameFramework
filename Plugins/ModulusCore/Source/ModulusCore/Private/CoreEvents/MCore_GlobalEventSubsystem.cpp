@@ -6,6 +6,7 @@
 #include "CoreData/Logging/LogModulusEvent.h"
 #include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreEvents/MCore_EventListenerComp.h"
+#include "Serialization/BufferArchive.h"
 
 void UMCore_GlobalEventSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -194,6 +195,58 @@ bool UMCore_GlobalEventSubsystem::ValidateEventRequest(const FMCore_EventData& E
 		return false;
 	}
 	
+	/* Typed payload validation — global events cross the network */
+	if (EventData.TypedPayload.IsValid())
+	{
+		const UScriptStruct* PayloadStruct = EventData.TypedPayload.GetScriptStruct();
+		if (PayloadStruct)
+		{
+			/* Fast reject — GetStructureSize() is the C++ sizeof, zero runtime cost */
+			constexpr int32 MaxStructSizeBytes = 2048;
+			if (PayloadStruct->GetStructureSize() > MaxStructSizeBytes)
+			{
+				UE_LOG(LogModulusEvent, Warning,
+					TEXT("GlobalEventSubsystem::ValidateEventRequest -- rejected '%s': typed payload struct '%s' "
+						 "sizeof %d exceeds cap of %d"),
+					*EventData.EventTag.ToString(),
+					*PayloadStruct->GetName(),
+					PayloadStruct->GetStructureSize(),
+					MaxStructSizeBytes);
+				return false;
+			}
+
+			/* Serialized size check — catches dynamic content (TArrays, FStrings, maps)
+			 * where sizeof is small but serialized form can be arbitrarily large */
+			constexpr int32 MaxSerializedPayloadBytes = 4096;
+			FBufferArchive SizeCounter;
+			const_cast<UScriptStruct*>(PayloadStruct)->SerializeItem(SizeCounter,
+				const_cast<uint8*>(EventData.TypedPayload.GetMemory()), nullptr);
+			if (SizeCounter.Num() > MaxSerializedPayloadBytes)
+			{
+				UE_LOG(LogModulusEvent, Warning,
+					TEXT("GlobalEventSubsystem::ValidateEventRequest -- rejected '%s': typed payload struct '%s' "
+						 "serialized size %d exceeds cap of %d"),
+					*EventData.EventTag.ToString(),
+					*PayloadStruct->GetName(),
+					SizeCounter.Num(),
+					MaxSerializedPayloadBytes);
+				return false;
+			}
+		}
+	}
+
+#if !UE_BUILD_SHIPPING
+	if (EventData.TypedPayload.IsValid() && EventData.EventParams.Num() > 0)
+	{
+		UE_LOG(LogModulusEvent, Verbose,
+			TEXT("GlobalEventSubsystem::ValidateEventRequest -- event '%s' has both string params (%d) and typed payload '%s'. "
+				 "This is valid but may indicate redundant data during migration."),
+			*EventData.EventTag.ToString(),
+			EventData.EventParams.Num(),
+			*EventData.TypedPayload.GetScriptStruct()->GetName());
+	}
+#endif
+
 	return true;
 }
 
