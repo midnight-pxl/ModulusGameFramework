@@ -168,9 +168,17 @@ private:
 	TWeakObjectPtr<UMCore_ConfirmationDialog> PendingConfirmationDialog;
 
 	TWeakObjectPtr<UMCore_SettingsRevertCountdown> ActiveRevertCountdown;
+	
+	/** Tags accumulated during the debounce window. Merged into the countdown when it spawns. */
+	TArray<FGameplayTag> PendingConfirmationTags;
+	
+	/** Debounce timer — resets on each new confirmation-required change. */
+	FTimerHandle ConfirmationDebounceTimer;
+	
+	/** Spawns the countdown modal with all accumulated PendingConfirmationTags. */
+	void SpawnRevertCountdown();
 
-	void HandleConfirmationRequired(const TArray<FGameplayTag>& AffectedTags,
-		const TArray<FString>& PreviousValues, float RevertDelay);
+	void HandleConfirmationRequired(const TArray<FGameplayTag>& AffectedTags);
 
 	UFUNCTION()
 	void HandleCountdownResult(bool bConfirmed);

@@ -155,6 +155,8 @@ void UMCore_SettingsPanel::NativeOnDeactivated()
 		ActiveRevertCountdown.Reset();
 	}
 
+	PendingConfirmationTags = TArray<FGameplayTag>();
+
 	Super::NativeOnDeactivated();
 }
 
@@ -204,6 +206,8 @@ void UMCore_SettingsPanel::NativeDestruct()
 		ActiveRevertCountdown->OnCountdownResult.RemoveAll(this);
 		ActiveRevertCountdown.Reset();
 	}
+
+	PendingConfirmationTags = TArray<FGameplayTag>();
 
 	if (Btn_ResetAll) { Btn_ResetAll->OnButtonClicked.RemoveAll(this); }
 	if (Btn_ResetCategory) { Btn_ResetCategory->OnButtonClicked.RemoveAll(this); }
@@ -630,38 +634,81 @@ void UMCore_SettingsPanel::HandleResetCategoryConfirmResult(bool bConfirmed)
 	}
 }
 
-void UMCore_SettingsPanel::HandleConfirmationRequired(
-	const TArray<FGameplayTag>& AffectedTags,
-	const TArray<FString>& PreviousValues,
-	float RevertDelay)
+void UMCore_SettingsPanel::SpawnRevertCountdown()
 {
-	if (!IsActivated()) { return; }
-
-	/* Block double-countdown */
-	if (ActiveRevertCountdown.IsValid()) { return; }
-
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
 	if (!CoreSettings || !CoreSettings->SettingsRevertCountdownClass)
 	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("SettingsPanel::HandleConfirmationRequired -- SettingsRevertCountdownClass not set in CoreSettings, saving directly"));
-		UMCore_GameSettingsLibrary::SavePlayerSettings(GetOwningLocalPlayer());
-		RefreshAllWidgets();
+		/** No countdown class configured. Save + clear pending */
+		UMCore_GameSettingsLibrary::SavePlayerSettings(this);
+		PendingConfirmationTags.Empty();
 		return;
 	}
 
-	UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>();
-	if (!UISubsystem) { return; }
+	UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()
+		? GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>()
+		: nullptr;
+	if (!UISubsystem)
+	{
+		UMCore_GameSettingsLibrary::SavePlayerSettings(this);
+		PendingConfirmationTags.Empty();
+		return;
+	}
 
-	UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
+	UCommonActivatableWidget* Widget = UISubsystem->OpenScreen(
 		CoreSettings->SettingsRevertCountdownClass,
 		MCore_UILayerTags::MCore_UI_Layer_Modal);
 
-	if (UMCore_SettingsRevertCountdown* Countdown = Cast<UMCore_SettingsRevertCountdown>(CAWidget))
+	UMCore_SettingsRevertCountdown* Countdown = Cast<UMCore_SettingsRevertCountdown>(Widget);
+	if (!Countdown)
 	{
-		ActiveRevertCountdown = Countdown;
-		Countdown->OnCountdownResult.AddDynamic(this, &ThisClass::HandleCountdownResult);
-		Countdown->StartCountdown(RevertDelay, AffectedTags, PreviousValues);
+		UMCore_GameSettingsLibrary::SavePlayerSettings(this);
+		PendingConfirmationTags.Empty();
+		return;
+	}
+
+	ActiveRevertCountdown = Countdown;
+	Countdown->OnCountdownResult.AddDynamic(this, &ThisClass::HandleCountdownResult);
+	Countdown->StartCountdown(PendingConfirmationTags);
+}
+
+void UMCore_SettingsPanel::HandleConfirmationRequired(const TArray<FGameplayTag>& AffectedTags)
+{
+	if (!IsActivated()) { return; }
+	
+	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+	if (!CoreSettings) { return; }
+
+	/** Merge incoming tags into pending set */
+	for (const FGameplayTag& Tag : AffectedTags) { PendingConfirmationTags.AddUnique(Tag); }
+
+	/** Teardown active countdown if one exists */
+	if (ActiveRevertCountdown.IsValid())
+	{
+		ActiveRevertCountdown->OnCountdownResult.Clear();
+		ActiveRevertCountdown->DeactivateWidget();
+		ActiveRevertCountdown.Reset();
+	}
+	
+	UWorld* World = GetWorld();
+	if (!World) { return; }
+	
+	World->GetTimerManager().ClearTimer(ConfirmationDebounceTimer);
+	
+	const float Delay = CoreSettings->ConfirmationDebounceDelay;
+	
+	if (Delay > 0.0f)
+	{
+		World->GetTimerManager().SetTimer(
+			ConfirmationDebounceTimer,
+			this,
+			&ThisClass::SpawnRevertCountdown,
+			Delay,
+			false);
+	}
+	else
+	{
+		SpawnRevertCountdown();
 	}
 }
 
@@ -673,6 +720,7 @@ void UMCore_SettingsPanel::HandleCountdownResult(bool bConfirmed)
 		ActiveRevertCountdown.Reset();
 	}
 
+	PendingConfirmationTags.Empty();
 	RefreshAllWidgets();
 }
 

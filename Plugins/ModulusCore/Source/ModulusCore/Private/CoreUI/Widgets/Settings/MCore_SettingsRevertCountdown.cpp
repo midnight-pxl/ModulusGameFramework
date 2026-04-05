@@ -5,7 +5,6 @@
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
-#include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 
 #include "CommonTextBlock.h"
@@ -61,7 +60,6 @@ void UMCore_SettingsRevertCountdown::NativeOnDeactivated()
 	
 	/** Reset state */
 	PendingTags.Empty();
-	PendingPreviousValues.Empty();
 	RemainingSeconds = 0.f;
 	TotalSeconds = 0.f;
 	
@@ -100,16 +98,15 @@ UWidget* UMCore_SettingsRevertCountdown::NativeGetDesiredFocusTarget() const
 // COUNTDOWN
 // ============================================================================
 
-void UMCore_SettingsRevertCountdown::StartCountdown(float Seconds,
-	const TArray<FGameplayTag>& AffectedTags,
-	const TArray<FString>& PreviousValues)
+void UMCore_SettingsRevertCountdown::StartCountdown(const TArray<FGameplayTag>& AffectedTags)
 {
 	bResolved = false;
-	
+
 	PendingTags = AffectedTags;
-	PendingPreviousValues = PreviousValues;
-	TotalSeconds = Seconds;
-	RemainingSeconds = Seconds;
+
+	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+	TotalSeconds = CoreSettings ? CoreSettings->ConfirmationRevertDelay : 15.0f;
+	RemainingSeconds = TotalSeconds;
 
 	if (Txt_Countdown)
 	{
@@ -181,75 +178,12 @@ void UMCore_SettingsRevertCountdown::ResolveCountdown(bool bConfirmed)
 
 void UMCore_SettingsRevertCountdown::ApplySettings(bool bConfirmed)
 {
-	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
-	if (!CoreSettings)
+	if (bConfirmed)
 	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("SettingsRevertCountdown::ApplySettings -- CoreSettings unavailable, widget=%s"), *GetNameSafe(this));
-		return;
+		UMCore_GameSettingsLibrary::SavePlayerSettings(this);
 	}
-
-	TArray<FMCore_FloatSettingChange> FloatChanges;
-	TArray<FMCore_IntSettingChange> IntChanges;
-	TArray<FMCore_BoolSettingChange> BoolChanges;
-
-	for (int32 i = 0; i < PendingTags.Num(); ++i)
+	else
 	{
-		UMCore_DA_SettingDefinition* Definition = CoreSettings->FindSettingDefinitionByTag(PendingTags[i]);
-		if (!Definition)
-		{
-			UE_LOG(LogModulusSettings, Warning,
-				TEXT("SettingsRevertCountdown::ApplySettings -- no definition found for tag %s, widget=%s"),
-				*PendingTags[i].ToString(), *GetNameSafe(this));
-			continue;
-		}
-
-		switch (Definition->SettingType)
-		{
-		case EMCore_SettingType::Slider:
-		{
-			FMCore_FloatSettingChange Change;
-			Change.Setting = Definition;
-			Change.Value = bConfirmed
-				? UMCore_GameSettingsLibrary::GetSettingFloat(this, Definition)
-				: FCString::Atof(*PendingPreviousValues[i]);
-			FloatChanges.Add(Change);
-			break;
-		}
-		case EMCore_SettingType::Dropdown:
-		{
-			FMCore_IntSettingChange Change;
-			Change.Setting = Definition;
-			Change.Value = bConfirmed
-				? UMCore_GameSettingsLibrary::GetSettingInt(this, Definition)
-				: FCString::Atoi(*PendingPreviousValues[i]);
-			IntChanges.Add(Change);
-			break;
-		}
-		case EMCore_SettingType::Toggle:
-		{
-			FMCore_BoolSettingChange Change;
-			Change.Setting = Definition;
-			Change.Value = bConfirmed
-				? UMCore_GameSettingsLibrary::GetSettingBool(this, Definition)
-				: PendingPreviousValues[i].ToBool();
-			BoolChanges.Add(Change);
-			break;
-		}
-		}
-	}
-
-	/* Re-apply with bypass so the setters save to disk and broadcast */
-	if (!FloatChanges.IsEmpty())
-	{
-		UMCore_GameSettingsLibrary::SetSettingFloat(this, FloatChanges, true);
-	}
-	if (!IntChanges.IsEmpty())
-	{
-		UMCore_GameSettingsLibrary::SetSettingInt(this, IntChanges, true);
-	}
-	if (!BoolChanges.IsEmpty())
-	{
-		UMCore_GameSettingsLibrary::SetSettingBool(this, BoolChanges, true);
+		UMCore_GameSettingsLibrary::ReloadAndApplyFromDisk(this);
 	}
 }

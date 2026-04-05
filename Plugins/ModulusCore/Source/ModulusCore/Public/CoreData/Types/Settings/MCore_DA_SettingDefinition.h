@@ -162,14 +162,6 @@ public:
 		meta = (DisplayName = "Requires Confirmation"))
 	bool bRequiresConfirmation = false;
 
-	/* Duration of the revert countdown in seconds (only when bRequiresConfirmation is true) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Behavior",
-		meta = (EditCondition = "bRequiresConfirmation",
-				EditConditionHides,
-				ClampMin = "5.0", ClampMax = "30.0",
-				DisplayName = "Confirmation Revert Delay (s)"))
-	float ConfirmationRevertDelay = 10.0f;
-
 	// ============================================================================
 	// METHODS
 	// ============================================================================

@@ -158,6 +158,17 @@ public:
 	/** Widget class for the revert countdown overlay when a setting with bRequiresConfirmation is changed. */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_SettingsRevertCountdown> SettingsRevertCountdownClass;
+	
+	/**
+	 * Delay for showing revert countdown after a confirmation-required setting change.
+	 * Resets on each new change, preventing modal spam during rapid cycling.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Settings", meta = (ClampMin = "0.0", ClampMax = "3.0", Units = "s"))
+	float ConfirmationDebounceDelay{0.75f};
+
+	/** How long the revert countdown modal displays before auto-reverting. */
+	UPROPERTY(Config, EditAnywhere, Category = "Settings", meta = (ClampMin = "5.0", ClampMax = "30.0", Units = "s"))
+	float ConfirmationRevertDelay = 15.0f;
 
 	// ============================================================================
 	// DEBUG (EDITOR ONLY)

@@ -22,16 +22,12 @@ class USoundClass;
 
 /**
  * Broadcast when one or more settings with bRequiresConfirmation are applied.
- * Carries the affected setting tags, their previous values (as strings), and
- * the longest revert delay across all affected settings.
- * Fired alongside the tag-based event for direct C++ subscription without
+ * Carries the affected setting tags for direct C++ subscription without
  * requiring an EventListenerComp.
  */
-DECLARE_MULTICAST_DELEGATE_ThreeParams(
+DECLARE_MULTICAST_DELEGATE_OneParam(
 	FOnSettingsConfirmationRequired,
-	const TArray<FGameplayTag>&,  /* AffectedTags */
-	const TArray<FString>&,       /* PreviousValues */
-	float                         /* LongestRevertDelay */
+	const TArray<FGameplayTag>&  /* AffectedTags */
 );
 
 /**
@@ -168,6 +164,11 @@ public:
 		meta = (WorldContext = "WorldContextObject"))
 	static void SavePlayerSettings(const UObject* WorldContextObject);
 
+	/** Reloads player settings from disk, replacing in-memory state, and re-applies all values to the engine. */
+	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
+		meta = (WorldContext = "WorldContextObject"))
+	static void ReloadAndApplyFromDisk(const UObject* WorldContextObject);
+
 private:
 	// ============================================================================
 	// INTERNAL HELPERS
@@ -184,11 +185,8 @@ private:
 		const TArray<TChangeStruct>& Changes,
 		bool bBypassConfirmation,
 		TFunctionRef<TValue(const UMCore_DA_SettingDefinition*, TValue)> ClampValue,
-		TFunctionRef<TValue(const UMCore_DA_SettingDefinition*)> GetDefault,
-		TFunctionRef<bool(UMCore_PlayerSettingsSave*, const FString&, TValue&)> GetCommitted,
 		TFunctionRef<void(UMCore_PlayerSettingsSave*, const FString&, TValue)> SetCommitted,
-		TFunctionRef<void(const UMCore_DA_SettingDefinition*, TValue)> ApplyToEngine,
-		TFunctionRef<FString(TValue)> ValueToString);
+		TFunctionRef<void(const UMCore_DA_SettingDefinition*, TValue)> ApplyToEngine);
 
 	template<typename TValue>
 	static TValue GetSettingByTag_Internal(

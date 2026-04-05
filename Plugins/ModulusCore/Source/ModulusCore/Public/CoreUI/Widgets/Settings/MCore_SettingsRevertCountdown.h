@@ -17,7 +17,6 @@
 
 class UCommonTextBlock;
 class UMCore_ButtonBase;
-class UMCore_DA_SettingDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCountdownResult, bool, bConfirmed);
 
@@ -39,14 +38,11 @@ public:
 
 	/**
 	 * Begin the countdown. Stores affected settings and starts a 1-second looping timer.
-	 * @param Seconds         Total countdown duration (typically the max ConfirmationRevertDelay).
+	 * Duration is read from CoreSettings::ConfirmationRevertDelay.
 	 * @param AffectedTags    Setting tags that need confirmation.
-	 * @param PreviousValues  Pre-change values as strings, parallel with AffectedTags.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "UI|Settings")
-	void StartCountdown(float Seconds,
-		const TArray<FGameplayTag>& AffectedTags,
-		const TArray<FString>& PreviousValues);
+	void StartCountdown(const TArray<FGameplayTag>& AffectedTags);
 
 	/** Fires when the countdown resolves. True = user confirmed, false = reverted or timed out. */
 	UPROPERTY(BlueprintAssignable, Category = "UI|Settings")
@@ -94,7 +90,6 @@ private:
 	void HandleCountdownTick();
 
 	TArray<FGameplayTag> PendingTags;
-	TArray<FString> PendingPreviousValues;
 	FTimerHandle CountdownTimerHandle;
 	float RemainingSeconds{0.f};
 	float TotalSeconds{0.f};
