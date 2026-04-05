@@ -13,6 +13,7 @@
 #include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Switcher.h"
 #include "CoreUI/Widgets/KeyBindings/MCore_KeyBindingPanel_Base.h"
 #include "CoreUI/Widgets/Primitives/MCore_ConfirmationDialog.h"
+#include "CoreUI/Widgets/Settings/MCore_SettingsRevertCountdown.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 
@@ -59,6 +60,9 @@ void UMCore_SettingsPanel::NativeOnInitialized()
 	Btn_ResetAll->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetAllClicked);
 	Btn_ResetCategory->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetCategoryClicked);
 	Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
+
+	UMCore_GameSettingsLibrary::OnSettingsConfirmationRequired.AddUObject(
+		this, &ThisClass::HandleConfirmationRequired);
 }
 
 void UMCore_SettingsPanel::NativeOnActivated()
@@ -89,6 +93,9 @@ void UMCore_SettingsPanel::NativeOnActivated()
 		Btn_ResetAll->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetAllClicked);
 		Btn_ResetCategory->OnButtonClicked.AddDynamic(this, &ThisClass::HandleResetCategoryClicked);
 		Btn_Back->OnButtonClicked.AddDynamic(this, &ThisClass::HandleBackClicked);
+
+		UMCore_GameSettingsLibrary::OnSettingsConfirmationRequired.AddUObject(
+			this, &ThisClass::HandleConfirmationRequired);
 
 		/* BuildPanel internally clears stale state:
 		 *   ClearAllTabs() resets PageWidgets/TabList/PageSwitcher (fixes stale GetTabCount=5)
@@ -140,6 +147,14 @@ void UMCore_SettingsPanel::NativeOnDeactivated()
 		PendingConfirmationDialog.Reset();
 	}
 
+	/* Dismiss any active revert countdown */
+	if (ActiveRevertCountdown.IsValid())
+	{
+		ActiveRevertCountdown->OnCountdownResult.RemoveAll(this);
+		ActiveRevertCountdown->DeactivateWidget();
+		ActiveRevertCountdown.Reset();
+	}
+
 	Super::NativeOnDeactivated();
 }
 
@@ -180,6 +195,14 @@ void UMCore_SettingsPanel::NativeDestruct()
 	{
 		PendingConfirmationDialog->OnDialogResult.RemoveAll(this);
 		PendingConfirmationDialog.Reset();
+	}
+
+	UMCore_GameSettingsLibrary::OnSettingsConfirmationRequired.RemoveAll(this);
+
+	if (ActiveRevertCountdown.IsValid())
+	{
+		ActiveRevertCountdown->OnCountdownResult.RemoveAll(this);
+		ActiveRevertCountdown.Reset();
 	}
 
 	if (Btn_ResetAll) { Btn_ResetAll->OnButtonClicked.RemoveAll(this); }
@@ -605,6 +628,52 @@ void UMCore_SettingsPanel::HandleResetCategoryConfirmResult(bool bConfirmed)
 			GetOwningLocalPlayer(), ActiveLeafCategory);
 		RefreshAllWidgets();
 	}
+}
+
+void UMCore_SettingsPanel::HandleConfirmationRequired(
+	const TArray<FGameplayTag>& AffectedTags,
+	const TArray<FString>& PreviousValues,
+	float RevertDelay)
+{
+	if (!IsActivated()) { return; }
+
+	/* Block double-countdown */
+	if (ActiveRevertCountdown.IsValid()) { return; }
+
+	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+	if (!CoreSettings || !CoreSettings->SettingsRevertCountdownClass)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SettingsPanel::HandleConfirmationRequired -- SettingsRevertCountdownClass not set in CoreSettings, saving directly"));
+		UMCore_GameSettingsLibrary::SavePlayerSettings(GetOwningLocalPlayer());
+		RefreshAllWidgets();
+		return;
+	}
+
+	UMCore_UISubsystem* UISubsystem = GetOwningLocalPlayer()->GetSubsystem<UMCore_UISubsystem>();
+	if (!UISubsystem) { return; }
+
+	UCommonActivatableWidget* CAWidget = UISubsystem->OpenScreen(
+		CoreSettings->SettingsRevertCountdownClass,
+		MCore_UILayerTags::MCore_UI_Layer_Modal);
+
+	if (UMCore_SettingsRevertCountdown* Countdown = Cast<UMCore_SettingsRevertCountdown>(CAWidget))
+	{
+		ActiveRevertCountdown = Countdown;
+		Countdown->OnCountdownResult.AddDynamic(this, &ThisClass::HandleCountdownResult);
+		Countdown->StartCountdown(RevertDelay, AffectedTags, PreviousValues);
+	}
+}
+
+void UMCore_SettingsPanel::HandleCountdownResult(bool bConfirmed)
+{
+	if (ActiveRevertCountdown.IsValid())
+	{
+		ActiveRevertCountdown->OnCountdownResult.RemoveAll(this);
+		ActiveRevertCountdown.Reset();
+	}
+
+	RefreshAllWidgets();
 }
 
 void UMCore_SettingsPanel::HandleBackClicked()

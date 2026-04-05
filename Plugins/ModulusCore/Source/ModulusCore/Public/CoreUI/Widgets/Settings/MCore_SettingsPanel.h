@@ -10,6 +10,7 @@
 class UMCore_TabbedContainer;
 class UMCore_ButtonBase;
 class UMCore_ConfirmationDialog;
+class UMCore_SettingsRevertCountdown;
 class UMCore_DA_SettingDefinition;
 class UMCore_SettingsWidget_Base;
 class UCommonTextBlock;
@@ -165,6 +166,14 @@ private:
 	TArray<TObjectPtr<UMCore_TabbedContainer>> SubTabContainers;
 
 	TWeakObjectPtr<UMCore_ConfirmationDialog> PendingConfirmationDialog;
+
+	TWeakObjectPtr<UMCore_SettingsRevertCountdown> ActiveRevertCountdown;
+
+	void HandleConfirmationRequired(const TArray<FGameplayTag>& AffectedTags,
+		const TArray<FString>& PreviousValues, float RevertDelay);
+
+	UFUNCTION()
+	void HandleCountdownResult(bool bConfirmed);
 
 	bool bNeedsFullRebuild{false};
 };

@@ -38,17 +38,54 @@ void UMCore_SettingsRevertCountdown::NativeOnInitialized()
 	}
 }
 
+void UMCore_SettingsRevertCountdown::NativeOnDeactivated()
+{
+	/** Always kill timer to prevent ticking after deactivation */
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		World->GetTimerManager().ClearTimer(CountdownTimerHandle);
+	}
+	
+	if (!bResolved)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("SettingsRevertCountdown::NativeOnDeactivated -- deactivated w/o resolution, auto-reverting"));
+		
+		ApplySettings(false);
+		OnCountdownResult.Broadcast(false);
+	}
+	
+	/** Clear external delegates to prevent stale references */
+	OnCountdownResult.Clear();
+	
+	/** Reset state */
+	PendingTags.Empty();
+	PendingPreviousValues.Empty();
+	RemainingSeconds = 0.f;
+	TotalSeconds = 0.f;
+	
+	Super::NativeOnDeactivated();
+}
+
 void UMCore_SettingsRevertCountdown::NativeDestruct()
 {
-	if (Btn_Confirm)
+	/**
+	 * Defensive timer clear (NativeOnDeactivated should've handled this)
+	 * Just in case guarantee
+	 */
+	UWorld* World = GetWorld();
+	if (World)
 	{
-		Btn_Confirm->OnButtonClicked.RemoveAll(this);
+		World->GetTimerManager().ClearTimer(CountdownTimerHandle);
 	}
+	
+	/** Clear external delegate in case NativeOnDeactivated was skipped somehow */
+	OnCountdownResult.Clear();
+	
+	if (Btn_Confirm) { Btn_Confirm->OnButtonClicked.RemoveAll(this); }
 
-	if (Btn_Revert)
-	{
-		Btn_Revert->OnButtonClicked.RemoveAll(this);
-	}
+	if (Btn_Revert)	{ Btn_Revert->OnButtonClicked.RemoveAll(this); }
 
 	Super::NativeDestruct();
 }
@@ -67,6 +104,8 @@ void UMCore_SettingsRevertCountdown::StartCountdown(float Seconds,
 	const TArray<FGameplayTag>& AffectedTags,
 	const TArray<FString>& PreviousValues)
 {
+	bResolved = false;
+	
 	PendingTags = AffectedTags;
 	PendingPreviousValues = PreviousValues;
 	TotalSeconds = Seconds;
@@ -121,6 +160,8 @@ void UMCore_SettingsRevertCountdown::HandleRevertClicked()
 
 void UMCore_SettingsRevertCountdown::ResolveCountdown(bool bConfirmed)
 {
+	if (bResolved) { return; }
+	
 	UWorld* World = GetWorld();
 	if (World)
 	{

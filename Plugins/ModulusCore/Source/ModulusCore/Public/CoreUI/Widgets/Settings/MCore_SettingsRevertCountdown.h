@@ -58,6 +58,7 @@ protected:
 	// ============================================================================
 
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnDeactivated() override;
 	virtual void NativeDestruct() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 
@@ -97,4 +98,5 @@ private:
 	FTimerHandle CountdownTimerHandle;
 	float RemainingSeconds{0.f};
 	float TotalSeconds{0.f};
+	bool bResolved{false};
 };
