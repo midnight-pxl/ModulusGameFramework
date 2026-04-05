@@ -18,6 +18,8 @@
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/GameUserSettings.h"
 
+FOnSettingsConfirmationRequired UMCore_GameSettingsLibrary::OnSettingsConfirmationRequired;
+
 // ============================================================================
 // CONSOLE VARIABLES
 // ============================================================================
@@ -222,7 +224,7 @@ void UMCore_GameSettingsLibrary::ApplySettingChanges_Internal(
 		return;
 	}
 
-	TArray<FString> AffectedTags;
+	TArray<FGameplayTag> AffectedTags;
 	TArray<FString> PreviousValues;
 	TArray<FGameplayTag> ProcessedTags;
 	float LongestRevertDelay{0.f};
@@ -249,7 +251,7 @@ void UMCore_GameSettingsLibrary::ApplySettingChanges_Internal(
 		if (Change.Setting->bRequiresConfirmation && !bBypassConfirmation)
 		{
 			bAnyRequiresConfirmation = true;
-			AffectedTags.Add(Change.Setting->SettingTag.ToString());
+			AffectedTags.Add(Change.Setting->SettingTag);
 			PreviousValues.Add(ValueToString(PreviousVal));
 			LongestRevertDelay = FMath::Max(LongestRevertDelay, Change.Setting->ConfirmationRevertDelay);
 		}
@@ -266,8 +268,16 @@ void UMCore_GameSettingsLibrary::ApplySettingChanges_Internal(
 
 	if (bAnyRequiresConfirmation)
 	{
+		/* Stringify tags only for the event broadcast payload */
+		TArray<FString> AffectedTagStrings;
+		AffectedTagStrings.Reserve(AffectedTags.Num());
+		for (const FGameplayTag& Tag : AffectedTags)
+		{
+			AffectedTagStrings.Add(Tag.ToString());
+		}
+
 		TMap<FString, FString> EventParams;
-		EventParams.Add(TEXT("SettingTags"), FString::Join(AffectedTags, TEXT("|")));
+		EventParams.Add(TEXT("SettingTags"), FString::Join(AffectedTagStrings, TEXT("|")));
 		EventParams.Add(TEXT("PreviousValues"), FString::Join(PreviousValues, TEXT("|")));
 		EventParams.Add(TEXT("RevertDelay"), FString::SanitizeFloat(LongestRevertDelay));
 
@@ -275,6 +285,8 @@ void UMCore_GameSettingsLibrary::ApplySettingChanges_Internal(
 			WorldContextObject,
 			MCore_SettingsTags::MCore_Settings_Event_ConfirmationRequired,
 			EventParams, EMCore_EventScope::Local);
+
+		OnSettingsConfirmationRequired.Broadcast(AffectedTags, PreviousValues, LongestRevertDelay);
 	}
 	else
 	{

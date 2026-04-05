@@ -26,6 +26,7 @@ class UMCore_SettingsWidget_Slider;
 class UMCore_SettingsWidget_Switcher;
 class UMCore_ConfirmationDialog;
 class UMCore_KeyBindingPanel_Base;
+class UMCore_SettingsRevertCountdown;
 
 /**
  * Developer settings for the Modulus Game Framework (Project Settings > Game > Modulus Core).
@@ -153,6 +154,10 @@ public:
 	 */
 	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
 	TSubclassOf<UMCore_ConfirmationDialog> DefaultConfirmationDialogClass;
+
+	/** Widget class for the revert countdown overlay when a setting with bRequiresConfirmation is changed. */
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category="Settings")
+	TSubclassOf<UMCore_SettingsRevertCountdown> SettingsRevertCountdownClass;
 
 	// ============================================================================
 	// DEBUG (EDITOR ONLY)

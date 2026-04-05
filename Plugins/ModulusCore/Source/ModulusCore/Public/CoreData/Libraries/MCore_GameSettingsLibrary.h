@@ -21,6 +21,20 @@ class UMCore_PlayerSettingsSave;
 class USoundClass;
 
 /**
+ * Broadcast when one or more settings with bRequiresConfirmation are applied.
+ * Carries the affected setting tags, their previous values (as strings), and
+ * the longest revert delay across all affected settings.
+ * Fired alongside the tag-based event for direct C++ subscription without
+ * requiring an EventListenerComp.
+ */
+DECLARE_MULTICAST_DELEGATE_ThreeParams(
+	FOnSettingsConfirmationRequired,
+	const TArray<FGameplayTag>&,  /* AffectedTags */
+	const TArray<FString>&,       /* PreviousValues */
+	float                         /* LongestRevertDelay */
+);
+
+/**
  * Game settings library providing typed getters/setters with immediate-apply semantics.
  *
  * Each setter writes to committed storage, applies to engine systems (GameUserSettings,
@@ -33,6 +47,12 @@ class MODULUSCORE_API UMCore_GameSettingsLibrary : public UBlueprintFunctionLibr
 	GENERATED_BODY()
 
 public:
+	/**
+	 * Static delegate for direct C++ subscription to confirmation-required settings events.
+	 * Fires when any setting with bRequiresConfirmation is changed without bBypassConfirmation.
+	 */
+	static FOnSettingsConfirmationRequired OnSettingsConfirmationRequired;
+
 	// ============================================================================
 	// TYPED GETTERS
 	// ============================================================================
