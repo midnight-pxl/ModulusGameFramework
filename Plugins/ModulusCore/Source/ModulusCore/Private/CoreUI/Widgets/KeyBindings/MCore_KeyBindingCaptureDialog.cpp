@@ -56,17 +56,21 @@ void UMCore_KeyBindingCaptureDialog::ShowCaptureError(const FText& ErrorMessage)
 // LIFECYCLE
 // ============================================================================
 
+void UMCore_KeyBindingCaptureDialog::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+
+	if (Btn_Cancel)
+	{
+		Btn_Cancel->OnButtonClicked.AddDynamic(this, &ThisClass::HandleCancelClicked);
+	}
+}
+
 void UMCore_KeyBindingCaptureDialog::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
 	if (!IsActivated()) { return; }
-
-	if (Btn_Cancel)
-	{
-		Btn_Cancel->OnButtonClicked.RemoveAll(this);
-		Btn_Cancel->OnButtonClicked.AddDynamic(this, &ThisClass::HandleCancelClicked);
-	}
 
 	if (!BackInputAction.IsNull())
 	{
@@ -91,11 +95,6 @@ void UMCore_KeyBindingCaptureDialog::NativeOnDeactivated()
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(ErrorCooldownTimerHandle);
-	}
-
-	if (Btn_Cancel)
-	{
-		Btn_Cancel->OnButtonClicked.RemoveAll(this);
 	}
 
 	Super::NativeOnDeactivated();

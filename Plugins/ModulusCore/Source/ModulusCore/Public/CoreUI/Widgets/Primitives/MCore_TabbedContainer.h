@@ -16,6 +16,7 @@
 class UCommonButtonBase;
 class UCommonAnimatedSwitcher;
 class UCommonTabListWidgetBase;
+class UMCore_ActionButton;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTabbedContainerTabAdded, FName, TabID, UCommonButtonBase*, TabButton);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTabbedContainerTabSelected, FName, TabID);
@@ -57,6 +58,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
 	bool SelectTab(FName TabID);
 
+	/** Select the next tab in insertion order, wrapping from last to first. */
+	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
+	void SelectNextTab();
+
+	/** Select the previous tab in insertion order, wrapping from first to last. */
+	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
+	void SelectPreviousTab();
+
 	// ============================================================================
 	// QUERIES
 	// ============================================================================
@@ -80,6 +89,17 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Tabbed Container")
 	UCommonAnimatedSwitcher* GetPageSwitcher() const { return PageSwitcher; }
+
+	/** Returns tab IDs in insertion order. */
+	const TArray<FName>& GetTabOrder() const { return TabOrder; }
+
+	// ============================================================================
+	// FLANKING ACTION ICONS
+	// ============================================================================
+
+	/** Configure the optional tab-cycle icon buttons with input actions for platform glyph display. */
+	UFUNCTION(BlueprintCallable, Category = "Tabbed Container")
+	void SetTabCycleActions(const FDataTableRowHandle& PrevAction, const FDataTableRowHandle& NextAction);
 
 	// ============================================================================
 	// TAB STATE
@@ -120,12 +140,22 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tabbed Container")
 	TSubclassOf<UCommonButtonBase> TabButtonClass;
 
+	/** Optional icon button showing the "previous tab" input glyph. Display-only. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ActionButton> Btn_TabPrev;
+
+	/** Optional icon button showing the "next tab" input glyph. Display-only. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ActionButton> Btn_TabNext;
+
 private:
 	UFUNCTION()
 	void HandleTabSelected(FName TabNameID);
 
 	UPROPERTY(Transient)
 	TMap<FName, TObjectPtr<UWidget>> PageWidgets;
+
+	TArray<FName> TabOrder;
 
 	FName SelectedTabID;
 };

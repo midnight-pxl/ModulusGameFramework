@@ -6,6 +6,7 @@
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreUI/MCore_UISubsystem.h"
+#include "CoreUI/Widgets/Primitives/MCore_ActionButton.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreUI/Widgets/Primitives/MCore_TabbedContainer.h"
 #include "CoreUI/Widgets/Settings/MCore_SettingsWidget_Base.h"
@@ -81,6 +82,53 @@ void UMCore_SettingsPanel::NativeOnActivated()
 		UE_LOG(LogModulusSettings, Verbose, TEXT("SettingsPanel::NativeOnActivated -- early exit, not activated (BlockTags?)"));
 		return;
 	}
+
+	/* Register input action bindings for panel navigation */
+	{
+		FMCore_InputActionBindingHandle Handle;
+
+		if (!TabNextAction.IsNull())
+		{
+			FInputActionExecutedDelegate Delegate;
+			Delegate.BindDynamic(this, &UMCore_SettingsPanel::HandleTabNextInput);
+			RegisterBinding(TabNextAction, Delegate, Handle);
+		}
+		if (!TabPrevAction.IsNull())
+		{
+			FInputActionExecutedDelegate Delegate;
+			Delegate.BindDynamic(this, &UMCore_SettingsPanel::HandleTabPrevInput);
+			RegisterBinding(TabPrevAction, Delegate, Handle);
+		}
+		if (!SubTabNextAction.IsNull())
+		{
+			FInputActionExecutedDelegate Delegate;
+			Delegate.BindDynamic(this, &UMCore_SettingsPanel::HandleSubTabNextInput);
+			RegisterBinding(SubTabNextAction, Delegate, Handle);
+		}
+		if (!SubTabPrevAction.IsNull())
+		{
+			FInputActionExecutedDelegate Delegate;
+			Delegate.BindDynamic(this, &UMCore_SettingsPanel::HandleSubTabPrevInput);
+			RegisterBinding(SubTabPrevAction, Delegate, Handle);
+		}
+		if (!RevertSettingsAction.IsNull())
+		{
+			FInputActionExecutedDelegate Delegate;
+			Delegate.BindDynamic(this, &UMCore_SettingsPanel::HandleResetCategoryInput);
+			RegisterBinding(RevertSettingsAction, Delegate, Handle);
+		}
+		if (!ResetDefaultsAction.IsNull())
+		{
+			FInputActionExecutedDelegate Delegate;
+			Delegate.BindDynamic(this, &UMCore_SettingsPanel::HandleResetAllInput);
+			RegisterBinding(ResetDefaultsAction, Delegate, Handle);
+		}
+	}
+
+	/* Configure optional action bar icon buttons */
+	if (Btn_ActionRevert) { Btn_ActionRevert->SetInputAction(RevertSettingsAction); }
+	if (Btn_ActionReset) { Btn_ActionReset->SetInputAction(ResetDefaultsAction); }
+	if (Btn_ActionBack) { Btn_ActionBack->SetInputAction(BackAction); }
 
 	if (bNeedsFullRebuild)
 	{
@@ -183,6 +231,7 @@ void UMCore_SettingsPanel::NativeDestruct()
 		}
 	}
 	SubTabContainers.Empty();
+	MainTabToSubContainer.Empty();
 
 	for (UMCore_SettingsWidget_Base* Widget : AllSettingWidgets)
 	{
@@ -253,6 +302,7 @@ void UMCore_SettingsPanel::BuildPanel()
 	TabIDToLeafTag.Reset();
 	AllSettingWidgets.Reset();
 	SubTabContainers.Reset();
+	MainTabToSubContainer.Reset();
 
 	const TArray<FGameplayTag> AllCategories = CoreSettings->GetAllSettingsCategories();
 
@@ -311,6 +361,11 @@ void UMCore_SettingsPanel::BuildPanel()
 			else
 			{
 				PageWidget = BuildTabbedPage(ParentTag, Children);
+
+				if (PageWidget)
+				{
+					MainTabToSubContainer.Add(TabID, Cast<UMCore_TabbedContainer>(PageWidget));
+				}
 			}
 		}
 
@@ -331,6 +386,17 @@ void UMCore_SettingsPanel::BuildPanel()
 	if (!FirstTabID.IsNone())
 	{
 		TabbedContainer_Main->SelectTab(FirstTabID);
+	}
+
+	/* Configure flanking tab-cycle icons on all tab bars */
+	TabbedContainer_Main->SetTabCycleActions(TabPrevAction, TabNextAction);
+
+	for (auto& Pair : MainTabToSubContainer)
+	{
+		if (IsValid(Pair.Value))
+		{
+			Pair.Value->SetTabCycleActions(SubTabPrevAction, SubTabNextAction);
+		}
 	}
 
 	OnPanelBuildComplete();
@@ -727,6 +793,48 @@ void UMCore_SettingsPanel::HandleCountdownResult(bool bConfirmed)
 void UMCore_SettingsPanel::HandleBackClicked()
 {
 	DeactivateWidget();
+}
+
+// ============================================================================
+// INPUT ACTION HANDLERS
+// ============================================================================
+
+void UMCore_SettingsPanel::HandleTabNextInput(FName ActionName)
+{
+	TabbedContainer_Main->SelectNextTab();
+}
+
+void UMCore_SettingsPanel::HandleTabPrevInput(FName ActionName)
+{
+	TabbedContainer_Main->SelectPreviousTab();
+}
+
+void UMCore_SettingsPanel::HandleSubTabNextInput(FName ActionName)
+{
+	const FName MainTabID = TabbedContainer_Main->GetSelectedTabID();
+	if (TObjectPtr<UMCore_TabbedContainer>* Found = MainTabToSubContainer.Find(MainTabID))
+	{
+		if (IsValid(*Found)) { (*Found)->SelectNextTab(); }
+	}
+}
+
+void UMCore_SettingsPanel::HandleSubTabPrevInput(FName ActionName)
+{
+	const FName MainTabID = TabbedContainer_Main->GetSelectedTabID();
+	if (TObjectPtr<UMCore_TabbedContainer>* Found = MainTabToSubContainer.Find(MainTabID))
+	{
+		if (IsValid(*Found)) { (*Found)->SelectPreviousTab(); }
+	}
+}
+
+void UMCore_SettingsPanel::HandleResetCategoryInput(FName ActionName)
+{
+	HandleResetCategoryClicked();
+}
+
+void UMCore_SettingsPanel::HandleResetAllInput(FName ActionName)
+{
+	HandleResetAllClicked();
 }
 
 // ============================================================================

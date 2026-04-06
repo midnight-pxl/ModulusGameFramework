@@ -71,7 +71,7 @@ namespace MCore_SettingsTags
 	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Graphics_ShadingQuality);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Graphics_AntiAliasing);
     MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Graphics_ViewDistance);
-	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Graphics_EffectQuality);
+	MODULUSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(MCore_Settings_Graphics_EffectsQuality);
 
     // ========================================================================
     // AUDIO SETTINGS

@@ -3,6 +3,7 @@
 #include "CoreUI/Widgets/Primitives/MCore_TabbedContainer.h"
 
 #include "CoreData/Logging/LogModulusUI.h"
+#include "CoreUI/Widgets/Primitives/MCore_ActionButton.h"
 
 #include "CommonButtonBase.h"
 #include "CommonTabListWidgetBase.h"
@@ -19,6 +20,9 @@ void UMCore_TabbedContainer::NativeOnInitialized()
 	UE_LOG(LogModulusUI, Verbose, TEXT("TabbedContainer::NativeOnInitialized -- this=%p"), this);
 
 	TabList->OnTabSelected.AddDynamic(this, &ThisClass::HandleTabSelected);
+
+	if (Btn_TabPrev) { Btn_TabPrev->SetDisplayMode(EMCore_ButtonDisplayMode::IconOnly); }
+	if (Btn_TabNext) { Btn_TabNext->SetDisplayMode(EMCore_ButtonDisplayMode::IconOnly); }
 }
 
 void UMCore_TabbedContainer::NativeDestruct()
@@ -64,6 +68,7 @@ bool UMCore_TabbedContainer::AddTab(FName TabID, UWidget* PageWidget)
 	}
 
 	PageWidgets.Add(TabID, PageWidget);
+	TabOrder.Add(TabID);
 	PageSwitcher->AddChild(PageWidget);
 	TabList->RegisterTab(TabID, ButtonClass, PageWidget, PageWidgets.Num() - 1);
 
@@ -101,6 +106,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 	TabList->RemoveAllTabs();
 	PageSwitcher->ClearChildren();
 	PageWidgets.Empty();
+	TabOrder.Reset();
 	SelectedTabID = NAME_None;
 
 	TSubclassOf<UCommonButtonBase> ButtonClass = TabButtonClass;
@@ -115,6 +121,7 @@ bool UMCore_TabbedContainer::RemoveTab(FName TabID)
 		PageSwitcher->AddChild(Pair.Value);
 		TabList->RegisterTab(Pair.Key, ButtonClass, Pair.Value, Index);
 		PageWidgets.Add(Pair.Key, Pair.Value);
+		TabOrder.Add(Pair.Key);
 	}
 
 	if (RemainingTabs.Num() > 0)
@@ -142,6 +149,7 @@ void UMCore_TabbedContainer::ClearAllTabs()
 	TabList->RemoveAllTabs();
 	PageSwitcher->ClearChildren();
 	PageWidgets.Empty();
+	TabOrder.Reset();
 	SelectedTabID = NAME_None;
 }
 
@@ -158,6 +166,35 @@ bool UMCore_TabbedContainer::SelectTab(FName TabID)
 	SelectedTabID = TabID;
 
 	return true;
+}
+
+void UMCore_TabbedContainer::SelectNextTab()
+{
+	if (TabOrder.Num() <= 1) { return; }
+
+	const int32 CurrentIndex = TabOrder.IndexOfByKey(SelectedTabID);
+	if (CurrentIndex == INDEX_NONE) { return; }
+
+	const int32 NextIndex = (CurrentIndex + 1) % TabOrder.Num();
+	SelectTab(TabOrder[NextIndex]);
+}
+
+void UMCore_TabbedContainer::SelectPreviousTab()
+{
+	if (TabOrder.Num() <= 1) { return; }
+
+	const int32 CurrentIndex = TabOrder.IndexOfByKey(SelectedTabID);
+	if (CurrentIndex == INDEX_NONE) { return; }
+
+	const int32 PrevIndex = (CurrentIndex - 1 + TabOrder.Num()) % TabOrder.Num();
+	SelectTab(TabOrder[PrevIndex]);
+}
+
+void UMCore_TabbedContainer::SetTabCycleActions(
+	const FDataTableRowHandle& PrevAction, const FDataTableRowHandle& NextAction)
+{
+	if (Btn_TabPrev) { Btn_TabPrev->SetInputAction(PrevAction); }
+	if (Btn_TabNext) { Btn_TabNext->SetInputAction(NextAction); }
 }
 
 void UMCore_TabbedContainer::HandleTabSelected(FName TabNameID)

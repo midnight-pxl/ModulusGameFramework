@@ -92,6 +92,7 @@ protected:
 	// LIFECYCLE
 	// ====================================================================
 
+	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
 	virtual void NativeDestruct() override;

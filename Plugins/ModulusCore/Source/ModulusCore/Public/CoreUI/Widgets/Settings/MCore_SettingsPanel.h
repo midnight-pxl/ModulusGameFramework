@@ -9,6 +9,7 @@
 
 class UMCore_TabbedContainer;
 class UMCore_ButtonBase;
+class UMCore_ActionButton;
 class UMCore_ConfirmationDialog;
 class UMCore_SettingsRevertCountdown;
 class UMCore_DA_SettingDefinition;
@@ -51,14 +52,39 @@ protected:
 	/** Blueprint class spawned at runtime for nested sub-tab containers. */
 	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel")
 	TSubclassOf<UMCore_TabbedContainer> SubTabContainerClass;
-	
-	/** 
+
+	/**
 	 * Confirmation dialog class for reset operations. falls back to
 	 * DefaultConfirmationDialogClass in CoreSettings if null
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel")
 	TSubclassOf<UMCore_ConfirmationDialog> ResetConfirmationDialogClass;
- 
+
+	// ============================================================================
+	// INPUT ACTIONS
+	// ============================================================================
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle TabNextAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle TabPrevAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle SubTabNextAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle SubTabPrevAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle RevertSettingsAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle ResetDefaultsAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Settings Panel|Input Actions")
+	FDataTableRowHandle BackAction;
+
 	// ============================================================================
 	// BIND WIDGETS
 	// ============================================================================
@@ -77,7 +103,19 @@ protected:
  
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UMCore_ButtonBase> Btn_Back;
-	
+
+	/** Optional action icon for revert-category input. Auto-resolves platform glyph. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ActionButton> Btn_ActionRevert;
+
+	/** Optional action icon for reset-all input. Auto-resolves platform glyph. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ActionButton> Btn_ActionReset;
+
+	/** Optional action icon for back input. Auto-resolves platform glyph. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UMCore_ActionButton> Btn_ActionBack;
+
 	// ============================================================================
 	// BLUEPRINT EXTENSION POINTS
 	// ============================================================================
@@ -121,21 +159,43 @@ private:
 	void FocusFirstWidgetInActivePage();
  
 	// ============================================================================
+	// INPUT ACTION HANDLERS
+	// ============================================================================
+
+	UFUNCTION()
+	void HandleTabNextInput(FName ActionName);
+
+	UFUNCTION()
+	void HandleTabPrevInput(FName ActionName);
+
+	UFUNCTION()
+	void HandleSubTabNextInput(FName ActionName);
+
+	UFUNCTION()
+	void HandleSubTabPrevInput(FName ActionName);
+
+	UFUNCTION()
+	void HandleResetCategoryInput(FName ActionName);
+
+	UFUNCTION()
+	void HandleResetAllInput(FName ActionName);
+
+	// ============================================================================
 	// ACTION BAR
 	// ============================================================================
- 
+
 	UFUNCTION()
 	void HandleResetAllClicked();
-	
+
 	UFUNCTION()
 	void HandleResetAllConfirmResult(bool bConfirmed);
- 
+
 	UFUNCTION()
 	void HandleResetCategoryClicked();
-	
+
 	UFUNCTION()
 	void HandleResetCategoryConfirmResult(bool bConfirmed);
- 
+
 	UFUNCTION()
 	void HandleBackClicked();
  
@@ -156,6 +216,10 @@ private:
 	 * query their nested container for Parent instead.
 	 */
 	TMap<FName, FGameplayTag> TabIDToLeafTag;
+
+	/** Maps main tab IDs to their sub-tab container (only for multi-subcategory tabs). */
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UMCore_TabbedContainer>> MainTabToSubContainer;
  
 	FGameplayTag ActiveLeafCategory;
  
