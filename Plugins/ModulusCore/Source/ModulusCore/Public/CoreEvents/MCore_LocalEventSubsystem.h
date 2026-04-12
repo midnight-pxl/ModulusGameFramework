@@ -16,6 +16,8 @@
 class UMCore_EventListenerComp;
 struct FMCore_EventData;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLocalEventBroadcast, const FMCore_EventData& /*EventData*/);
+
 /**
  * Local event subsystem for client-only, non-networked GameplayTag events.
  * Each LocalPlayer has its own instance (split-screen safe).
@@ -41,7 +43,10 @@ public:
 	 * Use UMCore_EventFunctionLibrary::BroadcastLocalEvent() instead of calling this directly.
 	 */
 	void BroadcastLocalEvent(const FMCore_EventData& EventData);
-	
+
+	/** Native delegate fired on every local event broadcast. Subsystems can bind here instead of using EventListenerComp. */
+	FOnLocalEventBroadcast OnLocalEventBroadcast;
+
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;

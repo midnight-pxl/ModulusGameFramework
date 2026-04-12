@@ -3,7 +3,7 @@
 #include "CoreUI/Widgets/KeyBindings/MCore_GamepadIconSwitcher.h"
 
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
-#include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Settings/MCore_PlayerSettingsSubsystem.h"
 #include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 #include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
@@ -82,10 +82,10 @@ void UMCore_GamepadIconSwitcher::RefreshDisplay()
 
 	/* Read saved index */
 	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	UMCore_UISubsystem* UISubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UMCore_UISubsystem>() : nullptr;
-	if (UISubsystem)
+	UMCore_PlayerSettingsSubsystem* SettingsSubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UMCore_PlayerSettingsSubsystem>() : nullptr;
+	if (SettingsSubsystem)
 	{
-		if (UMCore_PlayerSettingsSave* Save = UISubsystem->GetPlayerSettings())
+		if (UMCore_PlayerSettingsSave* Save = SettingsSubsystem->GetPlayerSettings())
 		{
 			CurrentIndex = Save->GamepadIconSetIndex;
 		}
@@ -122,10 +122,10 @@ void UMCore_GamepadIconSwitcher::HandleNext()
 void UMCore_GamepadIconSwitcher::ApplySelection()
 {
 	const ULocalPlayer* LocalPlayer = GetOwningLocalPlayer();
-	UMCore_UISubsystem* UISubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UMCore_UISubsystem>() : nullptr;
-	if (UISubsystem)
+	UMCore_PlayerSettingsSubsystem* SettingsSubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UMCore_PlayerSettingsSubsystem>() : nullptr;
+	if (SettingsSubsystem)
 	{
-		if (UMCore_PlayerSettingsSave* Save = UISubsystem->GetPlayerSettings())
+		if (UMCore_PlayerSettingsSave* Save = SettingsSubsystem->GetPlayerSettings())
 		{
 			Save->GamepadIconSetIndex = CurrentIndex;
 			Save->SaveSettings();

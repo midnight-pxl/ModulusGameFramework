@@ -4,7 +4,7 @@
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
 
 #include "CoreData/Assets/UI/Styles/MCore_PDA_SliderStyle.h"
-#include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Settings/MCore_PlayerSettingsSubsystem.h"
 #include "CoreData/Logging/LogModulusUI.h"
 
 #include "CommonTextBlock.h"
@@ -19,9 +19,9 @@ void UMCore_ThemeLibrary::ApplyTextStyleFromTheme(const ULocalPlayer* LocalPlaye
 	int32 SizeIndex{0};
 	if (LocalPlayer)
 	{
-		if (const UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>())
+		if (const UMCore_PlayerSettingsSubsystem* SettingsSubsystem = LocalPlayer->GetSubsystem<UMCore_PlayerSettingsSubsystem>())
 		{
-			SizeIndex = UISubsystem->GetActiveTextSizeIndex();
+			SizeIndex = SettingsSubsystem->GetActiveTextSizeIndex();
 		}
 	}
 	

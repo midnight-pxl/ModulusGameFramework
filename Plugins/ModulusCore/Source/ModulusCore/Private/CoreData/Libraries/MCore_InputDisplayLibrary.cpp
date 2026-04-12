@@ -3,7 +3,7 @@
 #include "CoreData/Libraries/MCore_InputDisplayLibrary.h"
 
 #include "CoreData/Logging/LogModulusUI.h"
-#include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Settings/MCore_PlayerSettingsSubsystem.h"
 #include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 
 #include "EnhancedInputSubsystemInterface.h"
@@ -472,10 +472,10 @@ FName UMCore_InputDisplayLibrary::GetEffectiveGamepadName(
 
 	/* Read the player's override index */
 	int32 OverrideIndex{0};
-	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
-	if (UISubsystem)
+	UMCore_PlayerSettingsSubsystem* SettingsSubsystem = LocalPlayer->GetSubsystem<UMCore_PlayerSettingsSubsystem>();
+	if (SettingsSubsystem)
 	{
-		if (UMCore_PlayerSettingsSave* Save = UISubsystem->GetPlayerSettings())
+		if (UMCore_PlayerSettingsSave* Save = SettingsSubsystem->GetPlayerSettings())
 		{
 			OverrideIndex = Save->GamepadIconSetIndex;
 		}

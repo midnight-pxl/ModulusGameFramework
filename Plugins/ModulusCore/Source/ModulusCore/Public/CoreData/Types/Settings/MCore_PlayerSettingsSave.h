@@ -21,7 +21,7 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FOnPlayerSettingsLoaded, UMCore_PlayerSettings
  * Stores framework UI state (scale, tooltip delay) and generic typed setting values
  * written by UMCore_GameSettingsLibrary's setters.
  *
- * Access via UMCore_UISubsystem::GetPlayerSettings(). Modify via GameSettingsLibrary (preferred).
+ * Access via UMCore_PlayerSettingsSubsystem::GetPlayerSettings(). Modify via GameSettingsLibrary (preferred).
  */
 UCLASS()
 class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame

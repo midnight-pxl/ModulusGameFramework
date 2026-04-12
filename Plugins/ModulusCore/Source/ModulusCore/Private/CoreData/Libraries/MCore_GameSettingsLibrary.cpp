@@ -2,7 +2,7 @@
 
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 
-#include "CoreUI/MCore_UISubsystem.h"
+#include "CoreData/Settings/MCore_PlayerSettingsSubsystem.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 #include "CoreData/Libraries/MCore_EventFunctionLibrary.h"
@@ -116,10 +116,10 @@ UMCore_PlayerSettingsSave* UMCore_GameSettingsLibrary::GetPlayerSave(const UObje
 	const ULocalPlayer* LocalPlayer = World->GetFirstLocalPlayerFromController();
 	if (!LocalPlayer) { return nullptr; }
 
-	UMCore_UISubsystem* UISubsystem = LocalPlayer->GetSubsystem<UMCore_UISubsystem>();
-	if (!UISubsystem) { return nullptr; }
+	UMCore_PlayerSettingsSubsystem* SettingsSubsystem = LocalPlayer->GetSubsystem<UMCore_PlayerSettingsSubsystem>();
+	if (!SettingsSubsystem) { return nullptr; }
 
-	return UISubsystem->GetPlayerSettings();
+	return SettingsSubsystem->GetPlayerSettings();
 }
 
 // ============================================================================

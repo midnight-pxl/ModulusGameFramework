@@ -20,11 +20,11 @@
 class UCommonActivatableWidgetStack;
 class UCommonActivatableWidget;
 class UMCore_PDA_UITheme_Base;
-class UMCore_PlayerSettingsSave;
 class UMCore_GameMenuHub;
 class UMCore_PrimaryGameLayout;
 class UTexture2D;
 struct FGameplayTag;
+struct FMCore_EventData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnThemeChanged, UMCore_PDA_UITheme_Base*, NewTheme);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPrimaryGameLayoutReady, UMCore_PrimaryGameLayout*, Layout);
@@ -35,7 +35,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWidgetLayerChanged, UCommonActiv
  * Central access point for ModulusCore UI systems. One instance per LocalPlayer (split-screen safe).
  *
  * Manages PrimaryGameLayout lifecycle, 4-layer widget stack access via gameplay tags,
- * theme distribution, menu hub orchestration, and player settings caching.
+ * theme distribution, and menu hub orchestration.
  */
 UCLASS()
 class MODULUSCORE_API UMCore_UISubsystem : public ULocalPlayerSubsystem
@@ -98,22 +98,6 @@ public:
 	void NotifyWidgetDestroyed(UCommonActivatableWidget* Widget);
 
 // ============================================================================
-// PLAYER SETTINGS
-// ============================================================================
-
-	/**
-	 * Returns the save slot name for this player's settings.
-	 * Default: "MCore_PlayerSettings_" + local player index.
-	 * Override for custom platform identity integration (e.g., console profile IDs).
-	 */
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category = "ModulusCore|Settings")
-	FString GetSettingsSaveSlotName() const;
-
-	/** Get cached player settings. Loads from disk on first access. */
-	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
-	UMCore_PlayerSettingsSave* GetPlayerSettings();
-	
-// ============================================================================
 // MENU HUB
 // ============================================================================
 
@@ -160,12 +144,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "UI|Theme")
 	int32 GetActiveThemeIndex() const { return ActiveThemeIndex; }
 
-	/** Returns the active text size index from the Accessibility.UITextSize setting (clamped >= 0). */
-	UFUNCTION(BlueprintPure, Category = "Modulus|Theme")
-	int32 GetActiveTextSizeIndex() const;
-
 	UFUNCTION(BlueprintCallable, Category = "UI|Theme")
 	bool SetActiveThemeByIndex(int32 ThemeIndex);
+
+	/** Re-broadcasts OnThemeChanged so all widgets re-resolve text styles at the new size index. */
+	UFUNCTION(BlueprintCallable, Category = "UI|Theme")
+	void NotifyTextSizeChanged();
 
 protected:
 	/* Widget class for PrimaryGameLayout. Set in project defaults or override in Blueprint. */
@@ -203,7 +187,10 @@ private:
 	/* Deferred layout creation once PlayerController is ready */
 	void OnPlayerControllerReady(APlayerController* OwningPlayer);
 	
+	void HandleLocalEvent(const FMCore_EventData& EventData);
+
 	FDelegateHandle PlayerControllerReadyHandle;
+	FDelegateHandle LocalEventHandle;
 	
 	/* Strong reference; UISubsystem owns the layout lifecycle */
 	UPROPERTY(Transient)
@@ -213,10 +200,6 @@ private:
 	TObjectPtr<UMCore_PDA_UITheme_Base> CachedActiveTheme;
 
 	int32 ActiveThemeIndex{INDEX_NONE};
-	
-	/* Cached player settings, loaded on first access and saved on Deinitialize */
-	UPROPERTY(Transient)
-	TObjectPtr<UMCore_PlayerSettingsSave> CachedPlayerSettings;
 	
 	UPROPERTY(Transient)
 	TMap<FGameplayTag, TObjectPtr<UCommonActivatableWidgetStack>> LayerStackMap;

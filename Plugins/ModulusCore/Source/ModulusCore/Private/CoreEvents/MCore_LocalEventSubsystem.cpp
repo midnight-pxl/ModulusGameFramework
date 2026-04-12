@@ -60,7 +60,9 @@ void UMCore_LocalEventSubsystem::UnregisterLocalListener(UMCore_EventListenerCom
 
 void UMCore_LocalEventSubsystem::BroadcastLocalEvent(const FMCore_EventData& EventData)
 {
-	if (LocalListeners.Num() == 0 || !EventData.IsValid()) { return; }
+	if (!EventData.IsValid()) { return; }
+
+	OnLocalEventBroadcast.Broadcast(EventData);
 
 	MCORE_EVENT_LOG(TEXT("LocalEventSubsystem::BroadcastLocalEvent -- broadcasting: %s"),
 		*EventData.EventTag.ToString());

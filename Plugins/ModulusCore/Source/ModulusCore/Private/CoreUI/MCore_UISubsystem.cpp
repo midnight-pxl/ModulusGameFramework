@@ -4,14 +4,13 @@
 
 #include "CoreData/Logging/LogModulusUI.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
-#include "CoreData/Types/Settings/MCore_PlayerSettingsSave.h"
 #include "CoreData/Tags/MCore_UILayerTags.h"
 #include "CoreUI/Widgets/MCore_GameMenuHub.h"
 #include "CoreUI/Widgets/MCore_PrimaryGameLayout.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
-#include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
+#include "CoreEvents/MCore_LocalEventSubsystem.h"
+#include "CoreData/Types/Events/MCore_EventData.h"
 #include "CoreData/Tags/MCore_SettingsTags.h"
-
 #include "GameplayTagContainer.h"
 #include "Engine/LocalPlayer.h"
 
@@ -58,13 +57,32 @@ void UMCore_UISubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		}
 	}
 
+	/* Subscribe to local events for text size changes */
+	if (UMCore_LocalEventSubsystem* LocalEvents = GetLocalPlayer()->GetSubsystem<UMCore_LocalEventSubsystem>())
+	{
+		// TODO: Switch to tag-filtered subscription (Event System Phase 2) to avoid per-event dispatch overhead
+		LocalEventHandle = LocalEvents->OnLocalEventBroadcast.AddUObject(this, &ThisClass::HandleLocalEvent);
+	}
+
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Initialize -- initialized for LocalPlayer"));
 }
 
 void UMCore_UISubsystem::Deinitialize()
 {
 	UE_LOG(LogModulusUI, Log, TEXT("UISubsystem::Deinitialize -- cleaning up"));
-	
+
+	if (LocalEventHandle.IsValid())
+	{
+		if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
+		{
+			if (UMCore_LocalEventSubsystem* LocalEvents = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
+			{
+				LocalEvents->OnLocalEventBroadcast.Remove(LocalEventHandle);
+			}
+		}
+		LocalEventHandle.Reset();
+	}
+
 	/* Clear delegate handle if still bound */
 	if (PlayerControllerReadyHandle.IsValid())
 	{
@@ -73,13 +91,6 @@ void UMCore_UISubsystem::Deinitialize()
 			LocalPlayer->OnPlayerControllerChanged().Remove(PlayerControllerReadyHandle);
 		}
 		PlayerControllerReadyHandle.Reset();
-	}
-	
-	/* Save and release player settings */
-	if (CachedPlayerSettings)
-	{
-		CachedPlayerSettings->SaveSettings();
-		CachedPlayerSettings = nullptr;
 	}
 	
 	/* Clear layer stack map and tracked widgets */
@@ -254,31 +265,6 @@ void UMCore_UISubsystem::BuildLayerStackMap()
 	UE_LOG(LogModulusUI, Log,
 		TEXT("UISubsystem::BuildLayerStackMap -- LayerStackMap created with %d layers"),
 		LayerStackMap.Num());
-}
-
-// ============================================================================
-// PLAYER SETTINGS
-// ============================================================================
-
-FString UMCore_UISubsystem::GetSettingsSaveSlotName_Implementation() const
-{
-	const ULocalPlayer* LocalPlayer = GetLocalPlayer();
-	const int32 PlayerIndex = LocalPlayer ? LocalPlayer->GetControllerId() : 0;
-	return FString::Printf(TEXT("MCore_PlayerSettings_%d"), PlayerIndex);
-}
-
-UMCore_PlayerSettingsSave* UMCore_UISubsystem::GetPlayerSettings()
-{
-	if (!CachedPlayerSettings)
-	{
-		CachedPlayerSettings = UMCore_PlayerSettingsSave::LoadPlayerSettings(GetSettingsSaveSlotName());
-
-		UE_LOG(LogModulusUI, Log,
-			TEXT("UISubsystem::GetPlayerSettings -- player settings loaded from slot '%s'"),
-			*CachedPlayerSettings->GetCachedSlotName());
-	}
-
-	return CachedPlayerSettings;
 }
 
 // ============================================================================
@@ -742,15 +728,25 @@ bool UMCore_UISubsystem::SetActiveThemeByIndex(int32 ThemeIndex)
 	return true;
 }
 
-int32 UMCore_UISubsystem::GetActiveTextSizeIndex() const
+void UMCore_UISubsystem::NotifyTextSizeChanged()
 {
-	const ULocalPlayer* LocalPlayer = GetLocalPlayer();
-	if (!LocalPlayer)
+	if (CachedActiveTheme)
 	{
-		return 0;
+		OnThemeChanged.Broadcast(CachedActiveTheme);
 	}
-
-	const int32 RawIndex = UMCore_GameSettingsLibrary::GetSettingIntByTag(LocalPlayer, MCore_SettingsTags::MCore_Settings_Accessibility_UITextSize);
-	return FMath::Max(RawIndex, 0);
 }
 
+void UMCore_UISubsystem::HandleLocalEvent(const FMCore_EventData& EventData)
+{
+	// TODO: Replace with tag-filtered subscription on LocalEventSubsystem once Event System Phase 2
+	// lands. This handler currently fires for ALL local events and manually compares tags.
+	// Tracked settings that require UI re-resolution:
+	//   - MCore_Settings_Accessibility_UITextSize (text style array re-index)
+	//   - MCore_Settings_Accessibility_ColorblindMode (future: theme color re-resolve)
+	//   - MCore_Settings_Accessibility_UIScale (future: ApplicationScale update)
+	
+	if (EventData.EventTag == MCore_SettingsTags::MCore_Settings_Accessibility_UITextSize)
+	{
+		NotifyTextSizeChanged();
+	}
+}
