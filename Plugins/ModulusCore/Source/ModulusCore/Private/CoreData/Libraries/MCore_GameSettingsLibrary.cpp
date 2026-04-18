@@ -17,6 +17,12 @@
 #include "Engine/LocalPlayer.h"
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMaterialLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialParameterCollection.h"
+#include "Sound/SoundMix.h"
+#include "Algo/Reverse.h"
 
 FOnSettingsConfirmationRequired UMCore_GameSettingsLibrary::OnSettingsConfirmationRequired;
 
@@ -356,7 +362,7 @@ void UMCore_GameSettingsLibrary::SetSettingFloat(
 				? FMath::Clamp(V, S->MinValue, S->MaxValue) : V;
 		},
 		[](UMCore_PlayerSettingsSave* Save, const FString& Key, float V) { Save->SetFloatSetting(Key, V); },
-		[](const UMCore_DA_SettingDefinition* S, float V) { ApplySettingToEngine(S, V, 0, false); });
+		[WorldContextObject](const UMCore_DA_SettingDefinition* S, float V) { ApplySettingToEngine(WorldContextObject, S, V, 0, false); });
 }
 
 void UMCore_GameSettingsLibrary::SetSettingInt(
@@ -371,7 +377,7 @@ void UMCore_GameSettingsLibrary::SetSettingInt(
 				? FMath::Clamp(V, 0, S->DropdownOptions.Num() - 1) : V;
 		},
 		[](UMCore_PlayerSettingsSave* Save, const FString& Key, int32 V) { Save->SetIntSetting(Key, V); },
-		[](const UMCore_DA_SettingDefinition* S, int32 V) { ApplySettingToEngine(S, 0.f, V, false); });
+		[WorldContextObject](const UMCore_DA_SettingDefinition* S, int32 V) { ApplySettingToEngine(WorldContextObject, S, 0.f, V, false); });
 }
 
 void UMCore_GameSettingsLibrary::SetSettingBool(
@@ -383,7 +389,7 @@ void UMCore_GameSettingsLibrary::SetSettingBool(
 		WorldContextObject, Changes, bBypassConfirmation,
 		[](const UMCore_DA_SettingDefinition*, bool V) { return V; },
 		[](UMCore_PlayerSettingsSave* Save, const FString& Key, bool V) { Save->SetBoolSetting(Key, V); },
-		[](const UMCore_DA_SettingDefinition* S, bool V) { ApplySettingToEngine(S, 0.f, 0, V); });
+		[WorldContextObject](const UMCore_DA_SettingDefinition* S, bool V) { ApplySettingToEngine(WorldContextObject, S, 0.f, 0, V); });
 }
 
 // ============================================================================
@@ -548,7 +554,7 @@ void UMCore_GameSettingsLibrary::ReloadAndApplyFromDisk(const UObject* WorldCont
 			const int32 IntVal = GetSettingInt(WorldContextObject, Definition);
 			const bool BoolVal = GetSettingBool(WorldContextObject, Definition);
 
-			ApplySettingToEngine(Definition, FloatVal, IntVal, BoolVal);
+			ApplySettingToEngine(WorldContextObject, Definition, FloatVal, IntVal, BoolVal);
 		}
 	}
 
@@ -566,26 +572,34 @@ void UMCore_GameSettingsLibrary::ReloadAndApplyFromDisk(const UObject* WorldCont
 // ENGINE APPLY DISPATCHER
 // ============================================================================
 
-void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDefinition* Setting, float FloatValue,
-	int32 IntValue, bool BoolValue)
+void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContextObject,
+	const UMCore_DA_SettingDefinition* Setting, float FloatValue, int32 IntValue, bool BoolValue)
 {
 	if (!Setting) { return; }
 
 	if (!Setting->GameUserSettingsProperty.IsNone())
 	{
-		switch (Setting->SettingType)
+		UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings();
+		if (GUS && ApplyViaGUSSetter(Setting->GameUserSettingsProperty, GUS, FloatValue, IntValue, BoolValue))
 		{
-		case EMCore_SettingType::Slider:
-			ApplyToGameUserSettings(Setting->GameUserSettingsProperty, FloatValue);
-			break;
-		case EMCore_SettingType::Toggle:
-			ApplyToGameUserSettings(Setting->GameUserSettingsProperty, BoolValue);
-			break;
-		case EMCore_SettingType::Dropdown:
-			ApplyToGameUserSettings(Setting->GameUserSettingsProperty, IntValue);
-			break;
-		default:
-			break;
+			/* Handled by setter — skip FProperty reflection */
+		}
+		else
+		{
+			switch (Setting->SettingType)
+			{
+			case EMCore_SettingType::Slider:
+				ApplyToGameUserSettings(Setting->GameUserSettingsProperty, FloatValue);
+				break;
+			case EMCore_SettingType::Toggle:
+				ApplyToGameUserSettings(Setting->GameUserSettingsProperty, BoolValue);
+				break;
+			case EMCore_SettingType::Dropdown:
+				ApplyToGameUserSettings(Setting->GameUserSettingsProperty, IntValue);
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -611,6 +625,168 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UMCore_DA_SettingDef
 	{
 		ApplyToSoundClass(Setting->SoundClass, FloatValue);
 	}
+
+	/* Phase 4 — Material Parameter Collection */
+	if (!Setting->MaterialParameterCollection.IsNull() && !Setting->MaterialParameterName.IsNone())
+	{
+		const float Scalar = GetScalarForMPC(Setting->SettingType, FloatValue, IntValue, BoolValue);
+		/* UKismetMaterialLibrary::SetScalarParameterValue takes non-const UObject* (UE API inconsistency) */
+		ApplyToMaterialParameterCollection(const_cast<UObject*>(WorldContextObject),
+			Setting->MaterialParameterCollection, Setting->MaterialParameterName, Scalar);
+	}
+
+	/* Phase 5 — SoundMix push/pop (Toggle only) */
+	if (!Setting->PushedSoundMix.IsNull() && Setting->SettingType == EMCore_SettingType::Toggle)
+	{
+		ApplyToSoundMix(WorldContextObject, Setting->PushedSoundMix,
+			Setting->GetSaveKey(), BoolValue);
+	}
+}
+
+// ============================================================================
+// GAME USER SETTINGS (SETTER DISPATCH)
+// ============================================================================
+
+bool UMCore_GameSettingsLibrary::ApplyViaGUSSetter(const FName& PropertyName, UGameUserSettings* GUS,
+	float FloatValue, int32 IntValue, bool BoolValue)
+{
+	static const FName Name_OverallScalabilityLevel(TEXT("OverallScalabilityLevel"));
+	static const FName Name_TextureQuality(TEXT("TextureQuality"));
+	static const FName Name_ShadowQuality(TEXT("ShadowQuality"));
+	static const FName Name_AntiAliasingQuality(TEXT("AntiAliasingQuality"));
+	static const FName Name_PostProcessQuality(TEXT("PostProcessQuality"));
+	static const FName Name_ViewDistanceQuality(TEXT("ViewDistanceQuality"));
+	static const FName Name_FoliageQuality(TEXT("FoliageQuality"));
+	static const FName Name_ShadingQuality(TEXT("ShadingQuality"));
+	static const FName Name_VisualEffectQuality(TEXT("VisualEffectQuality"));
+	static const FName Name_FullscreenMode(TEXT("FullscreenMode"));
+	static const FName Name_VSyncEnabled(TEXT("VSyncEnabled"));
+	static const FName Name_FrameRateLimit(TEXT("FrameRateLimit"));
+	static const FName AudioQualityLevelName(TEXT("AudioQualityLevel"));
+	static const FName GlobalIlluminationQualityName(TEXT("GlobalIlluminationQuality"));
+	static const FName ReflectionQualityName(TEXT("ReflectionQuality"));
+	static const FName DynamicResolutionEnabledName(TEXT("DynamicResolutionEnabled"));
+	static const FName ResolutionScaleName(TEXT("ResolutionScale"));
+	static const FName HDREnabledName(TEXT("HDREnabled"));
+	static const FName HDRDisplayNitsName(TEXT("HDRDisplayNits"));
+	static const FName ScreenResolutionName(TEXT("ScreenResolution"));
+
+	/* Graphics — scalability setters (int32 0–4) */
+	if (PropertyName == Name_OverallScalabilityLevel)
+	{
+		GUS->SetOverallScalabilityLevel(IntValue);
+	}
+	else if (PropertyName == Name_TextureQuality)
+	{
+		GUS->ScalabilityQuality.TextureQuality = IntValue;
+	}
+	else if (PropertyName == Name_ShadowQuality)
+	{
+		GUS->ScalabilityQuality.ShadowQuality = IntValue;
+	}
+	else if (PropertyName == Name_AntiAliasingQuality)
+	{
+		GUS->ScalabilityQuality.AntiAliasingQuality = IntValue;
+	}
+	else if (PropertyName == Name_PostProcessQuality)
+	{
+		GUS->ScalabilityQuality.PostProcessQuality = IntValue;
+	}
+	else if (PropertyName == Name_ViewDistanceQuality)
+	{
+		GUS->ScalabilityQuality.ViewDistanceQuality = IntValue;
+	}
+	else if (PropertyName == Name_FoliageQuality)
+	{
+		GUS->ScalabilityQuality.FoliageQuality = IntValue;
+	}
+	else if (PropertyName == Name_ShadingQuality)
+	{
+		GUS->ScalabilityQuality.ShadingQuality = IntValue;
+	}
+	else if (PropertyName == Name_VisualEffectQuality)
+	{
+		GUS->ScalabilityQuality.EffectsQuality = IntValue;
+	}
+	/* Display — typed setters */
+	else if (PropertyName == Name_FullscreenMode)
+	{
+		GUS->SetFullscreenMode(EWindowMode::ConvertIntToWindowMode(IntValue));
+	}
+	else if (PropertyName == Name_VSyncEnabled)
+	{
+		GUS->SetVSyncEnabled(BoolValue);
+	}
+	else if (PropertyName == Name_FrameRateLimit)
+	{
+		GUS->SetFrameRateLimit(FloatValue);
+	}
+	/* Audio - typed setters */
+	else if (PropertyName == AudioQualityLevelName)
+	{
+		GUS->SetAudioQualityLevel(IntValue);
+		return true;
+	}
+	/* Additional scalability struct members */
+	else if (PropertyName == GlobalIlluminationQualityName)
+	{
+		GUS->ScalabilityQuality.GlobalIlluminationQuality = IntValue;
+		return true;
+	}
+	else if (PropertyName == ReflectionQualityName)
+	{
+		GUS->ScalabilityQuality.ReflectionQuality = IntValue;
+		return true;
+	}
+	/* Resolution scaling (runtime perf dial, not a scalability group) */
+	else if (PropertyName == DynamicResolutionEnabledName)
+	{
+		GUS->SetDynamicResolutionEnabled(BoolValue);
+		return true;
+	}
+	else if (PropertyName == ResolutionScaleName)
+	{
+		/* SetResolutionScaleValueEx expects 0..100 percentage, not 0..1 normalized */
+		GUS->SetResolutionScaleValueEx(FMath::Clamp(FloatValue, 0.0f, 100.0f));
+		return true;
+	}
+	/* HDR — coupled method, requires two entries that both call EnableHDRDisplayOutput */
+	else if (PropertyName == HDREnabledName)
+	{
+		const int32 CurrentNits = GUS->GetCurrentHDRDisplayNits();
+		GUS->EnableHDRDisplayOutput(BoolValue, CurrentNits > 0 ? CurrentNits : 1000);
+		return true;
+	}
+	else if (PropertyName == HDRDisplayNitsName)
+	{
+		GUS->EnableHDRDisplayOutput(GUS->IsHDREnabled(), IntValue);
+		return true;
+	}
+	/* Resolution — IntValue is the index into the descending-sorted supported resolutions list */
+	else if (PropertyName == ScreenResolutionName)
+	{
+		TArray<FIntPoint> Resolutions;
+		UKismetSystemLibrary::GetSupportedFullscreenResolutions(Resolutions);
+		Algo::Reverse(Resolutions);
+
+		if (Resolutions.IsValidIndex(IntValue))
+		{
+			GUS->SetScreenResolution(Resolutions[IntValue]);
+		}
+		else
+		{
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("GameSettingsLibrary::ApplyViaGUSSetter -- resolution index %d out of range (%d available)"),
+				IntValue, Resolutions.Num());
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
 }
 
 // ============================================================================
@@ -758,6 +934,82 @@ void UMCore_GameSettingsLibrary::ApplyToSoundClass(const TSoftObjectPtr<USoundCl
 	UE_LOG(LogModulusSettings, Verbose,
 		TEXT("GameSettingsLibrary::ApplyToSoundClass -- SoundClass '%s' volume set to %.2f"),
 		*LoadedClass->GetName(), Volume);
+}
+
+// ============================================================================
+// MATERIAL PARAMETER COLLECTION
+// ============================================================================
+
+float UMCore_GameSettingsLibrary::GetScalarForMPC(EMCore_SettingType SettingType,
+	float FloatValue, int32 IntValue, bool BoolValue)
+{
+	switch (SettingType)
+	{
+	case EMCore_SettingType::Slider:   return FloatValue;
+	case EMCore_SettingType::Dropdown: return static_cast<float>(IntValue);
+	case EMCore_SettingType::Toggle:   return BoolValue ? 1.0f : 0.0f;
+	default:                           return 0.0f;
+	}
+}
+
+void UMCore_GameSettingsLibrary::ApplyToMaterialParameterCollection(UObject* WorldContextObject,
+	TSoftObjectPtr<UMaterialParameterCollection> MPCRef, FName ParameterName, float ScalarValue)
+{
+	if (!WorldContextObject) { return; }
+
+	UMaterialParameterCollection* MPC = MPCRef.LoadSynchronous();
+	if (!MPC)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GameSettingsLibrary::ApplyToMaterialParameterCollection -- failed to load MPC '%s'"),
+			*MPCRef.ToString());
+		return;
+	}
+
+	UKismetMaterialLibrary::SetScalarParameterValue(WorldContextObject, MPC, ParameterName, ScalarValue);
+
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("GameSettingsLibrary::ApplyToMaterialParameterCollection -- MPC '%s' param '%s' set to %.4f"),
+		*MPC->GetName(), *ParameterName.ToString(), ScalarValue);
+}
+
+// ============================================================================
+// SOUND MIX
+// ============================================================================
+
+void UMCore_GameSettingsLibrary::ApplyToSoundMix(const UObject* WorldContextObject,
+	TSoftObjectPtr<USoundMix> SoundMixRef, const FString& SaveKey, bool bDesiredActive)
+{
+	static TMap<FString, bool> PushedState;
+
+	const bool* ExistingState = PushedState.Find(SaveKey);
+	if (ExistingState && *ExistingState == bDesiredActive) { return; }
+
+	if (!WorldContextObject) { return; }
+
+	USoundMix* Mix = SoundMixRef.LoadSynchronous();
+	if (!Mix)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GameSettingsLibrary::ApplyToSoundMix -- failed to load SoundMix '%s'"),
+			*SoundMixRef.ToString());
+		return;
+	}
+
+	if (bDesiredActive)
+	{
+		UGameplayStatics::PushSoundMixModifier(WorldContextObject, Mix);
+	}
+	else
+	{
+		UGameplayStatics::PopSoundMixModifier(WorldContextObject, Mix);
+	}
+
+	PushedState.Add(SaveKey, bDesiredActive);
+
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("GameSettingsLibrary::ApplyToSoundMix -- SoundMix '%s' %s (key: %s)"),
+		*Mix->GetName(), bDesiredActive ? TEXT("pushed") : TEXT("popped"), *SaveKey);
 }
 
 // ============================================================================

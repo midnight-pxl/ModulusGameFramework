@@ -6,6 +6,8 @@
 #include "CoreData/Types/Settings/MCore_SettingsTypes.h"
 #include "CoreData/Libraries/MCore_GameSettingsLibrary.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Algo/Reverse.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "CoreUI/Widgets/Primitives/MCore_ButtonBase.h"
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
@@ -61,7 +63,23 @@ void UMCore_SettingsWidget_Switcher::OnDefinitionSet_Implementation(
 	}
 	else
 	{
-		Options = Definition->DropdownOptions;
+		if (Definition->bPopulateFromSupportedResolutions)
+		{
+			TArray<FIntPoint> Resolutions;
+			UKismetSystemLibrary::GetSupportedFullscreenResolutions(Resolutions);
+			Algo::Reverse(Resolutions);
+
+			Options.Reset(Resolutions.Num());
+			for (const FIntPoint& Res : Resolutions)
+			{
+				Options.Add(FText::FromString(
+					FString::Printf(TEXT("%d \u00D7 %d"), Res.X, Res.Y)));
+			}
+		}
+		else
+		{
+			Options = Definition->DropdownOptions;
+		}
 	}
 
 	ReadCurrentValue();

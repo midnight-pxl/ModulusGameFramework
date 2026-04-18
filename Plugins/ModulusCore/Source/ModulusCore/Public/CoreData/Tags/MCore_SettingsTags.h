@@ -124,7 +124,6 @@ namespace MCore_SettingsTags
     // UTILITY FUNCTIONS
     // ========================================================================
 
-    MODULUSCORE_API FGameplayTag GetWidgetTypeTag(EMCore_SettingType SettingType);
     MODULUSCORE_API FGameplayTag GetCategoryTag(const FString& CategoryName);
     MODULUSCORE_API FGameplayTag GenerateCustomUISettingTag(const FString& Category, const FString& Setting);
 }

@@ -17,8 +17,10 @@
 #include "MCore_GameSettingsLibrary.generated.h"
 
 class UMCore_DA_SettingDefinition;
+class UMaterialParameterCollection;
 class UMCore_PlayerSettingsSave;
 class USoundClass;
+class USoundMix;
 
 /**
  * Broadcast when one or more settings with bRequiresConfirmation are applied.
@@ -200,7 +202,11 @@ private:
 	// ENGINE APPLY HELPERS
 	// ============================================================================
 
-	static void ApplySettingToEngine(const UMCore_DA_SettingDefinition* Setting,
+	static void ApplySettingToEngine(const UObject* WorldContextObject,
+		const UMCore_DA_SettingDefinition* Setting,
+		float FloatValue, int32 IntValue, bool BoolValue);
+
+	static bool ApplyViaGUSSetter(const FName& PropertyName, UGameUserSettings* GUS,
 		float FloatValue, int32 IntValue, bool BoolValue);
 
 	static void ApplyToGameUserSettings(const FName& PropertyName, float Value);
@@ -212,6 +218,17 @@ private:
 	static void ApplyToConsoleVariable(const FName& CVarName, bool Value);
 
 	static void ApplyToSoundClass(const TSoftObjectPtr<USoundClass>& SoundClassRef, float Volume);
+
+	static void ApplyToMaterialParameterCollection(UObject* WorldContextObject,
+		TSoftObjectPtr<UMaterialParameterCollection> MPCRef,
+		FName ParameterName, float ScalarValue);
+
+	static void ApplyToSoundMix(const UObject* WorldContextObject,
+		TSoftObjectPtr<USoundMix> SoundMixRef,
+		const FString& SaveKey, bool bDesiredActive);
+
+	static float GetScalarForMPC(EMCore_SettingType SettingType,
+		float FloatValue, int32 IntValue, bool BoolValue);
 
 	static void ResetDefinitionsToDefault(const UObject* WorldContextObject,
 		const TArray<UMCore_DA_SettingDefinition*>& Definitions);

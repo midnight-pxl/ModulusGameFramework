@@ -18,7 +18,9 @@
 
 class UInputAction;
 class UInputMappingContext;
+class UMaterialParameterCollection;
 class USoundClass;
+class USoundMix;
 
 /* How slider values display in the UI */
 UENUM(BlueprintType)
@@ -148,6 +150,31 @@ public:
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Slider",
 		        EditConditionHides))
 	TSoftObjectPtr<USoundClass> SoundClass;
+
+	/* When true, widget queries UKismetSystemLibrary::GetSupportedFullscreenResolutions
+	   at runtime instead of using DA-authored DropdownOptions */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
+		        EditConditionHides))
+	bool bPopulateFromSupportedResolutions = false;
+
+	/* Material Parameter Collection whose scalar parameter is set when this setting changes.
+	   Slider -> float value, Dropdown -> int cast to float, Toggle -> 0.0/1.0 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply")
+	TSoftObjectPtr<UMaterialParameterCollection> MaterialParameterCollection;
+
+	/* Scalar parameter name within the MPC; must match an existing parameter */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
+		meta = (EditCondition = "!MaterialParameterCollection.IsNull()",
+		        EditConditionHides))
+	FName MaterialParameterName = NAME_None;
+
+	/* SoundMix pushed when toggle is ON, popped when OFF.
+	   Library tracks matched push/pop pairs per setting save key */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Toggle",
+		        EditConditionHides))
+	TSoftObjectPtr<USoundMix> PushedSoundMix;
 
 	// ============================================================================
 	// BEHAVIOR
