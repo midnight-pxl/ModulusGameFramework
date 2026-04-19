@@ -18,7 +18,6 @@
 
 class UInputAction;
 class UInputMappingContext;
-class UMaterialParameterCollection;
 class USoundClass;
 class USoundMix;
 
@@ -32,6 +31,19 @@ enum class EMCore_SliderDisplayFormat : uint8
 	Percentage,
 	/* Show integer: 75 */
 	WholeNumber
+};
+
+/* Role this setting plays in driving the Slate color-vision-deficiency filter.
+   Author two DAs — a Dropdown for Type and a Slider for Severity — both with
+   this field non-None. The library caches Type + Severity across invocations
+   so either DA's apply re-issues a SetColorVisionDeficiencyType call with the
+   current value of both axes. */
+UENUM(BlueprintType)
+enum class EModulusColorVisionRole : uint8
+{
+	None               UMETA(DisplayName = "None"),
+	DeficiencyType     UMETA(DisplayName = "Deficiency Type (Dropdown)"),
+	DeficiencySeverity UMETA(DisplayName = "Deficiency Severity (Slider)")
 };
 
 /**
@@ -158,16 +170,12 @@ public:
 		        EditConditionHides))
 	bool bPopulateFromSupportedResolutions = false;
 
-	/* Material Parameter Collection whose scalar parameter is set when this setting changes.
-	   Slider -> float value, Dropdown -> int cast to float, Toggle -> 0.0/1.0 */
+	/* Drives UWidgetBlueprintLibrary::SetColorVisionDeficiencyType at the Slate
+	   renderer layer. Default None = inert. Pair two DAs: a Dropdown for Type
+	   (values 0-3 = Normal/Deuteranope/Protanope/Tritanope) and a Slider for
+	   Severity (0.0-10.0). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply")
-	TSoftObjectPtr<UMaterialParameterCollection> MaterialParameterCollection;
-
-	/* Scalar parameter name within the MPC; must match an existing parameter */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
-		meta = (EditCondition = "!MaterialParameterCollection.IsNull()",
-		        EditConditionHides))
-	FName MaterialParameterName = NAME_None;
+	EModulusColorVisionRole ColorVisionRole = EModulusColorVisionRole::None;
 
 	/* SoundMix pushed when toggle is ON, popped when OFF.
 	   Library tracks matched push/pop pairs per setting save key */

@@ -17,7 +17,6 @@
 #include "MCore_GameSettingsLibrary.generated.h"
 
 class UMCore_DA_SettingDefinition;
-class UMaterialParameterCollection;
 class UMCore_PlayerSettingsSave;
 class USoundClass;
 class USoundMix;
@@ -219,16 +218,12 @@ private:
 
 	static void ApplyToSoundClass(const TSoftObjectPtr<USoundClass>& SoundClassRef, float Volume);
 
-	static void ApplyToMaterialParameterCollection(UObject* WorldContextObject,
-		TSoftObjectPtr<UMaterialParameterCollection> MPCRef,
-		FName ParameterName, float ScalarValue);
-
 	static void ApplyToSoundMix(const UObject* WorldContextObject,
 		TSoftObjectPtr<USoundMix> SoundMixRef,
 		const FString& SaveKey, bool bDesiredActive);
 
-	static float GetScalarForMPC(EMCore_SettingType SettingType,
-		float FloatValue, int32 IntValue, bool BoolValue);
+	static bool ApplyToColorVisionDeficiency(const UMCore_DA_SettingDefinition* Definition,
+		int32 IntValue, float FloatValue);
 
 	static void ResetDefinitionsToDefault(const UObject* WorldContextObject,
 		const TArray<UMCore_DA_SettingDefinition*>& Definitions);

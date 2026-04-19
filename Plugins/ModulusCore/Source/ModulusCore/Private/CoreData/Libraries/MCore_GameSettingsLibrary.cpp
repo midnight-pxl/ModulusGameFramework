@@ -18,9 +18,9 @@
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/KismetMaterialLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "Materials/MaterialParameterCollection.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Types/SlateEnums.h"
 #include "Sound/SoundMix.h"
 #include "Algo/Reverse.h"
 
@@ -577,6 +577,7 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContex
 {
 	if (!Setting) { return; }
 
+	/* Phase 1 — GameUserSettings (setter map with FProperty reflection fallback) */
 	if (!Setting->GameUserSettingsProperty.IsNone())
 	{
 		UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings();
@@ -603,6 +604,7 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContex
 		}
 	}
 
+	/* Phase 2 — Console Variables */
 	if (!Setting->ConsoleVariable.IsNone())
 	{
 		switch (Setting->SettingType)
@@ -621,25 +623,23 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContex
 		}
 	}
 
+	/* Phase 3 — Sound Class volume (Slider only) */
 	if (!Setting->SoundClass.IsNull() && Setting->SettingType == EMCore_SettingType::Slider)
 	{
 		ApplyToSoundClass(Setting->SoundClass, FloatValue);
 	}
 
-	/* Phase 4 — Material Parameter Collection */
-	if (!Setting->MaterialParameterCollection.IsNull() && !Setting->MaterialParameterName.IsNone())
-	{
-		const float Scalar = GetScalarForMPC(Setting->SettingType, FloatValue, IntValue, BoolValue);
-		/* UKismetMaterialLibrary::SetScalarParameterValue takes non-const UObject* (UE API inconsistency) */
-		ApplyToMaterialParameterCollection(const_cast<UObject*>(WorldContextObject),
-			Setting->MaterialParameterCollection, Setting->MaterialParameterName, Scalar);
-	}
-
-	/* Phase 5 — SoundMix push/pop (Toggle only) */
+	/* Phase 4 — SoundMix push/pop (Toggle only) */
 	if (!Setting->PushedSoundMix.IsNull() && Setting->SettingType == EMCore_SettingType::Toggle)
 	{
 		ApplyToSoundMix(WorldContextObject, Setting->PushedSoundMix,
 			Setting->GetSaveKey(), BoolValue);
+	}
+
+	/* Phase 5 — Color Vision Deficiency (Slate renderer, client-only) */
+	if (Setting->ColorVisionRole != EModulusColorVisionRole::None)
+	{
+		ApplyToColorVisionDeficiency(Setting, IntValue, FloatValue);
 	}
 }
 
@@ -937,43 +937,6 @@ void UMCore_GameSettingsLibrary::ApplyToSoundClass(const TSoftObjectPtr<USoundCl
 }
 
 // ============================================================================
-// MATERIAL PARAMETER COLLECTION
-// ============================================================================
-
-float UMCore_GameSettingsLibrary::GetScalarForMPC(EMCore_SettingType SettingType,
-	float FloatValue, int32 IntValue, bool BoolValue)
-{
-	switch (SettingType)
-	{
-	case EMCore_SettingType::Slider:   return FloatValue;
-	case EMCore_SettingType::Dropdown: return static_cast<float>(IntValue);
-	case EMCore_SettingType::Toggle:   return BoolValue ? 1.0f : 0.0f;
-	default:                           return 0.0f;
-	}
-}
-
-void UMCore_GameSettingsLibrary::ApplyToMaterialParameterCollection(UObject* WorldContextObject,
-	TSoftObjectPtr<UMaterialParameterCollection> MPCRef, FName ParameterName, float ScalarValue)
-{
-	if (!WorldContextObject) { return; }
-
-	UMaterialParameterCollection* MPC = MPCRef.LoadSynchronous();
-	if (!MPC)
-	{
-		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSettingsLibrary::ApplyToMaterialParameterCollection -- failed to load MPC '%s'"),
-			*MPCRef.ToString());
-		return;
-	}
-
-	UKismetMaterialLibrary::SetScalarParameterValue(WorldContextObject, MPC, ParameterName, ScalarValue);
-
-	UE_LOG(LogModulusSettings, Verbose,
-		TEXT("GameSettingsLibrary::ApplyToMaterialParameterCollection -- MPC '%s' param '%s' set to %.4f"),
-		*MPC->GetName(), *ParameterName.ToString(), ScalarValue);
-}
-
-// ============================================================================
 // SOUND MIX
 // ============================================================================
 
@@ -1010,6 +973,66 @@ void UMCore_GameSettingsLibrary::ApplyToSoundMix(const UObject* WorldContextObje
 	UE_LOG(LogModulusSettings, Verbose,
 		TEXT("GameSettingsLibrary::ApplyToSoundMix -- SoundMix '%s' %s (key: %s)"),
 		*Mix->GetName(), bDesiredActive ? TEXT("pushed") : TEXT("popped"), *SaveKey);
+}
+
+// ============================================================================
+// COLOR VISION DEFICIENCY
+// ============================================================================
+
+bool UMCore_GameSettingsLibrary::ApplyToColorVisionDeficiency(
+	const UMCore_DA_SettingDefinition* Definition, int32 IntValue, float FloatValue)
+{
+	if (!Definition || Definition->ColorVisionRole == EModulusColorVisionRole::None)
+	{
+		return false;
+	}
+
+	/* One Slate-wide (Type, Severity) slot — bare statics, no save-key keying.
+	   ReloadAndApplyFromDisk fires both role DAs at init so both caches converge. */
+	static int32 CachedType = 0;       /* 0 == NormalVision */
+	static float CachedSeverity = 0.f;
+
+	switch (Definition->ColorVisionRole)
+	{
+	case EModulusColorVisionRole::DeficiencyType:
+		if (Definition->SettingType != EMCore_SettingType::Dropdown)
+		{
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("GameSettingsLibrary::ApplyToColorVisionDeficiency -- "
+					 "DeficiencyType role requires Dropdown SettingType (setting: %s)"),
+				*Definition->GetName());
+			return false;
+		}
+		CachedType = FMath::Clamp(IntValue, 0, 3);
+		break;
+
+	case EModulusColorVisionRole::DeficiencySeverity:
+		if (Definition->SettingType != EMCore_SettingType::Slider)
+		{
+			UE_LOG(LogModulusSettings, Warning,
+				TEXT("GameSettingsLibrary::ApplyToColorVisionDeficiency -- "
+					 "DeficiencySeverity role requires Slider SettingType (setting: %s)"),
+				*Definition->GetName());
+			return false;
+		}
+		CachedSeverity = FMath::Clamp(FloatValue, 0.f, 10.f);
+		break;
+
+	default:
+		return false;
+	}
+
+	UWidgetBlueprintLibrary::SetColorVisionDeficiencyType(
+		static_cast<EColorVisionDeficiency>(CachedType),
+		CachedSeverity,
+		/*bCorrectDeficiency=*/true,
+		/*bShowCorrectionWithDeficiency=*/false);
+
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("GameSettingsLibrary::ApplyToColorVisionDeficiency -- Type=%d Severity=%.2f"),
+		CachedType, CachedSeverity);
+
+	return true;
 }
 
 // ============================================================================
