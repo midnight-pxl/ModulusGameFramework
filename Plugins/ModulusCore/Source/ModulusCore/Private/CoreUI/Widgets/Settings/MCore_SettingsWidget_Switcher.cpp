@@ -129,7 +129,22 @@ void UMCore_SettingsWidget_Switcher::CycleOption(int32 Direction)
 		return;
 	}
 
-	CurrentIndex = (CurrentIndex + Direction + Options.Num()) % Options.Num();
+	const int32 OptionCount = Options.Num();
+	const int32 SelectableCount =
+		(SettingDefinition
+		 && SettingDefinition->NumSelectableOptions > 0
+		 && SettingDefinition->NumSelectableOptions < OptionCount)
+			? SettingDefinition->NumSelectableOptions
+			: OptionCount;
+
+	if (SelectableCount <= 0) { return; }
+
+	/* If the current displayed index is a non-selectable status (e.g. "Custom" at index 4
+	   for QualityPreset), snap to the highest selectable index before stepping so the user
+	   navigates within the cycleable range. */
+	const int32 BaseIndex = (CurrentIndex >= SelectableCount) ? (SelectableCount - 1) : CurrentIndex;
+	CurrentIndex = (BaseIndex + Direction + SelectableCount) % SelectableCount;
+
 	ApplyCurrentValue();
 	UpdateDisplay();
 }
@@ -180,8 +195,7 @@ void UMCore_SettingsWidget_Switcher::ReadCurrentValue()
 	}
 	else
 	{
-		CurrentIndex = UMCore_GameSettingsLibrary::GetSettingInt(
-			GetOwningLocalPlayer(), SettingDefinition.Get());
+		CurrentIndex = ResolveDisplayedIndex();
 	}
 
 	if (Options.Num() > 0)
@@ -192,6 +206,13 @@ void UMCore_SettingsWidget_Switcher::ReadCurrentValue()
 	{
 		CurrentIndex = 0;
 	}
+}
+
+int32 UMCore_SettingsWidget_Switcher::ResolveDisplayedIndex_Implementation()
+{
+	if (!SettingDefinition) { return 0; }
+	return UMCore_GameSettingsLibrary::GetSettingInt(
+		GetOwningLocalPlayer(), SettingDefinition.Get());
 }
 
 // ============================================================================

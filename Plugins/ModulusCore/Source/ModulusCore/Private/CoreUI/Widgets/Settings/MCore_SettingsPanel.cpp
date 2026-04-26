@@ -495,24 +495,32 @@ UMCore_SettingsWidget_Base* UMCore_SettingsPanel::CreateSettingWidget(
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
 	UMCore_SettingsWidget_Base* Widget = nullptr;
 
-	switch (Definition->SettingType)
+	if (Definition->WidgetClassOverride)
 	{
-	case EMCore_SettingType::Toggle:
-	case EMCore_SettingType::Dropdown:
-		if (CoreSettings->SettingsSwitcherWidgetClass)
-		{
-			Widget = CreateWidget<UMCore_SettingsWidget_Switcher>(
-				this, CoreSettings->SettingsSwitcherWidgetClass);
-		}
-		break;
+		Widget = CreateWidget<UMCore_SettingsWidget_Base>(this, Definition->WidgetClassOverride);
+	}
 
-	case EMCore_SettingType::Slider:
-		if (CoreSettings->SettingsSliderWidgetClass)
+	if (!Widget)
+	{
+		switch (Definition->SettingType)
 		{
-			Widget = CreateWidget<UMCore_SettingsWidget_Slider>(
-				this, CoreSettings->SettingsSliderWidgetClass);
+		case EMCore_SettingType::Toggle:
+		case EMCore_SettingType::Dropdown:
+			if (CoreSettings->SettingsSwitcherWidgetClass)
+			{
+				Widget = CreateWidget<UMCore_SettingsWidget_Switcher>(
+					this, CoreSettings->SettingsSwitcherWidgetClass);
+			}
+			break;
+
+		case EMCore_SettingType::Slider:
+			if (CoreSettings->SettingsSliderWidgetClass)
+			{
+				Widget = CreateWidget<UMCore_SettingsWidget_Slider>(
+					this, CoreSettings->SettingsSliderWidgetClass);
+			}
+			break;
 		}
-		break;
 	}
 
 	if (Widget)

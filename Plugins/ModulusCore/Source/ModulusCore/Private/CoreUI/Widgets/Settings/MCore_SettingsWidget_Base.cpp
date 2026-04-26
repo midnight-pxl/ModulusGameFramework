@@ -5,10 +5,14 @@
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Logging/LogModulusSettings.h"
+#include "CoreData/Tags/MCore_SettingsTags.h"
+#include "CoreData/Types/Events/MCore_EventData.h"
+#include "CoreEvents/MCore_LocalEventSubsystem.h"
 #include "CoreUI/MCore_UISubsystem.h"
 #include "CoreData/DevSettings/MCore_CoreSettings.h"
 #include "CoreData/Libraries/MCore_ThemeLibrary.h"
 
+#include "Engine/LocalPlayer.h"
 #include "CommonTextBlock.h"
 
 // ============================================================================
@@ -183,11 +187,38 @@ void UMCore_SettingsWidget_Base::NativeOnInitialized()
 		{
 			ApplyTheme(UI->GetActiveTheme());
 		}
+
+		if (UMCore_LocalEventSubsystem* LES = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
+		{
+			EventSubscriptionHandle = LES->OnLocalEventBroadcast.AddUObject(
+				this, &UMCore_SettingsWidget_Base::HandleLocalEvent);
+		}
 	}
 }
 
 void UMCore_SettingsWidget_Base::NativeDestruct()
 {
+	if (EventSubscriptionHandle.IsValid())
+	{
+		if (ULocalPlayer* LocalPlayer = GetOwningLocalPlayer())
+		{
+			if (UMCore_LocalEventSubsystem* LES = LocalPlayer->GetSubsystem<UMCore_LocalEventSubsystem>())
+			{
+				LES->OnLocalEventBroadcast.Remove(EventSubscriptionHandle);
+			}
+		}
+		EventSubscriptionHandle.Reset();
+	}
+
 	UnbindThemeDelegate();
 	Super::NativeDestruct();
+}
+
+void UMCore_SettingsWidget_Base::HandleLocalEvent(const FMCore_EventData& EventData)
+{
+	if (EventData.EventTag.MatchesTagExact(MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange)
+		&& SettingDefinition != nullptr)
+	{
+		RefreshValueFromSettings();
+	}
 }

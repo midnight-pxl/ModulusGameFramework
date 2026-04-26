@@ -53,6 +53,13 @@ protected:
 	virtual void StepLeft_Implementation() override;
 	virtual void StepRight_Implementation() override;
 
+	/** Returns the index that should currently be displayed.
+	 *  Default reads the setting's save-key int via GameSettingsLibrary.
+	 *  Override for widgets where display state diverges from save (e.g. QualityPreset Custom). */
+	UFUNCTION(BlueprintNativeEvent, Category = "ModulusCore|Settings")
+	int32 ResolveDisplayedIndex();
+	virtual int32 ResolveDisplayedIndex_Implementation();
+
 	// ====================================================================
 	// LIFECYCLE
 	// ====================================================================

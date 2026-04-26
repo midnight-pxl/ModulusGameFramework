@@ -17,6 +17,7 @@
 class UMCore_DA_SettingDefinition;
 class UMCore_PDA_UITheme_Base;
 class UCommonTextBlock;
+struct FMCore_EventData;
 
 /**
  * Fired when user changes a setting value.
@@ -153,4 +154,8 @@ private:
     void BindThemeDelegate();
     void UnbindThemeDelegate();
     bool bThemeDelegateBound{false};
+
+    /** Filters local events for MCore.Settings.Event.ExternalValueChange and refreshes display. */
+    void HandleLocalEvent(const FMCore_EventData& EventData);
+    FDelegateHandle EventSubscriptionHandle;
 };
