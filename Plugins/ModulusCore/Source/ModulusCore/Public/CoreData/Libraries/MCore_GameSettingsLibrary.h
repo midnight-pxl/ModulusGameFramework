@@ -206,7 +206,15 @@ private:
 		float FloatValue, int32 IntValue, bool BoolValue);
 
 	static bool ApplyViaGUSSetter(const FName& PropertyName, UGameUserSettings* GUS,
-		float FloatValue, int32 IntValue, bool BoolValue);
+		float FloatValue, int32 IntValue, bool BoolValue,
+		const UObject* WorldContextObject);
+
+	/** Reads each ScalabilityQuality member from GUS and writes its value to the matching
+	 *  DA's save key (Definition->GameUserSettingsProperty matched against 10 known names). */
+	static void CascadeScalabilityValuesToSave(UMCore_PlayerSettingsSave* Save);
+
+	/** Sets LastSelectedQualityPreset to -1 (Custom) on the given save. No-op if Save is null. */
+	static void MarkQualityPresetCustom(UMCore_PlayerSettingsSave* Save);
 
 	static void ApplyToGameUserSettings(const FName& PropertyName, float Value);
 	static void ApplyToGameUserSettings(const FName& PropertyName, int32 Value);

@@ -20,6 +20,7 @@ class UInputAction;
 class UInputMappingContext;
 class USoundClass;
 class USoundMix;
+class UMCore_SettingsWidget_Base;
 
 /* How slider values display in the UI */
 UENUM(BlueprintType)
@@ -118,6 +119,13 @@ public:
 				EditConditionHides))
 	TArray<FText> DropdownOptions;
 
+	/** If > 0, user can only cycle indices 0..NumSelectableOptions-1. Higher indices are
+	 *  display-only (e.g. "Custom" status). 0 means all DropdownOptions are selectable. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setting|Dropdown",
+		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
+				EditConditionHides, ClampMin = "0"))
+	int32 NumSelectableOptions{0};
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Dropdown",
 		meta = (EditCondition = "SettingType == EMCore_SettingType::Dropdown",
 				EditConditionHides, ClampMin = "0"))
@@ -152,6 +160,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
 		meta = (DisplayName = "GameUserSettings Property"))
 	FName GameUserSettingsProperty;
+
+	/** Optional override of the widget class to instantiate for this setting.
+	 *  Null = use the type-driven default from CoreSettings. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
+		meta = (DisplayName = "Widget Class Override"))
+	TSubclassOf<UMCore_SettingsWidget_Base> WidgetClassOverride;
 
 	/* Console variable to write to (empty = none) */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply")

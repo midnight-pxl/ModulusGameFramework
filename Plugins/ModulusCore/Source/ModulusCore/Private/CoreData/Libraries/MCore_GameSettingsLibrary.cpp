@@ -550,6 +550,16 @@ void UMCore_GameSettingsLibrary::ReloadAndApplyFromDisk(const UObject* WorldCont
 		{
 			if (!Definition) { continue; }
 
+			/* Custom intent — skip QualityPreset apply so individual scalability DAs drive engine state.
+			   Without this guard, the cascade in ApplyViaGUSSetter would overwrite just-loaded
+			   individual save values with engine state matching the saved preset value. */
+			static const FName OverallScalabilityProp(TEXT("OverallScalabilityLevel"));
+			if (Definition->GameUserSettingsProperty == OverallScalabilityProp
+				&& CachedSave->GetLastSelectedQualityPreset() == -1)
+			{
+				continue;
+			}
+
 			const float FloatVal = GetSettingFloat(WorldContextObject, Definition);
 			const int32 IntVal = GetSettingInt(WorldContextObject, Definition);
 			const bool BoolVal = GetSettingBool(WorldContextObject, Definition);
@@ -581,7 +591,7 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContex
 	if (!Setting->GameUserSettingsProperty.IsNone())
 	{
 		UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings();
-		if (GUS && ApplyViaGUSSetter(Setting->GameUserSettingsProperty, GUS, FloatValue, IntValue, BoolValue))
+		if (GUS && ApplyViaGUSSetter(Setting->GameUserSettingsProperty, GUS, FloatValue, IntValue, BoolValue, WorldContextObject))
 		{
 			/* Handled by setter — skip FProperty reflection */
 		}
@@ -648,8 +658,14 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContex
 // ============================================================================
 
 bool UMCore_GameSettingsLibrary::ApplyViaGUSSetter(const FName& PropertyName, UGameUserSettings* GUS,
-	float FloatValue, int32 IntValue, bool BoolValue)
+	float FloatValue, int32 IntValue, bool BoolValue,
+	const UObject* WorldContextObject)
 {
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("GameSettingsLibrary::ApplyViaGUSSetter -- dispatch '%s'"), *PropertyName.ToString());
+
+	UMCore_PlayerSettingsSave* Save = GetPlayerSave(WorldContextObject);
+
 	static const FName Name_OverallScalabilityLevel(TEXT("OverallScalabilityLevel"));
 	static const FName Name_TextureQuality(TEXT("TextureQuality"));
 	static const FName Name_ShadowQuality(TEXT("ShadowQuality"));
@@ -658,62 +674,81 @@ bool UMCore_GameSettingsLibrary::ApplyViaGUSSetter(const FName& PropertyName, UG
 	static const FName Name_ViewDistanceQuality(TEXT("ViewDistanceQuality"));
 	static const FName Name_FoliageQuality(TEXT("FoliageQuality"));
 	static const FName Name_ShadingQuality(TEXT("ShadingQuality"));
-	static const FName Name_VisualEffectQuality(TEXT("VisualEffectQuality"));
+	static const FName Name_EffectsQuality(TEXT("EffectsQuality"));
 	static const FName Name_FullscreenMode(TEXT("FullscreenMode"));
-	static const FName Name_VSyncEnabled(TEXT("VSyncEnabled"));
+	static const FName Name_BUseVSync(TEXT("bUseVSync"));
 	static const FName Name_FrameRateLimit(TEXT("FrameRateLimit"));
 	static const FName AudioQualityLevelName(TEXT("AudioQualityLevel"));
 	static const FName GlobalIlluminationQualityName(TEXT("GlobalIlluminationQuality"));
 	static const FName ReflectionQualityName(TEXT("ReflectionQuality"));
-	static const FName DynamicResolutionEnabledName(TEXT("DynamicResolutionEnabled"));
+	static const FName BUseDynamicResolutionName(TEXT("bUseDynamicResolution"));
 	static const FName ResolutionScaleName(TEXT("ResolutionScale"));
-	static const FName HDREnabledName(TEXT("HDREnabled"));
-	static const FName HDRDisplayNitsName(TEXT("HDRDisplayNits"));
+	static const FName BUseHDRDisplayOutputName(TEXT("bUseHDRDisplayOutput"));
+	static const FName HDRDisplayOutputNitsName(TEXT("HDRDisplayOutputNits"));
 	static const FName ScreenResolutionName(TEXT("ScreenResolution"));
 
 	/* Graphics — scalability setters (int32 0–4) */
 	if (PropertyName == Name_OverallScalabilityLevel)
 	{
 		GUS->SetOverallScalabilityLevel(IntValue);
+
+		/* Cascade engine values back to individual save keys so subsequent reloads
+		   and per-widget reads reflect what the preset just applied. */
+		CascadeScalabilityValuesToSave(Save);
+		if (Save) { Save->SetLastSelectedQualityPreset(FMath::Clamp(IntValue, 0, 3)); }
+
+		/* Notify subscribed widgets to refresh from save. */
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
 	}
 	else if (PropertyName == Name_TextureQuality)
 	{
 		GUS->ScalabilityQuality.TextureQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	else if (PropertyName == Name_ShadowQuality)
 	{
 		GUS->ScalabilityQuality.ShadowQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	else if (PropertyName == Name_AntiAliasingQuality)
 	{
 		GUS->ScalabilityQuality.AntiAliasingQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	else if (PropertyName == Name_PostProcessQuality)
 	{
 		GUS->ScalabilityQuality.PostProcessQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	else if (PropertyName == Name_ViewDistanceQuality)
 	{
 		GUS->ScalabilityQuality.ViewDistanceQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	else if (PropertyName == Name_FoliageQuality)
 	{
 		GUS->ScalabilityQuality.FoliageQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	else if (PropertyName == Name_ShadingQuality)
 	{
 		GUS->ScalabilityQuality.ShadingQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
-	else if (PropertyName == Name_VisualEffectQuality)
+	else if (PropertyName == Name_EffectsQuality)
 	{
 		GUS->ScalabilityQuality.EffectsQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 	}
 	/* Display — typed setters */
 	else if (PropertyName == Name_FullscreenMode)
 	{
 		GUS->SetFullscreenMode(EWindowMode::ConvertIntToWindowMode(IntValue));
 	}
-	else if (PropertyName == Name_VSyncEnabled)
+	else if (PropertyName == Name_BUseVSync)
 	{
 		GUS->SetVSyncEnabled(BoolValue);
 	}
@@ -731,15 +766,17 @@ bool UMCore_GameSettingsLibrary::ApplyViaGUSSetter(const FName& PropertyName, UG
 	else if (PropertyName == GlobalIlluminationQualityName)
 	{
 		GUS->ScalabilityQuality.GlobalIlluminationQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 		return true;
 	}
 	else if (PropertyName == ReflectionQualityName)
 	{
 		GUS->ScalabilityQuality.ReflectionQuality = IntValue;
+		MarkQualityPresetCustom(Save);
 		return true;
 	}
 	/* Resolution scaling (runtime perf dial, not a scalability group) */
-	else if (PropertyName == DynamicResolutionEnabledName)
+	else if (PropertyName == BUseDynamicResolutionName)
 	{
 		GUS->SetDynamicResolutionEnabled(BoolValue);
 		return true;
@@ -751,13 +788,13 @@ bool UMCore_GameSettingsLibrary::ApplyViaGUSSetter(const FName& PropertyName, UG
 		return true;
 	}
 	/* HDR — coupled method, requires two entries that both call EnableHDRDisplayOutput */
-	else if (PropertyName == HDREnabledName)
+	else if (PropertyName == BUseHDRDisplayOutputName)
 	{
 		const int32 CurrentNits = GUS->GetCurrentHDRDisplayNits();
 		GUS->EnableHDRDisplayOutput(BoolValue, CurrentNits > 0 ? CurrentNits : 1000);
 		return true;
 	}
-	else if (PropertyName == HDRDisplayNitsName)
+	else if (PropertyName == HDRDisplayOutputNitsName)
 	{
 		GUS->EnableHDRDisplayOutput(GUS->IsHDREnabled(), IntValue);
 		return true;
@@ -787,6 +824,67 @@ bool UMCore_GameSettingsLibrary::ApplyViaGUSSetter(const FName& PropertyName, UG
 	}
 
 	return true;
+}
+
+// ============================================================================
+// QUALITY PRESET CASCADE / INTENT
+// ============================================================================
+
+void UMCore_GameSettingsLibrary::CascadeScalabilityValuesToSave(UMCore_PlayerSettingsSave* Save)
+{
+	if (!Save) { return; }
+
+	UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings();
+	if (!GUS) { return; }
+
+	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
+	if (!CoreSettings) { return; }
+
+	static const FName Name_TextureQuality(TEXT("TextureQuality"));
+	static const FName Name_ShadowQuality(TEXT("ShadowQuality"));
+	static const FName Name_AntiAliasingQuality(TEXT("AntiAliasingQuality"));
+	static const FName Name_PostProcessQuality(TEXT("PostProcessQuality"));
+	static const FName Name_ViewDistanceQuality(TEXT("ViewDistanceQuality"));
+	static const FName Name_FoliageQuality(TEXT("FoliageQuality"));
+	static const FName Name_EffectsQuality(TEXT("EffectsQuality"));
+	static const FName Name_ShadingQuality(TEXT("ShadingQuality"));
+	static const FName Name_GlobalIlluminationQuality(TEXT("GlobalIlluminationQuality"));
+	static const FName Name_ReflectionQuality(TEXT("ReflectionQuality"));
+
+	auto ReadMember = [GUS](const FName& Member, int32& OutValue) -> bool
+	{
+		if      (Member == Name_TextureQuality)            { OutValue = GUS->ScalabilityQuality.TextureQuality;            return true; }
+		else if (Member == Name_ShadowQuality)             { OutValue = GUS->ScalabilityQuality.ShadowQuality;             return true; }
+		else if (Member == Name_AntiAliasingQuality)       { OutValue = GUS->ScalabilityQuality.AntiAliasingQuality;       return true; }
+		else if (Member == Name_PostProcessQuality)        { OutValue = GUS->ScalabilityQuality.PostProcessQuality;        return true; }
+		else if (Member == Name_ViewDistanceQuality)       { OutValue = GUS->ScalabilityQuality.ViewDistanceQuality;       return true; }
+		else if (Member == Name_FoliageQuality)            { OutValue = GUS->ScalabilityQuality.FoliageQuality;            return true; }
+		else if (Member == Name_EffectsQuality)            { OutValue = GUS->ScalabilityQuality.EffectsQuality;            return true; }
+		else if (Member == Name_ShadingQuality)            { OutValue = GUS->ScalabilityQuality.ShadingQuality;            return true; }
+		else if (Member == Name_GlobalIlluminationQuality) { OutValue = GUS->ScalabilityQuality.GlobalIlluminationQuality; return true; }
+		else if (Member == Name_ReflectionQuality)         { OutValue = GUS->ScalabilityQuality.ReflectionQuality;         return true; }
+		return false;
+	};
+
+	const TArray<UMCore_DA_SettingsCollection*>& Collections = CoreSettings->GetAllSettingsCollections();
+	for (const UMCore_DA_SettingsCollection* Collection : Collections)
+	{
+		if (!Collection) { continue; }
+		for (const TObjectPtr<UMCore_DA_SettingDefinition>& Definition : Collection->GetAllSettings())
+		{
+			if (!Definition) { continue; }
+			int32 EngineValue = 0;
+			if (ReadMember(Definition->GameUserSettingsProperty, EngineValue))
+			{
+				Save->SetIntSetting(Definition->GetSaveKey(), EngineValue);
+			}
+		}
+	}
+}
+
+void UMCore_GameSettingsLibrary::MarkQualityPresetCustom(UMCore_PlayerSettingsSave* Save)
+{
+	if (Save) { Save->SetLastSelectedQualityPreset(-1); }
 }
 
 // ============================================================================

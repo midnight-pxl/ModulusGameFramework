@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/UserInterfaceSettings.h"
 #include "Engine/Engine.h"
+#include "GameFramework/GameUserSettings.h"
 
 UMCore_PlayerSettingsSave::UMCore_PlayerSettingsSave()
 {
@@ -202,10 +203,34 @@ void UMCore_PlayerSettingsSave::SetLastSelectedCategory(const FGameplayTag& Cate
 	LastSelectedCategory = CategoryTag;
 }
 
+void UMCore_PlayerSettingsSave::SetLastSelectedQualityPreset(int32 NewValue)
+{
+	LastSelectedQualityPreset = NewValue;
+}
+
 void UMCore_PlayerSettingsSave::ValidateSettings()
 {
 	UIScale = FMath::Clamp(UIScale, 0.5f, 3.0f);
 	TooltipDelayMs = FMath::Max(0, TooltipDelayMs);
+
+	/* Backfill QualityPreset intent on first load. The flag disambiguates fresh saves
+	   (or pre-feature saves) from explicit Custom intent set later by the user. */
+	if (!bQualityPresetInitialized)
+	{
+		if (GEngine)
+		{
+			if (UGameUserSettings* GUS = GEngine->GetGameUserSettings())
+			{
+				const int32 Single = GUS->ScalabilityQuality.GetSingleQualityLevel();
+				if (Single >= 0 && Single <= 3)
+				{
+					LastSelectedQualityPreset = Single;
+				}
+				/* else: stays -1 (genuinely Custom or beyond exposed range) */
+			}
+		}
+		bQualityPresetInitialized = true;
+	}
 }
 
 // ============================================================================

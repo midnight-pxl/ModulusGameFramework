@@ -57,6 +57,16 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
     UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Settings")
     int32 GamepadIconSetIndex = 0;
 
+	/* Last value the user explicitly selected for the QualityPreset (OverallScalabilityLevel).
+	   -1 means Custom (user has tweaked individual scalability settings). 0..3 are preset levels. */
+	UPROPERTY(SaveGame, BlueprintReadWrite, Category = "Save|QualityPreset")
+	int32 LastSelectedQualityPreset{-1};
+
+	/* Disambiguates first-load (-1 = uninitialized, will be backfilled from engine state) from
+	   explicitly-Custom (-1 chosen because user tweaked an individual scalability). */
+	UPROPERTY(SaveGame)
+	bool bQualityPresetInitialized{false};
+
 	// ========================================================================
 	// GENERIC SETTING STORAGE
 	// ========================================================================
@@ -142,6 +152,13 @@ class MODULUSCORE_API UMCore_PlayerSettingsSave : public USaveGame
 
 	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
 	void SetLastSelectedCategory(const FGameplayTag& CategoryTag);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ModulusCore|Settings")
+	int32 GetLastSelectedQualityPreset() const { return LastSelectedQualityPreset; }
+
+	/** Sets the last user-selected QualityPreset intent. Caller is responsible for persistence. */
+	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings")
+	void SetLastSelectedQualityPreset(int32 NewValue);
 
 	/**
 	 * Validate all stored values and fix any out-of-range data.
