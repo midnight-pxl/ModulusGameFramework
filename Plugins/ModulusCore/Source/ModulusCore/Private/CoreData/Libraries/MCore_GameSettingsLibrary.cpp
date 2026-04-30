@@ -534,12 +534,35 @@ void UMCore_GameSettingsLibrary::ReloadAndApplyFromDisk(const UObject* WorldCont
 	CachedSave->IntSettings = FreshSave->IntSettings;
 	CachedSave->BoolSettings = FreshSave->BoolSettings;
 
-	/* Re-apply all settings to engine */
+	ApplyAllSettingsToEngine(WorldContextObject);
+
+	UE_LOG(LogModulusSettings, Log,
+		TEXT("GameSettingsLibrary::ReloadAndApplyFromDisk -- restored from slot '%s', %d float / %d int / %d bool settings re-applied"),
+		*SlotName, CachedSave->FloatSettings.Num(), CachedSave->IntSettings.Num(), CachedSave->BoolSettings.Num());
+}
+
+/* Engine-apply half of the load-then-apply pair extracted from ReloadAndApplyFromDisk.
+ * Iterates every setting in CoreSettings::SettingsCollections and dispatches the persisted
+ * value through ApplySettingToEngine, then flushes UGameUserSettings once at the end.
+ * Idempotent — safe to call repeatedly. Early-outs on dedicated server (no audio device,
+ * GUS is a no-op, and all dispatchers warn on missing world context). */
+void UMCore_GameSettingsLibrary::ApplyAllSettingsToEngine(const UObject* WorldContextObject)
+{
+	if (IsRunningDedicatedServer()) { return; }
+
+	UMCore_PlayerSettingsSave* CachedSave = GetPlayerSave(WorldContextObject);
+	if (!CachedSave)
+	{
+		UE_LOG(LogModulusSettings, Warning,
+			TEXT("GameSettingsLibrary::ApplyAllSettingsToEngine -- no cached PlayerSettingsSave available"));
+		return;
+	}
+
 	const UMCore_CoreSettings* CoreSettings = UMCore_CoreSettings::Get();
 	if (!CoreSettings)
 	{
 		UE_LOG(LogModulusSettings, Warning,
-			TEXT("GameSettingsLibrary::ReloadAndApplyFromDisk -- CoreSettings unavailable, maps restored but engine not updated"));
+			TEXT("GameSettingsLibrary::ApplyAllSettingsToEngine -- CoreSettings unavailable"));
 		return;
 	}
 
@@ -586,10 +609,6 @@ void UMCore_GameSettingsLibrary::ReloadAndApplyFromDisk(const UObject* WorldCont
 	{
 		GUS->ApplySettings(false);
 	}
-
-	UE_LOG(LogModulusSettings, Log,
-		TEXT("GameSettingsLibrary::ReloadAndApplyFromDisk -- restored from slot '%s', %d float / %d int / %d bool settings re-applied"),
-		*SlotName, CachedSave->FloatSettings.Num(), CachedSave->IntSettings.Num(), CachedSave->BoolSettings.Num());
 }
 
 // ============================================================================
@@ -1011,6 +1030,20 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, b
 // SOUND CLASS
 // ============================================================================
 
+namespace
+{
+	/* File-scope cache of the most recent slider value committed per SoundClass.
+	 * Drives the parent-chain product cascade in ApplyToSoundClass — every commit
+	 * walks the cache and re-pushes Product(self × cached ancestors) for every
+	 * tracked class, so a Master adjustment correctly propagates to all
+	 * descendant categories without clobbering their independently-set values.
+	 * Weak pointers so cache entries don't extend SoundClass lifetimes; stale
+	 * entries are skipped at walk time. */
+	TMap<TWeakObjectPtr<USoundClass>, float> GMCore_VolumeCache;
+
+	constexpr int32 GMCore_VolumeWalkMaxDepth = 16;
+}
+
 /* Applies a volume slider commit to a SoundClass via the SoundMix override
  * pathway. Direct mutation of USoundClass::Properties.Volume is silently
  * ignored by AudioDevice for already-playing sources (see AudioDevice.cpp
@@ -1022,11 +1055,14 @@ void UMCore_GameSettingsLibrary::ApplyToConsoleVariable(const FName& CVarName, b
  * a custom SoundMix and point CoreSettings at it; see the README section
  * "Customizing the Volume Mix".
  *
- * SoundClass parent-chain assumption: each adjusted SoundClass is parented
- * (directly or transitively) under a shared Master class. Master volume
- * pushes its own override on the Master class; child categories push
- * independently. Engine multiplies them through the parent chain at
- * playback resolution, so bApplyToChildren is false here. */
+ * Parent-chain cascade: SetSoundMixClassOverride with bApplyToChildren=true
+ * last-write-wins clobbers per-category overrides; with false, parent volumes
+ * never propagate. We keep a per-class cache of the last committed value and,
+ * on every commit, re-push Product(self × cached ancestors via ParentClass)
+ * for every tracked class. Idempotent: classes whose product is unchanged
+ * end up overriding to the same value they already had. Depth-bailed at 16
+ * to defend against malformed (cyclic) ParentClass hierarchies — the engine
+ * has no cycle guard of its own. */
 void UMCore_GameSettingsLibrary::ApplyToSoundClass(
 	const UObject* WorldContextObject,
 	const TSoftObjectPtr<USoundClass>& SoundClassRef,
@@ -1053,40 +1089,47 @@ void UMCore_GameSettingsLibrary::ApplyToSoundClass(
 	EnsureVolumeMixActive(WorldContextObject, VolumeMix);
 
 	const float ClampedVolume = FMath::Clamp(Volume, 0.0f, 1.0f);
+	GMCore_VolumeCache.Add(LoadedClass, ClampedVolume);
 
-	UGameplayStatics::SetSoundMixClassOverride(
-		WorldContextObject,
-		VolumeMix,
-		LoadedClass,
-		ClampedVolume,
-		1.0f,    /* PitchAdjuster */
-		0.5f,    /* FadeInTime */
-		false);  /* bApplyToChildren */
+	for (const TPair<TWeakObjectPtr<USoundClass>, float>& Entry : GMCore_VolumeCache)
+	{
+		USoundClass* TrackedClass = Entry.Key.Get();
+		if (!TrackedClass) { continue; }
+
+		float Product = Entry.Value;
+		USoundClass* Ancestor = TrackedClass->ParentClass;
+		int32 Depth = 0;
+		while (Ancestor && Depth < GMCore_VolumeWalkMaxDepth)
+		{
+			if (const float* AncestorVolume = GMCore_VolumeCache.Find(Ancestor))
+			{
+				Product *= *AncestorVolume;
+			}
+			Ancestor = Ancestor->ParentClass;
+			++Depth;
+		}
+
+		UGameplayStatics::SetSoundMixClassOverride(
+			WorldContextObject,
+			VolumeMix,
+			TrackedClass,
+			FMath::Clamp(Product, 0.0f, 1.0f),
+			1.0f,    /* PitchAdjuster */
+			0.5f,    /* FadeInTime */
+			false);  /* bApplyToChildren */
+	}
 
 	UE_LOG(LogModulusSettings, Log,
-		TEXT("GameSettingsLibrary::ApplyToSoundClass -- override %s = %.3f"),
-		*LoadedClass->GetName(), ClampedVolume);
+		TEXT("GameSettingsLibrary::ApplyToSoundClass -- committed %s = %.3f, %d cached classes re-pushed"),
+		*LoadedClass->GetName(), ClampedVolume, GMCore_VolumeCache.Num());
 }
 
 void UMCore_GameSettingsLibrary::EnsureVolumeMixActive(
 	const UObject* WorldContextObject, USoundMix* VolumeMix)
 {
 	if (!VolumeMix || !WorldContextObject || !GEngine) { return; }
-
-	UWorld* World = GEngine->GetWorldFromContextObject(
-		WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
-	if (!World) { return; }
-
-	FAudioDeviceHandle AudioDevice = World->GetAudioDevice();
-	if (!AudioDevice.IsValid()) { return; }
-
-	if (!AudioDevice->IsSoundMixActive(VolumeMix))
-	{
-		UGameplayStatics::PushSoundMixModifier(WorldContextObject, VolumeMix);
-		UE_LOG(LogModulusSettings, Log,
-			TEXT("GameSettingsLibrary::EnsureVolumeMixActive -- pushed %s"),
-			*VolumeMix->GetName());
-	}
+	
+	UGameplayStatics::PushSoundMixModifier(WorldContextObject, VolumeMix);
 }
 
 // ============================================================================

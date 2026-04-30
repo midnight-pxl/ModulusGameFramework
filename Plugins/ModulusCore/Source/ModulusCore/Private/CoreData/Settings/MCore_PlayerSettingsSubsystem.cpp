@@ -20,6 +20,19 @@ void UMCore_PlayerSettingsSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
+void UMCore_PlayerSettingsSubsystem::PlayerControllerChanged(APlayerController* NewPlayerController)
+{
+	Super::PlayerControllerChanged(NewPlayerController);
+
+	if (!NewPlayerController || bBootApplyDone) { return; }
+
+	bBootApplyDone = true;
+	UMCore_GameSettingsLibrary::ApplyAllSettingsToEngine(this);
+
+	UE_LOG(LogModulusSettings, Log,
+		TEXT("PlayerSettingsSubsystem::PlayerControllerChanged -- boot-time apply complete"));
+}
+
 FString UMCore_PlayerSettingsSubsystem::GetSettingsSaveSlotName_Implementation() const
 {
 	const ULocalPlayer* LocalPlayer = GetLocalPlayer();

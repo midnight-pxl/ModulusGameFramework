@@ -15,6 +15,7 @@
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "MCore_PlayerSettingsSubsystem.generated.h"
 
+class APlayerController;
 class UMCore_PlayerSettingsSave;
 
 /**
@@ -31,6 +32,7 @@ class MODULUSCORE_API UMCore_PlayerSettingsSubsystem : public ULocalPlayerSubsys
 
 public:
 	virtual void Deinitialize() override;
+	virtual void PlayerControllerChanged(APlayerController* NewPlayerController) override;
 
 	// ============================================================================
 	// PLAYER SETTINGS
@@ -55,4 +57,6 @@ public:
 private:
 	UPROPERTY(Transient)
 	TObjectPtr<UMCore_PlayerSettingsSave> CachedPlayerSettings;
+
+	bool bBootApplyDone = false;
 };

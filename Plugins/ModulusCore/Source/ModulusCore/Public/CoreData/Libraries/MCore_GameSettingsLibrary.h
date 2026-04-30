@@ -170,6 +170,13 @@ public:
 		meta = (WorldContext = "WorldContextObject"))
 	static void ReloadAndApplyFromDisk(const UObject* WorldContextObject);
 
+	/** Re-applies every persisted setting to the engine without touching disk. Used by the
+	 *  boot-time replay path; also called internally by ReloadAndApplyFromDisk after refreshing
+	 *  in-memory state. Idempotent and safe to call repeatedly. Early-outs on dedicated server. */
+	UFUNCTION(BlueprintCallable, Category = "ModulusCore|Settings",
+		meta = (WorldContext = "WorldContextObject"))
+	static void ApplyAllSettingsToEngine(const UObject* WorldContextObject);
+
 private:
 	// ============================================================================
 	// INTERNAL HELPERS
