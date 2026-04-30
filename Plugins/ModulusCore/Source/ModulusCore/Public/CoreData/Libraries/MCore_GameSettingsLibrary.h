@@ -205,26 +205,36 @@ private:
 		const UMCore_DA_SettingDefinition* Setting,
 		float FloatValue, int32 IntValue, bool BoolValue);
 
-	static bool ApplyViaGUSSetter(const FName& PropertyName, UGameUserSettings* GUS,
-		float FloatValue, int32 IntValue, bool BoolValue,
+	static bool ApplyViaNamedSetter(const FName& SetterName,
+		float FloatValue, int32 IntValue, bool bBoolValue,
 		const UObject* WorldContextObject);
 
+	/* Type-aware reflection write. Three-value signature mirrors
+	 * ApplyViaNamedSetter: each typed cast picks the value matching its
+	 * property type. Returns true on a successful typed write, false (with
+	 * a specific warning naming the property, its actual GetCPPType(), and
+	 * which typed value was attempted) on type mismatch. */
+	static bool WriteReflectedProperty(FProperty* Prop, void* Container,
+		float FloatValue, int32 IntValue, bool bBoolValue);
+
 	/** Reads each ScalabilityQuality member from GUS and writes its value to the matching
-	 *  DA's save key (Definition->GameUserSettingsProperty matched against 10 known names). */
+	 *  DA's save key (Definition->NamedSetter matched against 10 known names). */
 	static void CascadeScalabilityValuesToSave(UMCore_PlayerSettingsSave* Save);
 
 	/** Sets LastSelectedQualityPreset to -1 (Custom) on the given save. No-op if Save is null. */
 	static void MarkQualityPresetCustom(UMCore_PlayerSettingsSave* Save);
 
-	static void ApplyToGameUserSettings(const FName& PropertyName, float Value);
-	static void ApplyToGameUserSettings(const FName& PropertyName, int32 Value);
-	static void ApplyToGameUserSettings(const FName& PropertyName, bool Value);
-
 	static void ApplyToConsoleVariable(const FName& CVarName, float Value);
 	static void ApplyToConsoleVariable(const FName& CVarName, int32 Value);
 	static void ApplyToConsoleVariable(const FName& CVarName, bool Value);
 
-	static void ApplyToSoundClass(const TSoftObjectPtr<USoundClass>& SoundClassRef, float Volume);
+	static void ApplyToSoundClass(const UObject* WorldContextObject,
+		const TSoftObjectPtr<USoundClass>& SoundClassRef, float Volume);
+
+	/* Idempotent. Pushes the configured volume mix to the active audio
+	 * device if not already active. Called from ApplyToSoundClass on each
+	 * slider commit; no-ops after first push. */
+	static void EnsureVolumeMixActive(const UObject* WorldContextObject, USoundMix* VolumeMix);
 
 	static void ApplyToSoundMix(const UObject* WorldContextObject,
 		TSoftObjectPtr<USoundMix> SoundMixRef,

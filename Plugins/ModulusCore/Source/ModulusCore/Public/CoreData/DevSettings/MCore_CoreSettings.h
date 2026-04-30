@@ -27,6 +27,7 @@ class UMCore_SettingsWidget_Switcher;
 class UMCore_ConfirmationDialog;
 class UMCore_KeyBindingPanel_Base;
 class UMCore_SettingsRevertCountdown;
+class USoundMix;
 
 /**
  * Developer settings for the Modulus Game Framework (Project Settings > Game > Modulus Core).
@@ -171,6 +172,20 @@ public:
 	float ConfirmationRevertDelay = 15.0f;
 
 	// ============================================================================
+	// AUDIO
+	// ============================================================================
+
+	/* SoundMix routing volume slider commits via SetSoundMixClassOverride.
+	 * Defaults to MCore_VolumeMix shipped with the plugin. To customize,
+	 * author your own SoundMix with class adjusters for every SoundClass
+	 * referenced by your audio settings DAs. The SoundClass hierarchy must
+	 * have one Master parent so the Master slider multiplies through the
+	 * parent chain at playback resolution. See README "Customizing the
+	 * Volume Mix" section. */
+	UPROPERTY(config, EditAnywhere, Category = "Audio")
+	TSoftObjectPtr<USoundMix> VolumeMix;
+
+	// ============================================================================
 	// DEBUG (EDITOR ONLY)
 	// ============================================================================
 
@@ -189,6 +204,58 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="Debug", meta=(DisplayName="Show UI Layer Debug Overlay"))
 	bool bShowUILayerDebugOverlay{false};
 #endif
+
+	// ============================================================================
+	// PIE
+	// ============================================================================
+
+	/**
+	 * Whether GUS-driven setting changes that mutate the host process's
+	 * window/display state (Resolution, Window Mode, HDR toggle, HDR nits)
+	 * should apply when running in PIE.
+	 *
+	 * Default false because applying these in PIE resizes the editor's host
+	 * window and disrupts the editor process. Set to true if you specifically
+	 * need PIE to behave like a packaged build for these settings.
+	 *
+	 * Has no effect outside PIE — packaged builds (Development, Test,
+	 * Shipping) always apply these settings normally.
+	 *
+	 * Mirrors Lyra's bApplyFrameRateSettingsInPIE / bApplyFrontEndPerformanceOptionsInPIE
+	 * pattern from LyraPlatformEmulationSettings.
+	 */
+	UPROPERTY(EditAnywhere, config, Category = "ModulusCore|PIE",
+		meta = (DisplayName = "Apply Display Settings in PIE"))
+	bool bApplyDisplaySettingsInPIE = false;
+
+	/**
+	 * Whether GUS-driven setting changes that mutate process-global
+	 * renderer state (scalability quality groups, resolution scale,
+	 * dynamic resolution toggle) should apply when running in PIE.
+	 *
+	 * Default false because applying these in PIE recreates the shadow
+	 * virtual physical page pool, invalidates TSR history, and (for
+	 * ResolutionScale) resizes render targets, disrupting the editor
+	 * process. Multi-PIE-window setups amplify the disruption because
+	 * renderer state is shared across PIE worlds. Set to true if you
+	 * specifically need PIE to behave like a packaged build for these
+	 * settings.
+	 *
+	 * Gated keys: OverallScalabilityLevel, the eight individual
+	 * ScalabilityQuality fields (Texture, Shadow, AntiAliasing,
+	 * PostProcess, ViewDistance, Foliage, Shading, Effects),
+	 * GlobalIlluminationQuality, ReflectionQuality, ResolutionScale,
+	 * bUseDynamicResolution.
+	 *
+	 * Has no effect outside PIE. Packaged builds (Development, Test,
+	 * Shipping) always apply these settings normally.
+	 *
+	 * Mirrors Lyra's bApplyFrontEndPerformanceOptionsInPIE pattern from
+	 * LyraPlatformEmulationSettings.
+	 */
+	UPROPERTY(EditAnywhere, config, Category = "ModulusCore|PIE",
+		meta = (DisplayName = "Apply Scalability Settings in PIE"))
+	bool bApplyScalabilitySettingsInPIE = false;
 
 	// ============================================================================
 	// HELPERS

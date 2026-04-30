@@ -156,10 +156,20 @@ public:
 	// APPLY CONFIGURATION
 	// ============================================================================
 
-	/* UGameUserSettings property name to write to (empty = custom handling only) */
+	/* Engine setter target. Routes via the three-bucket dispatcher in
+	 * MCore_GameSettingsLibrary::ApplyViaNamedSetter:
+	 *   Bucket 1: Top-level UPROPERTY on UGameUserSettings (e.g. bUseVSync,
+	 *             FullscreenMode, AudioQualityLevel, FrameRateLimit).
+	 *   Bucket 2: Member of UGameUserSettings::ScalabilityQuality struct
+	 *             (e.g. TextureQuality, EffectsQuality, ReflectionQuality).
+	 *   Bucket 3: Function-dispatch for irreducible operations
+	 *             (OverallScalabilityLevel, ScreenResolution,
+	 *              EnableHDRDisplayOutput, DisplayGamma, ApplicationScale).
+	 *
+	 * Use the literal engine name. Do not translate or invent keys. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setting|Apply",
-		meta = (DisplayName = "GameUserSettings Property"))
-	FName GameUserSettingsProperty;
+		meta = (DisplayName = "Named Setter"))
+	FName NamedSetter = NAME_None;
 
 	/** Optional override of the widget class to instantiate for this setting.
 	 *  Null = use the type-driven default from CoreSettings. */

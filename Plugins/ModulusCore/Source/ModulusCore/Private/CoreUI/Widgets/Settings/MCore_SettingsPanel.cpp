@@ -760,6 +760,7 @@ void UMCore_SettingsPanel::HandleConfirmationRequired(const TArray<FGameplayTag>
 	if (ActiveRevertCountdown.IsValid())
 	{
 		ActiveRevertCountdown->OnCountdownResult.Clear();
+		ActiveRevertCountdown->SuppressFallbackForReplacement();
 		ActiveRevertCountdown->DeactivateWidget();
 		ActiveRevertCountdown.Reset();
 	}

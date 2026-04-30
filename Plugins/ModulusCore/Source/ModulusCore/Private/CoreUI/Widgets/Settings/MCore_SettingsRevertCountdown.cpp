@@ -158,7 +158,8 @@ void UMCore_SettingsRevertCountdown::HandleRevertClicked()
 void UMCore_SettingsRevertCountdown::ResolveCountdown(bool bConfirmed)
 {
 	if (bResolved) { return; }
-	
+	bResolved = true;
+
 	UWorld* World = GetWorld();
 	if (World)
 	{
@@ -174,6 +175,11 @@ void UMCore_SettingsRevertCountdown::ResolveCountdown(bool bConfirmed)
 
 	OnCountdownResult.Broadcast(bConfirmed);
 	DeactivateWidget();
+}
+
+void UMCore_SettingsRevertCountdown::SuppressFallbackForReplacement()
+{
+	bResolved = true;
 }
 
 void UMCore_SettingsRevertCountdown::ApplySettings(bool bConfirmed)

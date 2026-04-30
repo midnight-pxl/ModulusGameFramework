@@ -6,9 +6,12 @@
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
 #include "CoreData/Logging/LogModulusSettings.h"
+#include "Sound/SoundMix.h"
 
 UMCore_CoreSettings::UMCore_CoreSettings()
 {
+	VolumeMix = TSoftObjectPtr<USoundMix>(FSoftObjectPath(
+		TEXT("/ModulusCore/Audio/MCore_VolumeMix.MCore_VolumeMix")));
 }
 
 const UMCore_CoreSettings* UMCore_CoreSettings::Get()

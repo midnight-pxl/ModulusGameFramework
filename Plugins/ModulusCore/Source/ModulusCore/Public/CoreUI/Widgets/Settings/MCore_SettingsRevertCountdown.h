@@ -48,6 +48,11 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "UI|Settings")
 	FOnCountdownResult OnCountdownResult;
 
+	/** Marks this countdown as resolved without firing the auto-revert fallback.
+	 *  Call before DeactivateWidget() when replacing this countdown with a merged
+	 *  successor inside the debounce window. */
+	void SuppressFallbackForReplacement();
+
 protected:
 	// ============================================================================
 	// LIFECYCLE
