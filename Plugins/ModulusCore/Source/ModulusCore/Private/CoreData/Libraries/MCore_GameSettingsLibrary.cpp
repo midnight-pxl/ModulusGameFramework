@@ -1140,12 +1140,27 @@ void UMCore_GameSettingsLibrary::ApplyToSoundMix(const UObject* WorldContextObje
 	TSoftObjectPtr<USoundMix> SoundMixRef, const FString& SaveKey, bool bDesiredActive)
 {
 	static TMap<FString, bool> PushedState;
-
+	static Audio::FDeviceId LastSeenDeviceId = INDEX_NONE;
+	
+	if (!WorldContextObject) { return; }
+	
+	if (UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(
+		WorldContextObject, EGetWorldErrorMode::LogAndReturnNull) : nullptr)
+	{
+		if (FAudioDeviceHandle DeviceHandle = World->GetAudioDevice())
+		{
+			const Audio::FDeviceId CurrentDeviceId = DeviceHandle->DeviceID;
+			if (CurrentDeviceId != LastSeenDeviceId)
+			{
+				PushedState.Reset();
+				LastSeenDeviceId = CurrentDeviceId;
+			}
+		}
+	}
+	
 	const bool* ExistingState = PushedState.Find(SaveKey);
 	if (ExistingState && *ExistingState == bDesiredActive) { return; }
-
-	if (!WorldContextObject) { return; }
-
+	
 	USoundMix* Mix = SoundMixRef.LoadSynchronous();
 	if (!Mix)
 	{
