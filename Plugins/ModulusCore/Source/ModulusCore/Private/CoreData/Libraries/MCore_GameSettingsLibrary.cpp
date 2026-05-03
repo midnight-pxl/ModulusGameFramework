@@ -25,6 +25,7 @@
 #include "Sound/SoundMix.h"
 #include "AudioDevice.h"
 #include "Algo/Reverse.h"
+#include "Scalability.h"
 
 FOnSettingsConfirmationRequired UMCore_GameSettingsLibrary::OnSettingsConfirmationRequired;
 
@@ -684,27 +685,34 @@ void UMCore_GameSettingsLibrary::ApplySettingToEngine(const UObject* WorldContex
 }
 
 // ============================================================================
-// GAME USER SETTINGS (THREE-BUCKET DISPATCHER)
+// GAME USER SETTINGS (TWO-BUCKET DISPATCHER)
 // ============================================================================
 
-/* Three-bucket dispatcher for engine setter targets. Resolution order is
- * Bucket 3 → Bucket 1 → Bucket 2 → not-found warning. Bucket 3 runs first so
- * that translation-key / paired-param / non-GUS targets take precedence over
- * blind reflection. The FName must be the literal engine name — do not invent
- * or translate keys.
+/* Two-bucket dispatcher for engine setter targets. Resolution order is
+ * Bucket 3 → Bucket 1 → not-found warning. Bucket 3 runs first so that
+ * translation-key / paired-param / non-GUS targets take precedence over
+ * blind reflection. The FName must be the literal engine name — do not
+ * invent or translate keys.
+ *
+ * Bucket 3 — function-dispatch for irreducible operations: cascades, paired
+ *            parameters, non-GUS targets, and ScalabilityQuality struct
+ *            members. Each entry writes the engine state directly and (for
+ *            scalability children) calls Scalability::SetQualityLevels to
+ *            push struct values onto the live sg.* CVars. Examples:
+ *            OverallScalabilityLevel (preset cascade), TextureQuality and
+ *            siblings (struct field + cascade), EnableHDRDisplayOutput
+ *            (paired bool+int), DisplayGamma (GEngine target),
+ *            ApplicationScale (UUserInterfaceSettings target).
  *
  * Bucket 1 — top-level UPROPERTY on UGameUserSettings, written via FProperty
  *            reflection. Example: bUseVSync, AudioQualityLevel, FrameRateLimit.
  *
- * Bucket 2 — member of UGameUserSettings::ScalabilityQuality struct, written
- *            via FStructProperty traversal then FProperty reflection on the
- *            nested struct. Successful writes mark the quality preset Custom.
- *            Example: TextureQuality, EffectsQuality, ReflectionQuality.
- *
- * Bucket 3 — function-dispatch for irreducible operations: cascades, paired
- *            parameters, non-GUS targets. Example: OverallScalabilityLevel
- *            (cascade), EnableHDRDisplayOutput (paired bool+int), DisplayGamma
- *            (GEngine target), ApplicationScale (UUserInterfaceSettings target).
+ * Why no struct-reflection bucket: FQualityLevels reflection via
+ * FStructProperty + FindPropertyByName silently fails to write under UE 5.6
+ * (the namespaced struct doesn't resolve through the property chain), and
+ * even when the write would succeed it doesn't push to the sg.* CVars
+ * without a follow-up Scalability::SetQualityLevels call. Explicit per-member
+ * dispatch is reliable and matches Lyra's pattern.
  *
  * Returns true if the dispatch landed in any bucket, false (with warning) if
  * the FName matched none of them. */
@@ -744,6 +752,7 @@ bool UMCore_GameSettingsLibrary::ApplyViaNamedSetter(const FName& SetterName,
 		TEXT("EffectsQuality"),
 		TEXT("GlobalIlluminationQuality"),
 		TEXT("ReflectionQuality"),
+		TEXT("LandscapeQuality"),
 		TEXT("ResolutionQuality"),
 		TEXT("bUseDynamicResolution")
 	};
@@ -799,6 +808,156 @@ bool UMCore_GameSettingsLibrary::ApplyViaNamedSetter(const FName& SetterName,
 		if (Save) { Save->SetLastSelectedQualityPreset(FMath::Clamp(IntValue, 0, 3)); }
 
 		/* Notify subscribed widgets to refresh from save. */
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+
+	/* ScalabilityQuality child setters. Each writes the FQualityLevels member directly
+	   and calls Scalability::SetQualityLevels to push the struct values onto the sg.* CVars
+	   (mirrors what UGameUserSettings::ApplyNonResolutionSettings does internally). Without
+	   the cascade call the field write would persist to ini but never affect the running
+	   session. Each commit flips the saved preset to Custom and broadcasts so the
+	   QualityPreset widget refreshes. Listed alphabetically. */
+	if (SetterName == TEXT("AntiAliasingQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.AntiAliasingQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("EffectsQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.EffectsQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("FoliageQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.FoliageQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("GlobalIlluminationQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.GlobalIlluminationQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("LandscapeQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.LandscapeQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("PostProcessQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.PostProcessQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("ReflectionQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.ReflectionQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("ShadingQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.ShadingQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("ShadowQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.ShadowQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("TextureQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.TextureQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+			WorldContextObject,
+			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+			EMCore_EventScope::Local);
+		return true;
+	}
+	if (SetterName == TEXT("ViewDistanceQuality"))
+	{
+		if (!GUS) { return false; }
+		GUS->ScalabilityQuality.ViewDistanceQuality = FMath::Clamp(IntValue, 0, 3);
+		Scalability::SetQualityLevels(GUS->ScalabilityQuality);
+
+		MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
 		UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
 			WorldContextObject,
 			MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
@@ -878,33 +1037,9 @@ bool UMCore_GameSettingsLibrary::ApplyViaNamedSetter(const FName& SetterName,
 		return WriteReflectedProperty(Prop, GUS, FloatValue, IntValue, bBoolValue);
 	}
 
-	/* ============================================================
-	 * Bucket 2 — member of ScalabilityQuality struct via reflection.
-	 * ============================================================ */
-	static const FName ScalabilityFieldName(TEXT("ScalabilityQuality"));
-	if (FStructProperty* ScalabilityProp = CastField<FStructProperty>(
-			GUS->GetClass()->FindPropertyByName(ScalabilityFieldName)))
-	{
-		void* StructAddr = ScalabilityProp->ContainerPtrToValuePtr<void>(GUS);
-		if (FProperty* InnerProp = ScalabilityProp->Struct->FindPropertyByName(SetterName))
-		{
-			const bool bWrote = WriteReflectedProperty(InnerProp, StructAddr, FloatValue, IntValue, bBoolValue);
-			if (bWrote)
-			{
-				MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
-				
-				UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
-					WorldContextObject,
-					MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
-					EMCore_EventScope::Local);
-			}
-			return bWrote;
-		}
-	}
-
 	UE_LOG(LogModulusSettings, Warning,
 		TEXT("GameSettingsLibrary::ApplyViaNamedSetter -- '%s' not found in any bucket "
-			 "(top-level UPROPERTY on %s, ScalabilityQuality member, or function-dispatch table)"),
+			 "(top-level UPROPERTY on %s or function-dispatch table)"),
 		*SetterName.ToString(), *GUS->GetClass()->GetName());
 	return false;
 }
