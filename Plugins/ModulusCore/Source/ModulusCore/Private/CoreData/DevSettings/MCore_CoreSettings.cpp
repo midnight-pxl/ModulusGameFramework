@@ -5,8 +5,39 @@
 #include "CoreData/Assets/UI/Themes/MCore_PDA_UITheme_Base.h"
 #include "CoreData/Types/UI/MCore_ThemeTypes.h"
 #include "CoreData/Types/Settings/MCore_DA_SettingDefinition.h"
+#include "CoreData/Settings/MCore_SettingsCollectionSubsystem.h"
 #include "CoreData/Logging/LogModulusSettings.h"
 #include "Sound/SoundMix.h"
+
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+
+namespace
+{
+	/* Cache hosts on UMCore_SettingsCollectionSubsystem (UGameInstanceSubsystem). The
+	   CDO has no world context, so proxies walk GEngine's world contexts to find a
+	   live Game/PIE world's GameInstance. Cooker/commandlet contexts have no
+	   GameInstance and are skipped. */
+	UMCore_SettingsCollectionSubsystem* FindRuntimeSubsystem()
+	{
+		if (!GEngine) { return nullptr; }
+
+		for (const FWorldContext& Context : GEngine->GetWorldContexts())
+		{
+			if (Context.WorldType != EWorldType::Game && Context.WorldType != EWorldType::PIE)
+			{
+				continue;
+			}
+			if (!Context.OwningGameInstance) { continue; }
+			if (UMCore_SettingsCollectionSubsystem* Subsystem =
+				Context.OwningGameInstance->GetSubsystem<UMCore_SettingsCollectionSubsystem>())
+			{
+				return Subsystem;
+			}
+		}
+		return nullptr;
+	}
+}
 
 UMCore_CoreSettings::UMCore_CoreSettings()
 {
@@ -83,44 +114,22 @@ bool UMCore_CoreSettings::IsValidThemeIndex(int32 Index) const
 
 const TArray<UMCore_DA_SettingsCollection*>& UMCore_CoreSettings::GetAllSettingsCollections() const
 {
-	if (!bCollectionsCacheValid)
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
 	{
-		ResolvedCollections.Reset();
-		for (const TSoftObjectPtr<UMCore_DA_SettingsCollection>& SoftRef : SettingsCollections)
-		{
-			if (SoftRef.IsNull())
-			{
-				continue;
-			}
-			UMCore_DA_SettingsCollection* Loaded = SoftRef.LoadSynchronous();
-			if (Loaded)
-			{
-				ResolvedCollections.Add(Loaded);
-			}
-			else
-			{
-				UE_LOG(LogModulusSettings, Warning,
-					TEXT("CoreSettings::GetAllSettingsCollections -- failed to load collection '%s'"),
-					*SoftRef.ToString());
-			}
-		}
-		bCollectionsCacheValid = true;
-		UE_LOG(LogModulusSettings, Log,
-			TEXT("CoreSettings::GetAllSettingsCollections -- loaded %d collection(s)"),
-			ResolvedCollections.Num());
+		return Subsystem->GetAllSettingsCollections();
 	}
-	return ResolvedCollections;
+
+	/* No GameInstance available (commandlet / cooker / pre-PIE editor inspection). */
+	static const TArray<UMCore_DA_SettingsCollection*> EmptyArray;
+	return EmptyArray;
 }
 
 UMCore_DA_SettingDefinition* UMCore_CoreSettings::FindSettingDefinitionByTag(
 	const FGameplayTag& SettingTag) const
 {
-	for (const UMCore_DA_SettingsCollection* Collection : GetAllSettingsCollections())
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
 	{
-		if (UMCore_DA_SettingDefinition* Found = Collection->FindSettingByTag(SettingTag))
-		{
-			return Found;
-		}
+		return Subsystem->FindSettingDefinitionByTag(SettingTag);
 	}
 	return nullptr;
 }
@@ -128,79 +137,48 @@ UMCore_DA_SettingDefinition* UMCore_CoreSettings::FindSettingDefinitionByTag(
 TArray<UMCore_DA_SettingDefinition*> UMCore_CoreSettings::GetSettingsForCategory(
 	const FGameplayTag& CategoryTag) const
 {
-	TArray<UMCore_DA_SettingDefinition*> Combined;
-	for (const UMCore_DA_SettingsCollection* Collection : GetAllSettingsCollections())
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
 	{
-		Combined.Append(Collection->GetSettingsInCategory(CategoryTag));
+		return Subsystem->GetSettingsForCategory(CategoryTag);
 	}
-	Combined.Sort([](const UMCore_DA_SettingDefinition& A, const UMCore_DA_SettingDefinition& B)
-	{
-		return A.SortOrder < B.SortOrder;
-	});
-	return Combined;
+	return TArray<UMCore_DA_SettingDefinition*>();
 }
 
 TArray<FGameplayTag> UMCore_CoreSettings::GetAllSettingsCategories() const
 {
-	TMap<FGameplayTag, int32> CategoryMinSort;
-	for (const UMCore_DA_SettingsCollection* Collection : GetAllSettingsCollections())
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
 	{
-		for (const TObjectPtr<UMCore_DA_SettingDefinition>& Setting : Collection->GetAllSettings())
-		{
-			if (!Setting || !Setting->CategoryTag.IsValid())
-			{
-				continue;
-			}
-			if (int32* Existing = CategoryMinSort.Find(Setting->CategoryTag))
-			{
-				*Existing = FMath::Min(*Existing, Setting->SortOrder);
-			}
-			else
-			{
-				CategoryMinSort.Add(Setting->CategoryTag, Setting->SortOrder);
-			}
-		}
+		return Subsystem->GetAllSettingsCategories();
 	}
-
-	TArray<FGameplayTag> Result;
-	CategoryMinSort.GetKeys(Result);
-	Result.Sort([&CategoryMinSort](const FGameplayTag& A, const FGameplayTag& B)
-	{
-		return CategoryMinSort[A] < CategoryMinSort[B];
-	});
-	return Result;
+	return TArray<FGameplayTag>();
 }
 
 FText UMCore_CoreSettings::GetCategoryDisplayName(const FGameplayTag& CategoryTag) const
 {
-	for (const UMCore_DA_SettingsCollection* Collection : GetAllSettingsCollections())
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
 	{
-		if (const FText* Name = Collection->CategoryDisplayName.Find(CategoryTag))
-		{
-			return *Name;
-		}
-	}
-	/* Fallback: last segment of the tag path */
-	const FString TagStr = CategoryTag.ToString();
-	int32 LastDot;
-	if (TagStr.FindLastChar(TEXT('.'), LastDot))
-	{
-		return FText::FromString(TagStr.Mid(LastDot + 1));
+		return Subsystem->GetCategoryDisplayName(CategoryTag);
 	}
 	return FText::GetEmpty();
 }
 
 bool UMCore_CoreSettings::HasValidSettingsCollections() const
 {
-	return GetAllSettingsCollections().Num() > 0;
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
+	{
+		return Subsystem->HasValidSettingsCollections();
+	}
+	return false;
 }
 
 void UMCore_CoreSettings::InvalidateCollectionCache()
 {
-	ResolvedCollections.Reset();
-	bCollectionsCacheValid = false;
-	UE_LOG(LogModulusSettings, Log,
-		TEXT("CoreSettings::InvalidateCollectionCache -- collection cache invalidated"));
+	if (UMCore_SettingsCollectionSubsystem* Subsystem = FindRuntimeSubsystem())
+	{
+		Subsystem->InvalidateCollectionCache();
+	}
+	/* Silent no-op if no subsystem — editor-time edit before any PIE has run. The next
+	   PIE start gets a fresh subsystem with empty cache. */
 }
 
 #if WITH_EDITOR

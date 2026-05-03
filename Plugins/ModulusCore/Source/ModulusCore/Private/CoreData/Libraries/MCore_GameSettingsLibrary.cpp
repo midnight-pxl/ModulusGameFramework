@@ -566,6 +566,13 @@ void UMCore_GameSettingsLibrary::ApplyAllSettingsToEngine(const UObject* WorldCo
 		return;
 	}
 
+	/* Snapshot the user's preset intent before iteration. State replay through
+	   ApplyViaNamedSetter is not user input — child-scalability writes flip the
+	   save's LastSelectedQualityPreset to -1 (Custom) via MarkQualityPresetCustom.
+	   Caching here lets the OverallScalabilityLevel short-circuit below read the
+	   pre-iteration value, and lets the post-loop restore reverse any clobber. */
+	const int32 PreservedQualityPreset = CachedSave->GetLastSelectedQualityPreset();
+
 	const TArray<UMCore_DA_SettingsCollection*>& Collections = CoreSettings->GetAllSettingsCollections();
 	for (const UMCore_DA_SettingsCollection* Collection : Collections)
 	{
@@ -577,10 +584,12 @@ void UMCore_GameSettingsLibrary::ApplyAllSettingsToEngine(const UObject* WorldCo
 
 			/* Custom intent — skip QualityPreset apply so individual scalability DAs drive engine state.
 			   Without this guard, the cascade in ApplyViaNamedSetter would overwrite just-loaded
-			   individual save values with engine state matching the saved preset value. */
+			   individual save values with engine state matching the saved preset value. The read uses
+			   the pre-iteration snapshot rather than the live save, because earlier iterations may
+			   have flipped the save's value to -1 as a side effect of child writes. */
 			static const FName OverallScalabilityProp(TEXT("OverallScalabilityLevel"));
 			if (Definition->NamedSetter == OverallScalabilityProp
-				&& CachedSave->GetLastSelectedQualityPreset() == -1)
+				&& PreservedQualityPreset == -1)
 			{
 				continue;
 			}
@@ -608,6 +617,15 @@ void UMCore_GameSettingsLibrary::ApplyAllSettingsToEngine(const UObject* WorldCo
 	if (UGameUserSettings* GUS = UGameUserSettings::GetGameUserSettings())
 	{
 		GUS->ApplySettings(false);
+	}
+
+	/* Restore user intent if iteration mutated it. The dispatcher's MarkQualityPresetCustom
+	   fire-paths are correct for slider commits but wrong for replay; this restore reverses
+	   the side effect without touching the dispatcher. Guarded write so the save remains
+	   untouched in the common case (no scalability DAs, or intent already -1 pre-iteration). */
+	if (CachedSave->GetLastSelectedQualityPreset() != PreservedQualityPreset)
+	{
+		CachedSave->SetLastSelectedQualityPreset(PreservedQualityPreset);
 	}
 }
 
@@ -707,9 +725,6 @@ bool UMCore_GameSettingsLibrary::ApplyViaNamedSetter(const FName& SetterName,
 	//
 	// Developers can opt in to applying these in PIE by setting
 	// UMCore_CoreSettings::bApplyDisplaySettingsInPIE = true.
-	//
-	// See: https://forums.unrealengine.com/t/calling-ugameusersettings-applysettings-forces-the-dimensions-of-a-pie-window/2668491
-	// See: Lyra's bApplyFrameRateSettingsInPIE in LyraPlatformEmulationSettings.h
 	static const TSet<FName> EditorUnsafeKeys = {
 		TEXT("ScreenResolution"),
 		TEXT("FullscreenMode"),
@@ -753,6 +768,15 @@ bool UMCore_GameSettingsLibrary::ApplyViaNamedSetter(const FName& SetterName,
 			UE_LOG(LogModulusSettings, Verbose,
 				TEXT("GameSettingsLibrary::ApplyViaNamedSetter -- skipping editor-unsafe scalability key '%s' in PIE (set CoreSettings::bApplyScalabilitySettingsInPIE=true to override)"),
 				*SetterName.ToString());
+			
+			if (SetterName != TEXT("OverallScalabilityLevel"))
+			{
+				MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+				UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+					WorldContextObject,
+					MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+					EMCore_EventScope::Local);
+			}
 			return true; // Treat as handled; save-path proceeds, engine call suppressed
 		}
 	}
@@ -868,6 +892,11 @@ bool UMCore_GameSettingsLibrary::ApplyViaNamedSetter(const FName& SetterName,
 			if (bWrote)
 			{
 				MarkQualityPresetCustom(GetPlayerSave(WorldContextObject));
+				
+				UMCore_EventFunctionLibrary::BroadcastSimpleEvent(
+					WorldContextObject,
+					MCore_SettingsTags::MCore_Settings_Event_ExternalValueChange,
+					EMCore_EventScope::Local);
 			}
 			return bWrote;
 		}
@@ -1128,7 +1157,11 @@ void UMCore_GameSettingsLibrary::EnsureVolumeMixActive(
 	const UObject* WorldContextObject, USoundMix* VolumeMix)
 {
 	if (!VolumeMix || !WorldContextObject || !GEngine) { return; }
-	
+
+	UE_LOG(LogModulusSettings, Verbose,
+		TEXT("GameSettingsLibrary::EnsureVolumeMixActive -- pushing VolumeMix '%s'"),
+		*VolumeMix->GetName());
+
 	UGameplayStatics::PushSoundMixModifier(WorldContextObject, VolumeMix);
 }
 

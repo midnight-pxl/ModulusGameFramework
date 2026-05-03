@@ -321,7 +321,4 @@ public:
 	UFUNCTION(BlueprintPure, Category="Modulus|Theme")
 	bool IsValidThemeIndex(int32 Index) const;
 
-private:
-	mutable TArray<TObjectPtr<UMCore_DA_SettingsCollection>> ResolvedCollections;
-	mutable bool bCollectionsCacheValid{false};
 };
